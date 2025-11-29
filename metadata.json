@@ -1,0 +1,7 @@
+{
+  "name": "CineLog - Watchlist",
+  "description": "Die ultimative AI-Watchlist. Mit Vision-Suche, Deep Content Analysis, ChatBot und Familien-Sync. Powered by TMDB & Google Gemini.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "cinelog-infocus",
+  "version": "1.0.0",
+  "description": "CineLog - Die ultimative AI-Watchlist PWA",
+  "main": "index.tsx",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "react",
+    "watchlist",
+    "tmdb",
+    "gemini-ai",
+    "pwa"
+  ],
+  "author": "BigDaddy",
+  "license": "MIT",
+  "dependencies": {
+    "@google/genai": "^1.30.0",
+    "lucide-react": "^0.555.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.6",
+    "recharts": "^3.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0"
+  }
+}
