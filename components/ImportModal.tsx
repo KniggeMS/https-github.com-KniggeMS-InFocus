@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { X, FileText, ArrowRight, Check, AlertCircle, Loader2, Download, Database } from 'lucide-react';
 import { useTranslation } from '../contexts/LanguageContext';
-import { searchTMDB, findByExternalId } from '../services/tmdb';
+import { searchTMDB, findByExternalId, IMAGE_BASE_URL } from '../services/tmdb';
 import { searchOMDB } from '../services/omdb';
 import { SearchResult, MediaType } from '../types';
 
@@ -177,7 +177,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-800 border border-slate-700 w-full max-w-3xl rounded-xl shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+      <div className="bg-slate-800 border border-slate-700 w-full max-w-4xl rounded-xl shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50 rounded-t-xl">
@@ -206,11 +206,11 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
                    ) : <div className="text-green-400 flex items-center gap-1"><Check size={14}/> TMDB Ready</div>}
                    
                    {!omdbApiKey ? (
-                       <div className="text-slate-500 flex items-center gap-1"><Database size={14}/> OMDb Fallback inaktiv (Key fehlt)</div>
+                       <div className="text-slate-500 flex items-center gap-1"><Database size={14}/> {t('omdb_inactive') || "OMDb Fallback inaktiv (Key fehlt)"}</div>
                    ) : (
                        <div className={`${omdbLimitReached ? 'text-red-400' : 'text-green-400'} flex items-center gap-1`}>
                            {omdbLimitReached ? <AlertCircle size={14} /> : <Check size={14} />} 
-                           {omdbLimitReached ? 'OMDb Limit erreicht!' : 'OMDb Fallback aktiv'}
+                           {omdbLimitReached ? (t('omdb_limit') || 'OMDb Limit erreicht!') : (t('omdb_active') || 'OMDb Fallback aktiv')}
                        </div>
                    )}
                </div>
@@ -238,7 +238,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
                            {match.selected && <Check size={12} />}
                         </button>
                         
-                        <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
+                        <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                            <div className="text-xs font-mono text-slate-400 truncate" title={match.originalLine}>
                              {match.originalLine}
                            </div>
@@ -246,16 +246,35 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
                            <div className="flex items-center gap-2 min-w-0">
                               <ArrowRight size={14} className="text-slate-600 flex-shrink-0" />
                               {match.result ? (
-                                <div className="flex items-center gap-2 min-w-0 flex-grow">
-                                   <div className="text-sm font-medium text-white truncate" title={match.result.title}>
-                                     {match.result.title}
+                                <div className="flex items-center gap-3 min-w-0 flex-grow bg-slate-800/80 p-2 rounded-lg border border-slate-700">
+                                   {/* Poster Thumbnail */}
+                                   <div className="w-9 h-14 bg-slate-700 rounded flex-shrink-0 overflow-hidden shadow-sm">
+                                     {match.result.posterPath ? (
+                                       <img src={`${IMAGE_BASE_URL}${match.result.posterPath}`} className="w-full h-full object-cover" alt="" />
+                                     ) : (
+                                       <div className="w-full h-full flex items-center justify-center text-[8px] text-slate-500 bg-slate-800">No Img</div>
+                                     )}
                                    </div>
-                                   <span className="text-xs text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded flex-shrink-0">
-                                     {match.result.year}
-                                   </span>
-                                   <span className={`text-[10px] px-1.5 py-0.5 rounded border ${match.source === 'OMDb' ? 'border-yellow-900 bg-yellow-900/20 text-yellow-500' : 'border-cyan-900 bg-cyan-900/20 text-cyan-500'}`}>
-                                       {match.source}
-                                   </span>
+
+                                   <div className="min-w-0 flex-grow">
+                                       <div className="flex items-center gap-2">
+                                            <div className="text-sm font-bold text-white truncate" title={match.result.title}>
+                                                {match.result.title}
+                                            </div>
+                                            <span className="text-xs text-slate-400">({match.result.year})</span>
+                                       </div>
+                                       
+                                       <div className="flex items-center gap-2 mt-1">
+                                            <span className={`text-[9px] px-1 py-px rounded border ${match.source === 'OMDb' ? 'border-yellow-900 bg-yellow-900/20 text-yellow-500' : 'border-cyan-900 bg-cyan-900/20 text-cyan-500'}`}>
+                                                {match.source}
+                                            </span>
+                                            {match.result.customNotes && (
+                                                <span className="text-[10px] text-slate-400 truncate max-w-[150px] italic border-l border-slate-700 pl-2" title={match.result.customNotes}>
+                                                    {match.result.customNotes}
+                                                </span>
+                                            )}
+                                       </div>
+                                   </div>
                                 </div>
                               ) : (
                                 <span className="text-sm text-red-400 italic">{t('no_match')}</span>

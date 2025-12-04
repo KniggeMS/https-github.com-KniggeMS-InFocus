@@ -1,4 +1,5 @@
 
+
 export enum WatchStatus {
   TO_WATCH = 'TO_WATCH',
   WATCHING = 'WATCHING',
@@ -100,6 +101,7 @@ export interface SearchResult {
   backdropPath?: string | null;
   // Temporary fields for Import logic
   customNotes?: string;
+  providers?: StreamingProvider[];
 }
 
 export interface GenreStat {

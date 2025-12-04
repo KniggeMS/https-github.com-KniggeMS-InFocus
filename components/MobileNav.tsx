@@ -9,7 +9,7 @@ interface MobileNavProps {
 
 export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick }) => {
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 pb-safe z-40">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 pb-safe z-50 shadow-[0_-5px_10px_rgba(0,0,0,0.3)]">
       <div className="flex justify-around items-center h-16 px-2">
         <NavLink 
           to="/" 
@@ -30,10 +30,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick }) => {
         </NavLink>
 
         {/* Search Button (Floating Action Style) */}
-        <div className="relative -top-5">
+        <div className="relative -top-6">
             <button 
                 onClick={onSearchClick}
-                className="w-14 h-14 bg-cyan-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-cyan-900/40 border-4 border-slate-900"
+                className="w-14 h-14 bg-cyan-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-cyan-900/40 border-4 border-slate-900 active:scale-95 transition-transform"
             >
                 <Search size={24} />
             </button>
@@ -48,7 +48,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick }) => {
           <Heart size={22} />
         </NavLink>
 
-        {/* Menu for Custom Lists (reusing Sidebar route or creating a mobile menu route) */}
+        {/* Menu for Custom Lists */}
         <button 
             onClick={() => document.getElementById('mobile-menu-trigger')?.click()}
             className="flex flex-col items-center justify-center w-16 h-full space-y-1 text-slate-500"

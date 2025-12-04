@@ -13,9 +13,9 @@ import { CreateListModal } from './components/CreateListModal';
 import { ShareModal } from './components/ShareModal';
 import { ImportModal } from './components/ImportModal';
 import { ChatBot } from './components/ChatBot';
+import { AiRecommendationButton } from './components/AiRecommendationButton';
 import { LanguageProvider, useTranslation } from './contexts/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { getRecommendations } from './services/gemini';
 import { getTMDBTrending, getMediaDetails } from './services/tmdb';
 import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database } from 'lucide-react';
 
@@ -33,6 +33,22 @@ const getRandomColor = () => {
   const hue = hues[Math.floor(Math.random() * hues.length)];
   return `hsl(${hue}, 40%, 30%)`;
 };
+
+const NavItem: React.FC<{ to: string; icon: any; label: string }> = ({ to, icon: Icon, label }) => (
+  <NavLink 
+    to={to} 
+    className={({ isActive }) => 
+      `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+        isActive 
+          ? 'bg-cyan-500/10 text-cyan-400 font-medium' 
+          : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+      }`
+    }
+  >
+    <Icon size={20} />
+    <span>{label}</span>
+  </NavLink>
+);
 
 const AppContent: React.FC = () => {
   const { user, logout, isAuthenticated, getAllUsers } = useAuth();
@@ -64,9 +80,6 @@ const AppContent: React.FC = () => {
   const [tempOmdbKey, setTempOmdbKey] = useState(DEFAULT_OMDB_KEY);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [recommendations, setRecommendations] = useState<SearchResult[]>([]);
-  const [loadingRecs, setLoadingRecs] = useState(false);
 
   // PWA Install Prompt
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -319,20 +332,6 @@ const AppContent: React.FC = () => {
     })));
   };
 
-  const handleRecommendation = async () => {
-    setLoadingRecs(true);
-    
-    // Pass full items array for Hybrid Filtering analysis
-    if (items.length === 0 && tmdbApiKey) {
-        const trending = await getTMDBTrending(tmdbApiKey);
-        setRecommendations(trending);
-    } else {
-        const recs = await getRecommendations(items);
-        setRecommendations(recs);
-    }
-    setLoadingRecs(false);
-  };
-
   const getFilteredItems = (status?: WatchStatus) => {
     let filtered = items;
     if (status) {
@@ -364,7 +363,7 @@ const AppContent: React.FC = () => {
       const owner = allUsers.find(u => u.id === list.ownerId);
 
       return (
-          <div className="pb-20 md:pb-0">
+          <div className="pb-24 md:pb-0">
              <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-800 pb-6">
                  <div>
                     <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
@@ -452,7 +451,7 @@ const AppContent: React.FC = () => {
       );
     }
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20 md:pb-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-24 md:pb-0">
         {filteredAndSorted.map(item => (
           <MediaCard 
             key={item.id} 
@@ -470,21 +469,7 @@ const AppContent: React.FC = () => {
     );
   };
 
-  const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
-    <NavLink 
-      to={to} 
-      className={({ isActive }) => 
-        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-          isActive 
-            ? 'bg-cyan-500/10 text-cyan-400 font-medium' 
-            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-        }`
-      }
-    >
-      <Icon size={20} />
-      <span>{label}</span>
-    </NavLink>
-  );
+  // NavItem moved outside AppContent
 
   // --- AUTH CHECK ---
   if (!isAuthenticated) {
@@ -658,44 +643,13 @@ const AppContent: React.FC = () => {
           </div>
         </nav>
 
-        {/* Mini Recommendation Widget */}
-        <div className="p-4 border-t border-slate-800">
-            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-               <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                    <Sparkles size={14} className="text-purple-400" />
-                    {t('ai_tip')}
-                  </h4>
-                  <button onClick={handleRecommendation} disabled={loadingRecs} className="text-xs text-cyan-400 hover:text-cyan-300 disabled:opacity-50">
-                    {loadingRecs ? '...' : t('new_rec')}
-                  </button>
-               </div>
-               {recommendations.length > 0 ? (
-                 <div className="space-y-3">
-                    {recommendations.slice(0, 1).map((rec, i) => (
-                      <div key={i} className="text-xs">
-                        <div className="font-medium text-slate-200">{rec.title}</div>
-                        <div className="text-slate-500 mt-1 line-clamp-2">{rec.plot}</div>
-                        <button 
-                          onClick={() => { addItem(rec); setRecommendations([]); }}
-                          className="mt-2 w-full py-1 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 transition-colors"
-                        >
-                          + {t('remember')}
-                        </button>
-                      </div>
-                    ))}
-                 </div>
-               ) : (
-                 <p className="text-xs text-slate-500">
-                   {t('empty_action')}
-                 </p>
-               )}
-            </div>
-        </div>
+        {/* AI Recommendation Widget */}
+        <AiRecommendationButton items={items} onAdd={addItem} apiKey={tmdbApiKey} />
+
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-grow p-4 md:p-8 overflow-y-auto h-screen scroll-smooth">
+      <main className="flex-grow p-4 md:p-8 overflow-y-auto h-screen scroll-smooth pb-24 md:pb-8">
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between mb-6">
              <div className="flex items-center gap-2 text-cyan-400">
