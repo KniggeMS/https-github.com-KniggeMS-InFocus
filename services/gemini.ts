@@ -12,6 +12,9 @@ const IMAGE_MODEL_NAME = "gemini-2.5-flash-image";
 const getAiClient = () => {
     // Priority: 1. LocalStorage (User Input), 2. Env Var (Deployment)
     const apiKey = localStorage.getItem(GEMINI_KEY_STORAGE_KEY) || process.env.API_KEY || '';
+    
+    // If no key is found, this might throw or fail later, but we allow empty string for now
+    // to let the UI handle the error state gracefully.
     return new GoogleGenAI({ apiKey });
 };
 
@@ -98,7 +101,6 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
 
   // 2. Check API Key validity (Simple check)
   const ai = getAiClient();
-  // We can't easily check if key is valid without making a call, but we proceed.
 
   const relevantItems = items.filter(i => i.isFavorite || (i.userRating && i.userRating >= 4) || (i.userNotes && i.userNotes.length > 5));
   const sourceItems = relevantItems.length < 3 ? items.slice(0, 10) : relevantItems.slice(0, 20);
