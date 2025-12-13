@@ -54,11 +54,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
   return (
     <div 
         onClick={() => onClick(item)}
-        className="group relative flex flex-col bg-slate-800 rounded-xl border border-slate-700 shadow-lg hover:border-slate-500 transition-all duration-300 hover:shadow-cyan-500/10 cursor-pointer"
+        className="group relative flex flex-col bg-slate-800 rounded-xl border border-slate-700 shadow-lg hover:border-slate-500 transition-all duration-300 hover:shadow-cyan-500/10 cursor-pointer h-full"
     >
-      {/* Image Container - Rounded Top, Overflow Hidden for Zoom Effect */}
+      {/* Image Container - Responsive Height */}
       <div 
-        className="h-96 w-full relative overflow-hidden bg-slate-900 rounded-t-xl"
+        className="aspect-[2/3] w-full relative overflow-hidden bg-slate-900 rounded-t-xl"
       >
         {posterUrl ? (
           <img 
@@ -76,32 +76,31 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
           </div>
         )}
         
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent sm:via-slate-900/60"></div>
 
-        <div className="absolute bottom-4 left-4 right-4 z-10">
-           <h3 className="text-xl font-bold text-white leading-tight drop-shadow-md line-clamp-2" title={item.title}>
+        {/* Content Overlay on Image for Mobile */}
+        <div className="absolute bottom-3 left-3 right-3 z-10">
+           <h3 className="text-sm sm:text-xl font-bold text-white leading-tight drop-shadow-md line-clamp-2" title={item.title}>
             {item.title}
           </h3>
-          <div className="flex flex-wrap items-center gap-2 text-slate-200 text-xs mt-2 font-medium">
-             {item.type === MediaType.MOVIE ? <Film size={14} className="text-cyan-400" /> : <Tv size={14} className="text-purple-400" />}
+          <div className="flex flex-wrap items-center gap-2 text-slate-200 text-[10px] sm:text-xs mt-1 sm:mt-2 font-medium">
+             {item.type === MediaType.MOVIE ? <Film size={12} className="text-cyan-400" /> : <Tv size={12} className="text-purple-400" />}
              <span>{item.year}</span>
-             <span>•</span>
-             <span className="truncate max-w-[150px]">{item.genre.slice(0, 2).join(', ')}</span>
+             <span className="hidden sm:inline">•</span>
+             <span className="truncate max-w-[150px] hidden sm:block">{item.genre.slice(0, 2).join(', ')}</span>
           </div>
         </div>
       </div>
 
-      {/* OVERLAY ELEMENTS (Menu & Badges) - Positioned absolute to Root to avoid clipping */}
-      
-      {/* Menu Button */}
+      {/* OVERLAY ELEMENTS (Menu & Badges) */}
       <div className="absolute top-2 right-2 z-30" ref={menuRef}>
             <button 
                 onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
-                className={`p-2 rounded-full backdrop-blur-md transition-colors shadow-sm ${isMenuOpen ? 'bg-cyan-600 text-white' : 'bg-slate-900/60 text-slate-300 hover:bg-slate-900 hover:text-white'}`}
+                className={`p-1.5 sm:p-2 rounded-full backdrop-blur-md transition-colors shadow-sm ${isMenuOpen ? 'bg-cyan-600 text-white' : 'bg-slate-900/60 text-slate-300 hover:bg-slate-900 hover:text-white'}`}
             >
-                <ListPlus size={20} />
+                <ListPlus size={16} className="sm:w-5 sm:h-5" />
             </button>
-
+            {/* Menu Dropdown Code - mostly same but ensuring z-index */}
             {isMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 animate-in fade-in zoom-in-95 duration-200 origin-top-right z-40">
                     <div className="bg-slate-900 px-4 py-2.5 border-b border-slate-700 rounded-t-lg">
@@ -219,89 +218,64 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
             )}
       </div>
 
-      {/* User Rating Badge - Outside Image Container */}
       {(item.userRating || 0) > 0 && (
-            <div className="absolute top-2 left-2 z-30 bg-yellow-500/90 text-slate-900 px-2 py-1 rounded-md text-xs font-bold shadow-sm flex items-center gap-1">
-            <Star size={12} className="fill-slate-900" />
+            <div className="absolute top-2 left-2 z-30 bg-yellow-500/90 text-slate-900 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-sm flex items-center gap-1">
+            <Star size={10} className="fill-slate-900 sm:w-3 sm:h-3" />
             {item.userRating}
             </div>
       )}
 
       {/* Content Body */}
-      <div className="p-4 flex-grow flex flex-col rounded-b-xl">
+      <div className="p-3 sm:p-4 flex-grow flex flex-col rounded-b-xl justify-between">
         
-        <div className="mb-3 flex flex-wrap gap-2 text-xs text-slate-400">
-           {item.type === MediaType.SERIES && ((item.seasons || 0) > 0 || (item.episodes || 0) > 0) && (
-              <div className="flex items-center gap-1.5 bg-slate-900/50 px-2 py-1 rounded border border-slate-700/50">
-                 <Layers size={12} className="text-purple-400" />
-                 <span>{item.seasons} {t('seasons')}</span>
-              </div>
-           )}
-           {item.type === MediaType.MOVIE && item.collectionName && (
-              <div className="flex items-center gap-1.5 bg-slate-900/50 px-2 py-1 rounded border border-slate-700/50 w-full" title={`${t('part_of')} ${item.collectionName}`}>
-                 <ListVideo size={12} className="text-cyan-400 flex-shrink-0" />
-                 <span className="truncate">{t('part_of')}: {item.collectionName}</span>
-              </div>
-           )}
+        {/* Hidden on mobile, visible on desktop */}
+        <div className="hidden sm:block">
+            <div className="mb-3 flex flex-wrap gap-2 text-xs text-slate-400">
+               {item.type === MediaType.SERIES && ((item.seasons || 0) > 0 || (item.episodes || 0) > 0) && (
+                  <div className="flex items-center gap-1.5 bg-slate-900/50 px-2 py-1 rounded border border-slate-700/50">
+                     <Layers size={12} className="text-purple-400" />
+                     <span>{item.seasons} {t('seasons')}</span>
+                  </div>
+               )}
+            </div>
+
+            <p className="text-slate-400 text-sm line-clamp-3 mb-4">
+              {item.plot}
+            </p>
         </div>
 
-        <p className="text-slate-400 text-sm line-clamp-3 mb-4 flex-grow">
-          {item.plot}
-        </p>
-
-        {item.providers && item.providers.length > 0 && (
-          <div className="mb-4">
-             <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1.5">{t('stream_available')}</div>
-             <div className="flex gap-2 flex-wrap">
-               {item.providers.map(prov => (
-                 <img 
-                   key={prov.providerId}
-                   src={`${LOGO_BASE_URL}${prov.logoPath}`} 
-                   alt={prov.providerName}
-                   title={prov.providerName}
-                   className="w-8 h-8 rounded-lg border border-slate-700 shadow-sm"
-                   loading="lazy"
-                 />
-               ))}
-             </div>
-          </div>
-        )}
-
-        <div className={`self-start mb-4 px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColors[item.status]}`}>
-           {statusLabels[item.status]}
-        </div>
-
-        <div className="flex items-center justify-between border-t border-slate-700 pt-3 mt-auto">
+        {/* Compact Footer for Mobile */}
+        <div className="flex items-center justify-between border-t border-slate-700 pt-2 sm:pt-3 mt-auto">
            <div className="flex gap-1">
               <button 
                 onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.TO_WATCH); }}
-                className={`p-2 rounded-lg hover:bg-slate-700 transition-colors ${item.status === WatchStatus.TO_WATCH ? 'text-yellow-400' : 'text-slate-500'}`}
+                className={`p-1.5 sm:p-2 rounded-lg hover:bg-slate-700 transition-colors ${item.status === WatchStatus.TO_WATCH ? 'text-yellow-400' : 'text-slate-500'}`}
                 title={t('planned')}
               >
-                <Clock size={18} />
+                <Clock size={16} className="sm:w-[18px] sm:h-[18px]" />
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.WATCHING); }}
-                className={`p-2 rounded-lg hover:bg-slate-700 transition-colors ${item.status === WatchStatus.WATCHING ? 'text-blue-400' : 'text-slate-500'}`}
+                className={`p-1.5 sm:p-2 rounded-lg hover:bg-slate-700 transition-colors ${item.status === WatchStatus.WATCHING ? 'text-blue-400' : 'text-slate-500'}`}
                 title={t('watching')}
               >
-                <PlayCircle size={18} />
+                <PlayCircle size={16} className="sm:w-[18px] sm:h-[18px]" />
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.WATCHED); }}
-                className={`p-2 rounded-lg hover:bg-slate-700 transition-colors ${item.status === WatchStatus.WATCHED ? 'text-green-400' : 'text-slate-500'}`}
+                className={`p-1.5 sm:p-2 rounded-lg hover:bg-slate-700 transition-colors ${item.status === WatchStatus.WATCHED ? 'text-green-400' : 'text-slate-500'}`}
                 title={t('seen')}
               >
-                <Check size={18} />
+                <Check size={16} className="sm:w-[18px] sm:h-[18px]" />
               </button>
            </div>
            
            <button 
              onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
-             className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+             className="p-1.5 sm:p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
              title={t('remove')}
            >
-             <Trash2 size={18} />
+             <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
            </button>
         </div>
       </div>

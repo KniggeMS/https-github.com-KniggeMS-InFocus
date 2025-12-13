@@ -386,7 +386,7 @@ const AppContent: React.FC = () => {
           <div className="pb-24 md:pb-0">
              <header className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-800 pb-6">
                  <div>
-                    <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+                    <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 flex items-center gap-3">
                         {list.name}
                         {list.ownerId !== user?.id && <span className="text-xs bg-slate-700 px-2 py-1 rounded-full font-normal text-slate-300">{t('shared_by')} {owner?.username || 'Unknown'}</span>}
                     </h2>
@@ -396,8 +396,8 @@ const AppContent: React.FC = () => {
                  <div className="flex gap-2 w-full md:w-auto">
                     {list.ownerId === user?.id && (
                         <>
-                            <button onClick={() => setShareList(list)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg border border-slate-700 transition-colors"><Share2 size={18} /> {t('share')}</button>
-                            <button onClick={() => deleteList(list.id)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20 transition-colors"><Trash2 size={18} /> {t('delete_list')}</button>
+                            <button onClick={() => setShareList(list)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg border border-slate-700 transition-colors text-sm"><Share2 size={16} /> {t('share')}</button>
+                            <button onClick={() => deleteList(list.id)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20 transition-colors text-sm"><Trash2 size={16} /> {t('delete_list')}</button>
                         </>
                     )}
                  </div>
@@ -406,7 +406,7 @@ const AppContent: React.FC = () => {
              {listItems.length === 0 ? (
                 <div className="text-center py-20 text-slate-500 border-2 border-dashed border-slate-700 rounded-xl"><List size={48} className="mx-auto mb-4 opacity-20" /><p>{t('empty_state')}</p></div>
              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
                     {listItems.map(item => (
                         <MediaCard 
                             key={item.id} 
@@ -446,8 +446,10 @@ const AppContent: React.FC = () => {
         </div>
       );
     }
+    
+    // UPDATED: Use 2-column grid on mobile (grid-cols-2) instead of 1
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-24 md:pb-0">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 pb-24 md:pb-0">
         {filteredAndSorted.map(item => (
           <MediaCard 
             key={item.id} 
@@ -467,11 +469,7 @@ const AppContent: React.FC = () => {
 
   if (isAuthLoading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center"><Loader2 size={40} className="text-cyan-500 animate-spin" /></div>;
   
-  // NEW: Intercept Recovery Mode
-  if (isRecoveryMode) {
-      return <RecoveryPage />;
-  }
-
+  if (isRecoveryMode) return <RecoveryPage />;
   if (!isAuthenticated) return <AuthPage />;
 
   const myCustomLists = customLists.filter(l => l.ownerId === user?.id);
@@ -481,7 +479,6 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col md:flex-row relative">
       
-      {/* MIGRATION OVERLAY */}
       {isMigrating && (
           <div className="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center text-white">
               <CloudUpload size={64} className="text-cyan-400 animate-bounce mb-4" />
@@ -490,7 +487,6 @@ const AppContent: React.FC = () => {
           </div>
       )}
 
-      {/* NOTIFICATION TOAST */}
       {notificationMsg && (
           <div className="fixed top-4 right-4 z-[90] bg-slate-800 border-l-4 border-cyan-500 shadow-2xl rounded-lg p-4 flex items-start gap-3 animate-in slide-in-from-right-10 duration-500 max-w-sm">
                <div className="p-2 bg-cyan-500/10 rounded-full">
@@ -533,7 +529,7 @@ const AppContent: React.FC = () => {
             </div>
         )}
 
-        {/* Settings Panel */}
+        {/* Desktop Settings Panel */}
         {isSettingsOpen && (
             <div className="mx-4 mb-4 p-4 bg-slate-800 rounded-xl border border-slate-700 animate-in slide-in-from-top-2">
                  {/* THEME SWITCHER */}
@@ -610,7 +606,7 @@ const AppContent: React.FC = () => {
              <div className="flex items-center gap-2 text-cyan-400">
                 <Clapperboard size={24} />
                 <h1 className="text-xl font-bold text-white">
-                    <span className="text-cyan-400">InFocus</span> CineLog
+                    <span className="text-cyan-400">InFocus</span>
                 </h1>
              </div>
              <div className="flex gap-4">
@@ -623,33 +619,42 @@ const AppContent: React.FC = () => {
              </div>
         </div>
         
-        {/* MOBILE LISTS DRAWER */}
+        {/* MOBILE LISTS DRAWER (Upgraded Visuals) */}
         {isMobileListsOpen && (
-            <div className="md:hidden fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-sm flex flex-col justify-end animate-in fade-in">
+            <div className="md:hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end animate-in fade-in">
                  <div className="flex-grow" onClick={() => setIsMobileListsOpen(false)}></div>
-                 <div className="bg-slate-800 p-6 rounded-t-2xl border-t border-slate-700 shadow-2xl relative animate-in slide-in-from-bottom-10 max-h-[85vh] overflow-y-auto pb-safe">
-                      <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-6"></div>
-                      <div className="flex items-center justify-between mb-6">
+                 <div className="bg-slate-900 rounded-t-[2rem] border-t border-slate-700 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] relative animate-in slide-in-from-bottom-10 max-h-[85vh] overflow-hidden flex flex-col">
+                      {/* Handle Bar */}
+                      <div className="w-full flex justify-center pt-3 pb-1" onClick={() => setIsMobileListsOpen(false)}>
+                          <div className="w-12 h-1.5 bg-slate-700 rounded-full"></div>
+                      </div>
+
+                      <div className="px-6 pb-4 pt-2 flex items-center justify-between border-b border-slate-800">
                         <h3 className="text-lg font-bold text-white flex items-center gap-2"><List size={20} className="text-cyan-400"/> {t('custom_lists')}</h3>
-                        <button onClick={() => setIsMobileListsOpen(false)} className="text-slate-400 bg-slate-900/50 p-2 rounded-full"><X size={20} /></button>
+                        <button onClick={() => setIsMobileListsOpen(false)} className="text-slate-400 bg-slate-800 p-1.5 rounded-full"><X size={18} /></button>
                       </div>
                       
-                      <div className="space-y-4">
+                      <div className="overflow-y-auto p-6 space-y-6 pb-safe">
                            {/* My Lists Section */}
                            <div>
-                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('my_lists')}</h4>
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <List size={12}/> {t('my_lists')}
+                                </h4>
                                 {myCustomLists.length === 0 ? (
-                                    <div className="p-3 text-slate-500 text-sm italic">{t('no_custom_lists')}</div>
+                                    <div className="p-4 bg-slate-800/50 rounded-xl text-slate-500 text-sm italic text-center border border-slate-800 border-dashed">{t('no_custom_lists')}</div>
                                 ) : (
                                     <div className="space-y-2">
                                         {myCustomLists.map(list => (
                                             <div 
                                                 key={list.id} 
                                                 onClick={() => { navigate(`/lists/${list.id}`); setIsMobileListsOpen(false); }}
-                                                className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-xl flex items-center gap-3 cursor-pointer"
+                                                className="p-4 bg-slate-800 rounded-xl flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform border border-slate-800 hover:border-slate-600"
                                             >
-                                                <List size={18} className="text-slate-400"/>
+                                                <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-slate-400">
+                                                    <List size={16} />
+                                                </div>
                                                 <span className="text-white font-medium">{list.name}</span>
+                                                <span className="ml-auto text-xs text-slate-500">{list.items.length}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -659,7 +664,9 @@ const AppContent: React.FC = () => {
                            {/* Shared Lists Section */}
                            {sharedLists.length > 0 && (
                                <div>
-                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-4">{t('shared_with')}</h4>
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 mt-2 flex items-center gap-2">
+                                        <Share2 size={12}/> {t('shared_with')}
+                                    </h4>
                                     <div className="space-y-2">
                                         {sharedLists.map(list => {
                                             const isNew = !seenListIds.includes(list.id);
@@ -667,11 +674,16 @@ const AppContent: React.FC = () => {
                                                 <div 
                                                     key={list.id} 
                                                     onClick={() => { navigate(`/lists/${list.id}`); setIsMobileListsOpen(false); }}
-                                                    className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-xl flex items-center gap-3 cursor-pointer border border-transparent hover:border-cyan-500/30 transition-colors"
+                                                    className={`p-4 rounded-xl flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform border ${isNew ? 'bg-cyan-900/10 border-cyan-500/30' : 'bg-slate-800 border-slate-800'}`}
                                                 >
-                                                    <Share2 size={18} className={isNew ? "text-cyan-400" : "text-slate-400"}/>
-                                                    <span className="text-white font-medium">{list.name}</span>
-                                                    {isNew && <span className="ml-auto text-xs bg-cyan-600 text-white px-2 py-0.5 rounded-full">NEU</span>}
+                                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isNew ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-700 text-slate-400'}`}>
+                                                        <Share2 size={16} />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-white font-medium leading-none mb-1">{list.name}</span>
+                                                        <span className="text-[10px] text-slate-400">Von {getAllUsers().find(u => u.id === list.ownerId)?.username}</span>
+                                                    </div>
+                                                    {isNew && <span className="ml-auto text-[10px] font-bold bg-cyan-500 text-slate-900 px-2 py-0.5 rounded-full">NEU</span>}
                                                 </div>
                                             );
                                         })}
@@ -681,7 +693,7 @@ const AppContent: React.FC = () => {
 
                            <button 
                                onClick={() => setIsCreateListOpen(true)}
-                               className="w-full mt-4 py-3 bg-cyan-600/10 border border-cyan-600/30 text-cyan-400 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyan-600/20 transition-colors"
+                               className="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-cyan-900/20 active:scale-[0.98] transition-transform mt-4"
                            >
                                <PlusCircle size={18} /> {t('create_list')}
                            </button>
@@ -741,15 +753,15 @@ const AppContent: React.FC = () => {
         )}
 
         {!location.pathname.startsWith('/lists/') && location.pathname !== '/profile' && (
-            <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+            <header className="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
             <div>
-                <h2 className="text-3xl font-bold text-white mb-2">{location.pathname === '/' ? t('collection') : location.pathname === '/watchlist' ? t('planned') : location.pathname === '/watching' ? t('watching') : location.pathname === '/favorites' ? t('favorites') : t('seen')}</h2>
-                <p className="text-slate-400 text-sm md:text-base">{location.pathname === '/' ? t('collection_sub') : location.pathname === '/favorites' ? t('fav_sub') : `${getFilteredItems(location.pathname === '/watchlist' ? WatchStatus.TO_WATCH : location.pathname === '/watching' ? WatchStatus.WATCHING : location.pathname === '/watched' ? WatchStatus.WATCHED : undefined).length} ${t('list_count')}`}</p>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2">{location.pathname === '/' ? t('collection') : location.pathname === '/watchlist' ? t('planned') : location.pathname === '/watching' ? t('watching') : location.pathname === '/favorites' ? t('favorites') : t('seen')}</h2>
+                <p className="text-slate-400 text-sm hidden md:block">{location.pathname === '/' ? t('collection_sub') : location.pathname === '/favorites' ? t('fav_sub') : `${getFilteredItems(location.pathname === '/watchlist' ? WatchStatus.TO_WATCH : location.pathname === '/watching' ? WatchStatus.WATCHING : location.pathname === '/watched' ? WatchStatus.WATCHED : undefined).length} ${t('list_count')}`}</p>
             </div>
-            <div className="relative self-end sm:self-auto">
-                <button onClick={() => setIsSortMenuOpen(!isSortMenuOpen)} className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition-colors text-sm font-medium"><ArrowUpDown size={16} /><span className="hidden sm:inline">{sortBy === SortOption.DATE_ADDED && t('sort_latest')}{sortBy === SortOption.RATING && t('sort_rating')}{sortBy === SortOption.YEAR && t('sort_year')}{sortBy === SortOption.TITLE && t('sort_title')}</span><ChevronDown size={14} className={`transition-transform ${isSortMenuOpen ? 'rotate-180' : ''}`} /></button>
+            <div className="relative self-end sm:self-auto w-full sm:w-auto">
+                <button onClick={() => setIsSortMenuOpen(!isSortMenuOpen)} className="w-full sm:w-auto flex items-center justify-between sm:justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition-colors text-sm font-medium"><div className="flex items-center gap-2"><ArrowUpDown size={16} /><span className="inline">{sortBy === SortOption.DATE_ADDED && t('sort_latest')}{sortBy === SortOption.RATING && t('sort_rating')}{sortBy === SortOption.YEAR && t('sort_year')}{sortBy === SortOption.TITLE && t('sort_title')}</span></div><ChevronDown size={14} className={`transition-transform ${isSortMenuOpen ? 'rotate-180' : ''}`} /></button>
                 {isSortMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-30 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute right-0 mt-2 w-full sm:w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-30 animate-in fade-in zoom-in-95 duration-150">
                         {[{ label: t('sort_latest'), value: SortOption.DATE_ADDED }, { label: t('sort_rating'), value: SortOption.RATING }, { label: t('sort_year'), value: SortOption.YEAR }, { label: t('sort_title'), value: SortOption.TITLE }].map((opt) => (
                             <button key={opt.value} onClick={() => { setSortBy(opt.value); setIsSortMenuOpen(false); }} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-700 ${sortBy === opt.value ? 'text-cyan-400 bg-slate-700/50' : 'text-slate-300'}`}>{opt.label}</button>
                         ))}
