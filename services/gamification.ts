@@ -54,12 +54,13 @@ export const calculateUserStats = (items: MediaItem[]): ExtendedUserStats => {
         seriesWatched: series,
         totalRatings: items.filter(i => i.userRating && i.userRating > 0).length,
         favoritesCount: items.filter(i => i.isFavorite).length,
-        collectionSize: items.length
+        collectionSize: items.length,
+        writtenReviews: items.filter(i => i.userNotes && i.userNotes.trim().length > 0).length
     };
 };
 
 export const calculateLevel = (stats: UserStats): UserLevel => {
-    const xp = stats.totalRuntimeMinutes;
+    const xp = stats.totalRuntimeMinutes + (stats.writtenReviews * 100); // Bonus XP for reviews
     
     // Find current level
     let currentLevelIdx = 0;

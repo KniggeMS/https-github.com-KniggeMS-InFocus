@@ -58,7 +58,7 @@ const generateOfflineAnalysis = (item: MediaItem, userNotes?: string): string =>
 
     // Notes Integration
     if (userNotes && userNotes.length > 0) {
-        vibe += ` Basierend auf deinen Notizen ("${userNotes}") scheint dies genau deinen aktuellen Interessen zu entsprechen.`;
+        vibe += ` Deine Rezension ("${userNotes}") fließt in zukünftige Empfehlungen ein.`;
     }
 
     return `(Offline Modus) ${vibe}`;
@@ -99,14 +99,14 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
       let info = `- "${item.title}" (${item.year}, ${item.genre.join('/')})`;
       if (item.userRating) info += ` [Rating: ${item.userRating}/5]`;
       if (item.isFavorite) info += ` [Favorite]`;
-      if (item.userNotes) info += ` [User Note: "${item.userNotes}"]`;
+      if (item.userNotes) info += ` [User Review: "${item.userNotes}"]`;
       return info;
   }).join("\n");
 
   try {
     const prompt = `
       Act as a sophisticated movie recommendation engine.
-      Analyze this user profile:
+      Analyze this user profile (Favorites & Reviews):
       ${profileSummary}
 
       Task: Recommend 3 NEW movies/series fitting this profile.
@@ -273,7 +273,7 @@ export const analyzeMovieContext = async (item: MediaItem, userNotes: string | u
         const prompt = `
             Analyze the movie/series "${item.title}".
             Plot: "${item.plot}"
-            User's Private Notes: "${userNotes || 'None'}"
+            User's Public Review: "${userNotes || 'None'}"
             
             Task:
             Provide a short, 2-sentence "Deep Insight".

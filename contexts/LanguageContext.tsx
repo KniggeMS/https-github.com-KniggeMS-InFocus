@@ -148,8 +148,8 @@ const dictionary: Translations = {
     "your_vibe": "Wie ist dein Vibe?",
     "play_trailer": "Trailer abspielen",
     "close_trailer": "Schließen",
-    "private_notes": "Private Notizen",
-    "notes_placeholder": "Was hat dir gefallen? Was nicht? Diese Notizen helfen der AI, dir bessere Empfehlungen zu geben.",
+    "private_notes": "Deine Rezension",
+    "notes_placeholder": "Was hat dir gefallen? Was nicht? Diese Rezension hilft der AI und ist für andere Nutzer sichtbar.",
     "ai_insight": "Deep Content Analysis",
     "analyzing_content": "Analysiere Inhalt...",
 
@@ -344,8 +344,8 @@ const dictionary: Translations = {
     "your_vibe": "What's your vibe?",
     "play_trailer": "Play Trailer",
     "close_trailer": "Close",
-    "private_notes": "Private Notes",
-    "notes_placeholder": "What did you like? What not? These notes help the AI give you better recommendations.",
+    "private_notes": "Your Review",
+    "notes_placeholder": "What did you like? What not? This review helps the AI and is visible to other users.",
     "ai_insight": "Deep Content Analysis",
     "analyzing_content": "Analyzing content...",
 

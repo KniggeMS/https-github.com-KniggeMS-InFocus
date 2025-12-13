@@ -1,6 +1,6 @@
 
 import { supabase } from './supabase';
-import { MediaItem, CustomList, WatchStatus, User, UserRole } from '../types';
+import { MediaItem, CustomList, WatchStatus, User, UserRole, PublicReview } from '../types';
 
 // MEDIA ITEMS CRUD
 
@@ -45,6 +45,38 @@ export const fetchMediaItems = async (): Promise<MediaItem[]> => {
     providers: item.providers,
     credits: item.credits
   }));
+};
+
+// NEW: Fetch reviews from OTHER users for a specific movie
+export const fetchPublicReviews = async (tmdbId: number): Promise<PublicReview[]> => {
+    // We select user_notes (the review), rating, and join the profiles table to get username/avatar
+    const { data, error } = await supabase
+        .from('media_items')
+        .select(`
+            user_id,
+            user_notes,
+            user_rating,
+            added_at,
+            profiles (username, avatar, is_stats_public)
+        `)
+        .eq('tmdb_id', tmdbId)
+        .neq('user_notes', null) // Only where notes exist
+        .neq('user_notes', '')   // And aren't empty
+        .limit(20);
+
+    if (error) {
+        console.error("Error fetching reviews:", error);
+        return [];
+    }
+
+    return data.map((row: any) => ({
+        userId: row.user_id,
+        username: row.profiles?.username || 'Unknown',
+        avatar: row.profiles?.avatar,
+        rating: row.user_rating || 0,
+        content: row.user_notes,
+        date: row.added_at
+    }));
 };
 
 export const addMediaItem = async (item: MediaItem, userId: string): Promise<MediaItem | null> => {

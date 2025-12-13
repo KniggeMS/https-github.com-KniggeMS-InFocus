@@ -83,7 +83,17 @@ export interface MediaItem {
   // User Interactions
   isFavorite?: boolean;
   userRating?: number; // 1-5 User Rating
-  userNotes?: string; // Private Notizen für ML Analyse
+  userNotes?: string; // Jetzt: Öffentliche Rezension
+}
+
+// New: For displaying reviews from others
+export interface PublicReview {
+    userId: string;
+    username: string;
+    avatar?: string;
+    rating: number;
+    content: string;
+    date: number;
 }
 
 export interface CustomList {
@@ -149,4 +159,5 @@ export interface UserStats {
   seriesWatched: number;
   totalRatings: number;
   favoritesCount: number;
+  writtenReviews: number; // New stat
 }

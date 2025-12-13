@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Film, Clock, MonitorPlay, Heart, Bookmark, Play, ChevronLeft, Layers, Check, PlayCircle, User, ExternalLink, Clapperboard, ImageOff, StickyNote, BrainCircuit, Loader2 } from 'lucide-react';
-import { MediaItem, SearchResult, MediaType, WatchStatus } from '../types';
+import { X, Film, Clock, MonitorPlay, Heart, Bookmark, Play, ChevronLeft, Layers, Check, PlayCircle, User, ExternalLink, Clapperboard, ImageOff, MessageSquareQuote, BrainCircuit, Loader2, Star, Users } from 'lucide-react';
+import { MediaItem, SearchResult, MediaType, WatchStatus, PublicReview } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, BACKDROP_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 import { analyzeMovieContext } from '../services/gemini';
 import { getOmdbRatings } from '../services/omdb';
+import { fetchPublicReviews } from '../services/db';
 import { useTranslation } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface DetailViewProps {
   item: MediaItem | SearchResult;
@@ -58,16 +60,21 @@ export const DetailView: React.FC<DetailViewProps> = ({
   omdbApiKey 
 }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [details, setDetails] = useState<Partial<MediaItem> | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [playingTrailer, setPlayingTrailer] = useState(false);
   const [backgroundVideoReady, setBackgroundVideoReady] = useState(false);
   const [imgError, setImgError] = useState(false);
   
-  // Notes & AI Analysis State
+  // Notes/Reviews & AI Analysis State
   const [notes, setNotes] = useState((initialItem as MediaItem).userNotes || '');
   const [aiInsight, setAiInsight] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  
+  // Community Reviews
+  const [communityReviews, setCommunityReviews] = useState<PublicReview[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   const existingItem = isExisting ? (initialItem as MediaItem) : null;
 
@@ -86,6 +93,20 @@ export const DetailView: React.FC<DetailViewProps> = ({
 
     loadDetails();
   }, [initialItem, apiKey]);
+
+  // Load Community Reviews
+  useEffect(() => {
+      const loadReviews = async () => {
+          if (initialItem.tmdbId && isExisting) {
+              setLoadingReviews(true);
+              const reviews = await fetchPublicReviews(initialItem.tmdbId);
+              // Filter out own review from the community list to avoid duplication
+              setCommunityReviews(reviews.filter(r => r.userId !== user?.id));
+              setLoadingReviews(false);
+          }
+      };
+      loadReviews();
+  }, [initialItem.tmdbId, isExisting, user]);
 
   // Retroactive RT Rating Fetching
   useEffect(() => {
@@ -521,23 +542,62 @@ export const DetailView: React.FC<DetailViewProps> = ({
                         </p>
                     </div>
                     
-                    {/* Private Notes Section */}
+                    {/* Public Reviews Section (Replaced Private Notes) */}
                     {isExisting && (
-                        <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
-                            <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                                <StickyNote size={16} className="text-yellow-400" /> {t('private_notes')}
-                            </h4>
-                            <textarea 
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-slate-300 text-sm focus:border-cyan-500 focus:outline-none min-h-[100px] resize-y"
-                                placeholder={t('notes_placeholder')}
-                            />
-                            <div className="flex justify-end mt-2">
-                                <span className="text-[10px] text-slate-500">
-                                    {notes === existingItem?.userNotes ? 'Gespeichert' : 'Änderungen werden gespeichert...'}
-                                </span>
+                        <div className="space-y-6">
+                            {/* User's Review */}
+                            <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
+                                <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                                    <MessageSquareQuote size={16} className="text-cyan-400" /> {t('private_notes')} <span className="text-[10px] bg-cyan-900/50 px-2 py-0.5 rounded text-cyan-200 uppercase">Öffentlich</span>
+                                </h4>
+                                <textarea 
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-slate-300 text-sm focus:border-cyan-500 focus:outline-none min-h-[100px] resize-y"
+                                    placeholder={t('notes_placeholder')}
+                                />
+                                <div className="flex justify-end mt-2">
+                                    <span className="text-[10px] text-slate-500">
+                                        {notes === existingItem?.userNotes ? 'Gespeichert' : 'Änderungen werden gespeichert...'}
+                                    </span>
+                                </div>
                             </div>
+
+                            {/* Community Reviews List */}
+                            {communityReviews.length > 0 && (
+                                <div className="bg-slate-900/30 p-6 rounded-xl border border-slate-800">
+                                    <h4 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                                        <Users size={16} className="text-purple-400" /> Community Reviews
+                                    </h4>
+                                    <div className="space-y-4">
+                                        {communityReviews.map((review, idx) => (
+                                            <div key={idx} className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden">
+                                                            {review.avatar ? (
+                                                                <img src={review.avatar} alt={review.username} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-slate-500"><User size={16} /></div>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs font-bold text-white">{review.username}</div>
+                                                            <div className="text-[10px] text-slate-500">{new Date(review.date).toLocaleDateString()}</div>
+                                                        </div>
+                                                    </div>
+                                                    {review.rating > 0 && (
+                                                        <div className="flex items-center gap-1 text-yellow-500 text-xs font-bold">
+                                                            <Star size={12} fill="currentColor" /> {review.rating}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-slate-300 italic">"{review.content}"</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                     
