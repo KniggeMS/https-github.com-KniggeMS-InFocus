@@ -22,6 +22,19 @@ interface DetailViewProps {
   omdbApiKey?: string;
 }
 
+// Custom Icons for RT
+const TomatoIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 2C7.5 2 4 5.5 4 9C4 13.5 8 19 12 22C16 19 20 13.5 20 9C20 5.5 16.5 2 12 2ZM12 4C13.5 4 14.5 5 14.5 5S13 7 12 7C11 7 9.5 5 9.5 5S10.5 4 12 4Z" />
+  </svg>
+);
+
+const RottenIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 2L14 6L18 5L17 9L21 11L17 14L19 18L15 17L12 21L9 17L5 18L7 14L3 11L7 9L6 5L10 6L12 2Z" />
+  </svg>
+);
+
 export const DetailView: React.FC<DetailViewProps> = ({ 
   item: initialItem, 
   onClose, 
@@ -164,15 +177,36 @@ export const DetailView: React.FC<DetailViewProps> = ({
   const currentStatus = existingItem?.status;
   const isFav = existingItem?.isFavorite;
 
-  // RT Score Handling (Prioritize retroactive fetch in details over existing item)
+  // RT Score Handling
   const rtScore = details?.rtScore || (initialItem as MediaItem).rtScore; 
   const hasRtScore = rtScore && rtScore !== "N/A";
   
-  // Determine Badge Type
+  // Logic: RT vs IMDb visual
   const isRT = hasRtScore && rtScore.includes('%');
-  const badgeLabel = isRT ? 'RT' : 'IMDb';
-  const badgeColor = isRT ? 'bg-[#FA320A]' : 'bg-[#F5C518] text-black';
-  const badgeSubtext = isRT ? 'Tomatometer' : 'IMDb Rating';
+  let badgeLabel = isRT ? 'RT' : 'IMDb';
+  let badgeSubtext = isRT ? 'Tomatometer' : 'IMDb Rating';
+  let badgeColor = 'bg-slate-700';
+  let badgeIcon = null;
+
+  if (isRT) {
+      const scoreVal = parseInt(rtScore);
+      if (!isNaN(scoreVal)) {
+          if (scoreVal >= 60) {
+              badgeColor = 'bg-gradient-to-br from-[#FA320A] to-[#D91A00] shadow-[0_0_15px_rgba(250,50,10,0.4)]';
+              badgeIcon = <TomatoIcon className="w-5 h-5 text-white" />;
+          } else {
+              badgeColor = 'bg-gradient-to-br from-[#5F9E3F] to-[#4A8030] shadow-[0_0_15px_rgba(95,158,63,0.4)]';
+              badgeIcon = <RottenIcon className="w-5 h-5 text-white" />;
+              badgeSubtext = "Rotten";
+          }
+      } else {
+          // Fallback if parsing fails but string has %
+          badgeColor = 'bg-[#FA320A]';
+      }
+  } else {
+      // IMDb Yellow
+      badgeColor = 'bg-[#F5C518] text-black shadow-[0_0_15px_rgba(245,197,24,0.3)]';
+  }
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
   
@@ -347,9 +381,9 @@ export const DetailView: React.FC<DetailViewProps> = ({
                           
                           {/* External Score Display (RT or IMDb) */}
                           {hasRtScore && (
-                              <div className="flex items-center gap-3 bg-slate-900/40 rounded-full pr-4 border border-slate-700/50 backdrop-blur-sm animate-in fade-in zoom-in">
-                                  <div className={`w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full shadow-lg ${badgeColor}`}>
-                                     <span className="font-black text-xs md:text-sm">{badgeLabel}</span>
+                              <div className="flex items-center gap-3 bg-slate-900/40 rounded-full pr-4 border border-slate-700/50 backdrop-blur-sm animate-in fade-in zoom-in group/score">
+                                  <div className={`w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full shadow-lg ${badgeColor} transition-transform group-hover/score:scale-110`}>
+                                     {badgeIcon ? badgeIcon : <span className={`font-black text-xs md:text-sm ${isRT ? 'text-white' : 'text-black'}`}>{badgeLabel}</span>}
                                   </div>
                                   <div className="flex flex-col">
                                       <span className="text-lg md:text-xl font-bold text-white leading-none">{rtScore}</span>
