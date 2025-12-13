@@ -8,15 +8,18 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    build: {
+      outDir: 'dist', // Force output directory
+      emptyOutDir: true,
+    },
     server: {
       host: '0.0.0.0',
-      port: 3000, // Enforce port 3000 to match Supabase default email links
+      port: 3000,
       hmr: {
         clientPort: 443
       }
     },
     define: {
-      // Add fallbacks to empty string to prevent JSON.stringify(undefined) build errors
       'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ''),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || '')

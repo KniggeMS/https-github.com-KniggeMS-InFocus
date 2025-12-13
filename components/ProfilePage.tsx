@@ -1,12 +1,11 @@
 
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { generateAvatar } from '../services/gemini';
 import { calculateUserStats, calculateLevel, getAchievements } from '../services/gamification';
 import { MediaItem, UserRole } from '../types';
-import { User, Lock, Upload, Sparkles, Loader2, Save, CheckCircle, AlertCircle, Trophy, Star, Tv, Film, Timer, BrainCircuit, Hourglass, Library, Popcorn, Crown, Eye, Shield, EyeOff, Calendar } from 'lucide-react';
+import { User, Lock, Upload, Sparkles, Loader2, Save, CheckCircle, AlertCircle, Trophy, Star, Tv, Film, Timer, BrainCircuit, Hourglass, Library, Popcorn, Crown, Eye, Shield, EyeOff, Calendar, Key } from 'lucide-react';
 
 const LOCAL_STORAGE_KEY = 'cinelog_items';
 
@@ -30,6 +29,9 @@ export const ProfilePage: React.FC = () => {
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmNewPw, setConfirmNewPw] = useState('');
+
+  // Admin Promotion
+  const [adminCode, setAdminCode] = useState('');
 
   // Avatar Gen
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
@@ -99,6 +101,26 @@ export const ProfilePage: React.FC = () => {
     } finally {
         setIsLoading(false);
     }
+  };
+
+  const handleClaimAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setSuccessMsg('');
+    setErrorMsg('');
+
+    if (adminCode === 'DirectorCut') {
+        try {
+            await updateProfile({ role: UserRole.ADMIN });
+            setSuccessMsg("Glückwunsch! Du bist jetzt Administrator.");
+            setAdminCode('');
+        } catch (err: any) {
+            setErrorMsg("Fehler beim Upgrade: " + err.message);
+        }
+    } else {
+        setErrorMsg("Ungültiger Studio-Code.");
+    }
+    setIsLoading(false);
   };
 
   const handleGenerateAvatar = async () => {
@@ -441,6 +463,31 @@ export const ProfilePage: React.FC = () => {
                            {t('change_password')}
                        </button>
                    </form>
+
+                   {/* ADMIN PROMOTION CHEAT CODE SECTION */}
+                   {user.role !== UserRole.ADMIN && (
+                       <div className="mt-8 border-t border-slate-700 pt-6">
+                           <h3 className="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2">
+                               <Key size={12} /> Studio Zugang
+                           </h3>
+                           <form onSubmit={handleClaimAdmin} className="flex gap-2">
+                               <input 
+                                   type="text" 
+                                   value={adminCode}
+                                   onChange={e => setAdminCode(e.target.value)}
+                                   placeholder="Studio Pass..."
+                                   className="flex-grow bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+                               />
+                               <button 
+                                   type="submit"
+                                   disabled={isLoading || !adminCode}
+                                   className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors"
+                               >
+                                   Claim
+                               </button>
+                           </form>
+                       </div>
+                   )}
                </div>
            </div>
        </div>

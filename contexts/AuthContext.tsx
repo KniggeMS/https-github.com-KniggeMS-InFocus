@@ -190,6 +190,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (data.firstName) updates.first_name = data.firstName;
     if (data.lastName) updates.last_name = data.lastName;
     if (data.isStatsPublic !== undefined) updates.is_stats_public = data.isStatsPublic;
+    if (data.role) updates.role = data.role; // Allow updating role (for Admin promotion)
 
     const { error } = await supabase
         .from('profiles')
