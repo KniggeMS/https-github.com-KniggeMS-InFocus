@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.8.0
+**Version:** 1.9.0
 
 ---
 
@@ -19,6 +19,7 @@ Das Ziel des Services **"InFocus CineLog"** ist die Bereitstellung einer hochver
     *   **Deep Analysis:** Kontextbezogene Analyse von User-Notizen mittels LLM.
     *   **Social Sync:** Echtzeit-Synchronisation von Listen zwischen Benutzern.
     *   **Rating Aggregation:** Integration von Rotten Tomatoes Scores (via OMDb).
+    *   **Community Feed:** Öffentliche Rezensionen und Meinungsaustausch.
 *   **Gamification Service:** XP-System und Achievements zur Steigerung der User-Retention.
 
 ---
@@ -98,6 +99,7 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-011** | Minor | **Ext. Data** | Integration von **Rotten Tomatoes Scores** via OMDb API. Erweiterung des DB-Schemas um `rt_score`. Anzeige in DetailView und MediaCard. | ✅ Done |
 | **RFC-012** | Minor | **UX/Data** | **Retroactive Fetching:** Implementierung eines Fallbacks in der Detailansicht, der fehlende RT-Scores live nachlädt. | ✅ Done |
 | **RFC-013** | Minor | **Data Integrity** | **Rating Persistence:** Nachträglich geladene RT-Scores werden nun sofort in der Datenbank (`media_items`) gespeichert, damit sie auch in der Übersicht (Grid) sichtbar sind. | ✅ Done |
+| **RFC-014** | Major | **Social** | **Community Reviews:** Umwandlung von privaten Notizen in öffentliche Rezensionen. Integration eines Feeds in der Detailansicht, der Rezensionen anderer Nutzer anzeigt. | ✅ Done |
 
 ---
 

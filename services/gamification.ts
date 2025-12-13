@@ -60,7 +60,8 @@ export const calculateUserStats = (items: MediaItem[]): ExtendedUserStats => {
 };
 
 export const calculateLevel = (stats: UserStats): UserLevel => {
-    const xp = stats.totalRuntimeMinutes + (stats.writtenReviews * 100); // Bonus XP for reviews
+    // XP Calculation: Runtime + (Reviews * 100 Bonus)
+    const xp = stats.totalRuntimeMinutes + (stats.writtenReviews * 100); 
     
     // Find current level
     let currentLevelIdx = 0;

@@ -55,6 +55,7 @@ const dictionary: Translations = {
     "series_watched": "Serien gesehen",
     "achievements": "Trophäen",
     "locked": "Gesperrt",
+    "reviews_written": "Rezensionen verfasst",
     
     // Privacy & Roles
     "privacy_settings": "Privatsphäre",
@@ -150,6 +151,7 @@ const dictionary: Translations = {
     "close_trailer": "Schließen",
     "private_notes": "Deine Rezension",
     "notes_placeholder": "Was hat dir gefallen? Was nicht? Diese Rezension hilft der AI und ist für andere Nutzer sichtbar.",
+    "community_reviews": "Community Stimmen",
     "ai_insight": "Deep Content Analysis",
     "analyzing_content": "Analysiere Inhalt...",
 
@@ -251,6 +253,7 @@ const dictionary: Translations = {
     "series_watched": "Series Watched",
     "achievements": "Trophies",
     "locked": "Locked",
+    "reviews_written": "Reviews Written",
     
     // Privacy & Roles
     "privacy_settings": "Privacy",
@@ -346,6 +349,7 @@ const dictionary: Translations = {
     "close_trailer": "Close",
     "private_notes": "Your Review",
     "notes_placeholder": "What did you like? What not? This review helps the AI and is visible to other users.",
+    "community_reviews": "Community Reviews",
     "ai_insight": "Deep Content Analysis",
     "analyzing_content": "Analyzing content...",
 

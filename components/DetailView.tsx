@@ -567,7 +567,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                             {communityReviews.length > 0 && (
                                 <div className="bg-slate-900/30 p-6 rounded-xl border border-slate-800">
                                     <h4 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                                        <Users size={16} className="text-purple-400" /> Community Reviews
+                                        <Users size={16} className="text-purple-400" /> {t('community_reviews')}
                                     </h4>
                                     <div className="space-y-4">
                                         {communityReviews.map((review, idx) => (

@@ -199,7 +199,7 @@ export const GuidePage: React.FC = () => {
                     </div>
                     <h3 className="font-bold text-white mb-2">Deep Analysis</h3>
                     <p className="text-xs text-slate-300 leading-relaxed">
-                      Wenn du Notizen zu einem Film machst ("Hat mir gefallen, aber das Ende war doof"), liest die AI diese Notizen und gibt dir beim nächsten Mal noch präzisere Tipps ("Deep Insight").
+                      Wenn du deine Meinung schreibst ("Hat mir gefallen, aber das Ende war doof"), liest die AI diese Notizen und gibt dir beim nächsten Mal noch präzisere Tipps ("Deep Insight").
                     </p>
                   </div>
 
@@ -243,13 +243,13 @@ export const GuidePage: React.FC = () => {
 
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                        <Share2 size={18} className="text-green-400"/> Mit Freunden teilen
+                        <Share2 size={18} className="text-green-400"/> Community Feed
                       </h3>
                       <p className="text-sm text-slate-400 mb-4">
-                        Das Beste: Du kannst jede eigene Liste mit anderen Benutzern der App teilen!
+                        InFocus CineLog ist mehr als eine Liste. Schreibe deine Meinung zu Filmen!
                       </p>
                       <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 text-xs text-green-200">
-                        Sobald du eine Liste teilst, erscheint sie beim Freund unter "Geteilt mit". Auf dem Handy gibt es dafür ein extra Menü unten rechts!
+                        Deine "Private Notiz" ist jetzt eine <strong>Öffentliche Rezension</strong>. Andere Nutzer können sehen, was du denkst, und du siehst ihre Meinungen direkt unter dem Film.
                       </div>
                     </div>
                   </div>
@@ -276,7 +276,7 @@ export const GuidePage: React.FC = () => {
                         <Star className="text-yellow-500" size={20} />
                         <div>
                           <div className="text-sm font-bold text-white">Level System</div>
-                          <div className="text-xs text-slate-400">Vom "Statist" zur "Hollywood Legende".</div>
+                          <div className="text-xs text-slate-400">Vom "Statist" zur "Hollywood Legende". Auch Rezensionen bringen XP!</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
