@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    base: './', // WICHTIG für GitHub Pages (relative Pfade)
     build: {
       outDir: 'dist', // Force output directory
       emptyOutDir: true,
