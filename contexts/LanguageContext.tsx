@@ -67,6 +67,19 @@ const dictionary: Translations = {
     "access_denied": "Zugriff verweigert",
     "private_profile": "Dieses Profil ist privat.",
     "member_since": "Mitglied seit",
+    
+    // User Management
+    "user_management": "Benutzerverwaltung",
+    "manage_users": "Benutzer verwalten",
+    "users_count": "Registrierte Benutzer",
+    "search_user": "Benutzer suchen...",
+    "delete_user": "Benutzer löschen",
+    "delete_user_confirm": "Möchtest du diesen Benutzer und alle seine Daten wirklich unwiderruflich löschen?",
+    "role_updated": "Rolle erfolgreich aktualisiert",
+    "user_deleted": "Benutzer gelöscht",
+    "actions": "Aktionen",
+    "cant_edit_self": "Eigenes Profil hier nicht bearbeitbar",
+    "cant_edit_admin": "Admins können nicht von Managern bearbeitet werden",
 
     // Achievement Titles (DE)
     "ach_first_blood_title": "Erster Schritt",
@@ -250,6 +263,19 @@ const dictionary: Translations = {
     "access_denied": "Access Denied",
     "private_profile": "This profile is private.",
     "member_since": "Member since",
+    
+    // User Management
+    "user_management": "User Management",
+    "manage_users": "Manage Users",
+    "users_count": "Registered Users",
+    "search_user": "Search users...",
+    "delete_user": "Delete User",
+    "delete_user_confirm": "Are you sure you want to permanently delete this user and all their data?",
+    "role_updated": "Role updated successfully",
+    "user_deleted": "User deleted",
+    "actions": "Actions",
+    "cant_edit_self": "Can't edit yourself here",
+    "cant_edit_admin": "Managers cannot edit Admins",
 
     // Achievement Titles (EN)
     "ach_first_blood_title": "First Step",

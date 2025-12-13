@@ -1,6 +1,6 @@
 
 import { supabase } from './supabase';
-import { MediaItem, CustomList, WatchStatus } from '../types';
+import { MediaItem, CustomList, WatchStatus, User, UserRole } from '../types';
 
 // MEDIA ITEMS CRUD
 
@@ -165,4 +165,54 @@ export const deleteCustomList = async (listId: string) => {
 
 export const shareCustomList = async (listId: string, userIds: string[]) => {
     await supabase.from('custom_lists').update({ shared_with: userIds }).eq('id', listId);
+};
+
+// --- USER MANAGEMENT (ADMIN/MANAGER) ---
+
+export const fetchAllProfiles = async (): Promise<User[]> => {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return data.map((p: any) => ({
+        id: p.id,
+        username: p.username,
+        email: p.email,
+        avatar: p.avatar,
+        firstName: p.first_name,
+        lastName: p.last_name,
+        role: p.role as UserRole,
+        isStatsPublic: p.is_stats_public,
+        createdAt: new Date(p.created_at).getTime()
+    }));
+};
+
+export const updateUserRole = async (userId: string, newRole: UserRole) => {
+    const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userId);
+    
+    if (error) throw error;
+};
+
+export const deleteUserProfile = async (userId: string) => {
+    // Note: This deletes the profile row. In a full backend system,
+    // this should also trigger deletion from auth.users via a Postgres trigger or Edge Function.
+    // Client-side, we can only clean up the public data tables.
+    
+    // 1. Delete associated data (if not handled by cascade)
+    await supabase.from('media_items').delete().eq('user_id', userId);
+    await supabase.from('custom_lists').delete().eq('owner_id', userId);
+    
+    // 2. Delete Profile
+    const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+    if (error) throw error;
 };

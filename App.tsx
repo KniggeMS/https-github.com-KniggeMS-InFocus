@@ -10,6 +10,7 @@ import { AuthPage } from './components/AuthPage';
 import { RecoveryPage } from './components/RecoveryPage';
 import { ProfilePage } from './components/ProfilePage';
 import { GuidePage } from './components/GuidePage';
+import { UserManagementPage } from './components/UserManagementPage'; // Import new component
 import { MobileNav } from './components/MobileNav';
 import { CreateListModal } from './components/CreateListModal';
 import { ShareModal } from './components/ShareModal';
@@ -22,7 +23,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { getMediaDetails } from './services/tmdb';
 import * as db from './services/db';
-import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing, BookOpen, Shield } from 'lucide-react';
 
 const API_KEY_STORAGE_KEY = 'cinelog_tmdb_key';
 const OMDB_KEY_STORAGE_KEY = 'cinelog_omdb_key';
@@ -104,6 +105,9 @@ const AppContent: React.FC = () => {
   const navigate = useNavigate();
 
   const isAdmin = user?.role === UserRole.ADMIN;
+  const isManager = user?.role === UserRole.MANAGER;
+  const canManageUsers = isAdmin || isManager;
+  
   const canEditKeys = isAdmin; 
   const canSmartImport = isAdmin; 
 
@@ -573,6 +577,11 @@ const AppContent: React.FC = () => {
 
         <nav className="flex-grow px-4 space-y-1 overflow-y-auto pb-4 custom-scrollbar">
           <NavItem to="/" icon={LayoutDashboard} label={t('overview')} />
+          {/* Admin / Manager Link */}
+          {canManageUsers && (
+              <NavItem to="/admin" icon={Shield} label={t('user_management')} />
+          )}
+
           <div className="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('my_lists')}</div>
           <NavItem to="/watchlist" icon={MonitorPlay} label={t('planned')} />
           <NavItem to="/watching" icon={Tv} label={t('watching')} />
@@ -737,6 +746,13 @@ const AppContent: React.FC = () => {
                                     </button>
                                 </div>
                             </div>
+                            
+                            {/* Mobile Admin Link */}
+                            {canManageUsers && (
+                                <button onClick={() => { setIsSettingsOpen(false); navigate('/admin'); }} className="w-full py-3 bg-slate-700/50 text-cyan-400 border border-slate-600 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                                    <Shield size={16} /> {t('user_management')}
+                                </button>
+                            )}
 
                             {canEditKeys ? (
                                 <div className="space-y-3">
@@ -762,7 +778,7 @@ const AppContent: React.FC = () => {
              </div>
         )}
 
-        {!location.pathname.startsWith('/lists/') && location.pathname !== '/profile' && !location.pathname.startsWith('/guide') && (
+        {!location.pathname.startsWith('/lists/') && location.pathname !== '/profile' && location.pathname !== '/admin' && !location.pathname.startsWith('/guide') && (
             <header className="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
             <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2">{location.pathname === '/' ? t('collection') : location.pathname === '/watchlist' ? t('planned') : location.pathname === '/watching' ? t('watching') : location.pathname === '/favorites' ? t('favorites') : t('seen')}</h2>
@@ -790,9 +806,9 @@ const AppContent: React.FC = () => {
           <Route path="/watched" element={renderGrid(WatchStatus.WATCHED)} />
           <Route path="/favorites" element={renderGrid()} />
           <Route path="/lists/:id" element={<CustomListView />} />
-          {/* UPDATED: Pass items to ProfilePage */}
           <Route path="/profile" element={<ProfilePage items={items} />} />
           <Route path="/guide" element={<GuidePage />} />
+          <Route path="/admin" element={<UserManagementPage />} />
         </Routes>
       </main>
       
