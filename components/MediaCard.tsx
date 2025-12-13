@@ -100,7 +100,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
             >
                 <ListPlus size={16} className="sm:w-5 sm:h-5" />
             </button>
-            {/* Menu Dropdown Code - mostly same but ensuring z-index */}
+            {/* Menu Dropdown Code */}
             {isMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 animate-in fade-in zoom-in-95 duration-200 origin-top-right z-40">
                     <div className="bg-slate-900 px-4 py-2.5 border-b border-slate-700 rounded-t-lg">
@@ -140,7 +140,6 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                                 onMouseLeave={() => setIsHoveringLists(false)}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    // Toggle only if touch or click interaction is preferred
                                     setIsHoveringLists(!isHoveringLists);
                                 }}
                              >
@@ -217,13 +216,21 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                 </div>
             )}
       </div>
-
-      {(item.userRating || 0) > 0 && (
-            <div className="absolute top-2 left-2 z-30 bg-yellow-500/90 text-slate-900 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-sm flex items-center gap-1">
-            <Star size={10} className="fill-slate-900 sm:w-3 sm:h-3" />
-            {item.userRating}
-            </div>
-      )}
+      
+      {/* Badges Container */}
+      <div className="absolute top-2 left-2 z-30 flex flex-col gap-1">
+          {(item.userRating || 0) > 0 && (
+                <div className="bg-yellow-500/90 text-slate-900 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-sm flex items-center gap-1 w-fit">
+                <Star size={10} className="fill-slate-900 sm:w-3 sm:h-3" />
+                {item.userRating}
+                </div>
+          )}
+          {item.rtScore && (
+              <div className="bg-[#FA320A]/90 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-sm flex items-center gap-1 w-fit">
+                 <span className="text-[8px] sm:text-[10px] font-black">RT</span> {item.rtScore}
+              </div>
+          )}
+      </div>
 
       {/* Content Body */}
       <div className="p-3 sm:p-4 flex-grow flex flex-col rounded-b-xl justify-between">

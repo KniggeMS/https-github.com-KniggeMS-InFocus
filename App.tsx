@@ -22,6 +22,7 @@ import { LanguageProvider, useTranslation } from './contexts/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { getMediaDetails } from './services/tmdb';
+import { getOmdbRatings } from './services/omdb';
 import * as db from './services/db';
 import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing, BookOpen, Shield } from 'lucide-react';
 
@@ -241,10 +242,18 @@ const AppContent: React.FC = () => {
     
     try {
         const details = await getMediaDetails(result, tmdbApiKey);
+        
+        // Fetch RT Rating via OMDb if IMDb ID is available
+        let rtScore: string | undefined = undefined;
+        if (details.imdbId && omdbApiKey) {
+            rtScore = await getOmdbRatings(details.imdbId, omdbApiKey);
+        }
+
         const newItem: MediaItem = {
           ...result,
           ...details,
           id: '', // DB assigns ID
+          rtScore: rtScore, // Add the fetched RT score
           status: status,
           addedAt: Date.now(),
           posterColor: getRandomColor(),
@@ -826,7 +835,7 @@ const AppContent: React.FC = () => {
       {canSmartImport && <ImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImport={handleBatchImport} apiKey={tmdbApiKey} omdbApiKey={omdbApiKey} />}
       {shareList && <ShareModal isOpen={!!shareList} onClose={() => setShareList(null)} list={shareList} onShare={shareListWithUsers} />}
       {viewingUserProfile && <PublicProfileModal user={viewingUserProfile} allLists={customLists} allItems={items} onClose={() => setViewingUserProfile(null)} />}
-      {viewingItem && <DetailView item={viewingItem} isExisting={true} apiKey={tmdbApiKey} onClose={() => setViewingItem(null)} onUpdateStatus={updateStatus} onToggleFavorite={toggleFavorite} onUpdateNotes={updateNotes} />}
+      {viewingItem && <DetailView item={viewingItem} isExisting={true} apiKey={tmdbApiKey} omdbApiKey={omdbApiKey} onClose={() => setViewingItem(null)} onUpdateStatus={updateStatus} onToggleFavorite={toggleFavorite} onUpdateNotes={updateNotes} />}
     </div>
   );
 };

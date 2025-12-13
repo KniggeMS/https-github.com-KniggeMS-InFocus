@@ -1,5 +1,4 @@
 
-
 export enum WatchStatus {
   TO_WATCH = 'TO_WATCH',
   WATCHING = 'WATCHING',
@@ -62,6 +61,7 @@ export interface MediaItem {
   genre: string[];
   plot: string;
   rating: number; // 0-10
+  rtScore?: string; // Rotten Tomatoes Score (e.g. "85%")
   posterColor?: string; // Fallback
   posterPath?: string | null;
   backdropPath?: string | null;

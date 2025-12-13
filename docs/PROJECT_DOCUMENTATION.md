@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.5.0
+**Version:** 1.7.0
 
 ---
 
@@ -18,6 +18,7 @@ Das Ziel des Services **"InFocus CineLog"** ist die Bereitstellung einer hochver
     *   **Vision Search:** Bilderkennung von Filmplakaten via Google Gemini Vision.
     *   **Deep Analysis:** Kontextbezogene Analyse von User-Notizen mittels LLM.
     *   **Social Sync:** Echtzeit-Synchronisation von Listen zwischen Benutzern.
+    *   **Rating Aggregation:** Integration von Rotten Tomatoes Scores (via OMDb).
 *   **Gamification Service:** XP-System und Achievements zur Steigerung der User-Retention.
 
 ---
@@ -48,7 +49,7 @@ Das Ziel des Services **"InFocus CineLog"** ist die Bereitstellung einer hochver
 
 *   **External Data Sources:**
     *   **Primary:** TMDB API (Metadaten, Bilder, Credits)
-    *   **Fallback:** OMDb API (Import-Matching)
+    *   **Secondary:** OMDb API (Rotten Tomatoes Ratings & Import-Matching)
 
 ### 2.2 Service Level Requirements (SLR)
 1.  **Verfügbarkeit:** 99.5% (abhängig von Vercel/Supabase Uptime).
@@ -60,10 +61,19 @@ Das Ziel des Services **"InFocus CineLog"** ist die Bereitstellung einer hochver
     *   Trennung von User-Daten durch RLS.
 
 ### 2.3 Capacity Management & Caching
-Um API-Quotas (Google Gemini / TMDB) zu schonen und die Latenz zu verringern, wurde eine **Smart Caching Strategie** implementiert:
+Um API-Quotas (Google Gemini / TMDB / OMDb) zu schonen und die Latenz zu verringern, wurde eine **Smart Caching Strategie** implementiert:
 *   **LocalStorage:** Speicherung von AI-Analysen und Empfehlungen.
 *   **Hashing:** User-Notizen werden gehasht; ändert sich die Notiz nicht, wird der Cache verwendet (0 API Calls).
 *   **TTL (Time To Live):** Empfehlungen laufen nach 1 Stunde ab.
+
+### 2.4 Configuration Management (CMS)
+Verwaltung der externen Schnittstellen-Konfigurationen (Configuration Items - CIs).
+
+| CI Name | Typ | Status | Verantwortlich | Beschreibung |
+|:---|:---|:---|:---|:---|
+| **CI-TMDB-KEY** | API Key | Active | Admin | Zugriff auf Metadaten. Default Key hinterlegt. |
+| **CI-OMDB-KEY** | API Key | Active | Admin | Zugriff auf RT Ratings. Key Endung: `...5dc9`. |
+| **CI-GEMINI-KEY** | API Key | Active | User/Env | AI Features. Wird via `.env` oder LocalStorage injiziert. |
 
 ---
 
@@ -85,6 +95,8 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-008** | Emergency | **Performance** | **Smart Caching Update:** Implementierung von LocalStorage-Cache für AI-Anfragen (Empfehlungen & Analysen) zur Schonung des API-Limits. Fallback-Modus für Offline-Szenarien. | ✅ Done |
 | **RFC-009** | Standard | **User Mgmt** | Admin-Dashboard zur Verwaltung von Benutzerrollen (RBAC: User, Manager, Admin). | ✅ Done |
 | **RFC-010** | Standard | **Documentation** | Erstellung der Landing Page (`docs/index.html`) und ITIL-Dokumentation. | ✅ Done |
+| **RFC-011** | Minor | **Ext. Data** | Integration von **Rotten Tomatoes Scores** via OMDb API. Erweiterung des DB-Schemas um `rt_score`. Anzeige in DetailView und MediaCard. | ✅ Done |
+| **RFC-012** | Minor | **UX/Data** | **Retroactive Fetching:** Implementierung eines Fallbacks in der Detailansicht, der fehlende RT-Scores live nachlädt, falls das Item vor der OMDb-Integration hinzugefügt wurde. | ✅ Done |
 
 ---
 
@@ -92,7 +104,7 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 
 ### 4.1 Incident Management (Fehlerbehandlung)
 *   **API Ausfälle (Gemini):** Das System fällt auf einen deterministischen Algorithmus zurück (`generateOfflineAnalysis`), der Metadaten analysiert, ohne die AI zu rufen.
-*   **API Ausfälle (TMDB):** Fehlermeldungen werden dem User angezeigt ("Keine Verbindung zu TMDB"). Bestehende Daten kommen aus der Supabase DB.
+*   **API Ausfälle (TMDB/OMDb):** Fehlermeldungen werden dem User angezeigt. Bestehende Daten kommen aus der Supabase DB (Fallback bei fehlenden Ratings).
 *   **Auth Issues:** Token-Refresh wird automatisch durch das Supabase SDK gehandhabt.
 
 ### 4.2 Access Management (Rollenkonzept)
@@ -117,4 +129,4 @@ Geplante Verbesserungen für kommende Sprints:
 
 ---
 
-*Dokumentation erstellt am: 25.10.2023 durch Senior Lead Engineer (AI)*
+*Dokumentation aktualisiert am: 25.10.2023 durch Senior Lead Engineer*

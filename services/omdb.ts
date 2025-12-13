@@ -16,6 +16,11 @@ interface OMDbResponse {
   Error?: string;
 }
 
+interface OMDbDetailResponse {
+    Ratings?: { Source: string; Value: string }[];
+    Response: string;
+}
+
 export const searchOMDB = async (query: string, year: string | null, type: MediaType | undefined, apiKey: string): Promise<OMDbSearchResult | null> => {
   if (!apiKey) return null;
 
@@ -50,4 +55,26 @@ export const searchOMDB = async (query: string, year: string | null, type: Media
     console.error("OMDb API Error:", error);
     return null;
   }
+};
+
+/**
+ * Fetches Rotten Tomatoes rating specifically using IMDb ID.
+ */
+export const getOmdbRatings = async (imdbId: string, apiKey: string): Promise<string | undefined> => {
+    if (!apiKey || !imdbId) return undefined;
+
+    try {
+        const url = `https://www.omdbapi.com/?apikey=${apiKey}&i=${imdbId}`;
+        const res = await fetch(url);
+        const data: OMDbDetailResponse = await res.json();
+
+        if (data.Response === "True" && data.Ratings) {
+            const rt = data.Ratings.find(r => r.Source === "Rotten Tomatoes");
+            return rt ? rt.Value : undefined;
+        }
+        return undefined;
+    } catch (e) {
+        console.error("OMDb Rating Fetch Error:", e);
+        return undefined;
+    }
 };

@@ -1,10 +1,10 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { X, Film, Clock, MonitorPlay, Heart, Bookmark, Play, ChevronLeft, Layers, Check, PlayCircle, User, ExternalLink, Clapperboard, ImageOff, StickyNote, BrainCircuit, Loader2 } from 'lucide-react';
 import { MediaItem, SearchResult, MediaType, WatchStatus } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, BACKDROP_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 import { analyzeMovieContext } from '../services/gemini';
+import { getOmdbRatings } from '../services/omdb';
 import { useTranslation } from '../contexts/LanguageContext';
 
 interface DetailViewProps {
@@ -18,6 +18,7 @@ interface DetailViewProps {
   // Context
   isExisting: boolean;
   apiKey: string;
+  omdbApiKey?: string; // New prop for retroactive fetching
 }
 
 export const DetailView: React.FC<DetailViewProps> = ({ 
@@ -28,7 +29,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
   onToggleFavorite, 
   onUpdateNotes,
   isExisting, 
-  apiKey 
+  apiKey,
+  omdbApiKey 
 }) => {
   const { t } = useTranslation();
   const [details, setDetails] = useState<Partial<MediaItem> | null>(null);
@@ -59,6 +61,27 @@ export const DetailView: React.FC<DetailViewProps> = ({
 
     loadDetails();
   }, [initialItem, apiKey]);
+
+  // Retroactive RT Rating Fetching
+  useEffect(() => {
+      const fetchRetroactiveRating = async () => {
+          // If we have details (containing IMDb ID) but no RT score in the item, and an API key is present
+          if (details?.imdbId && !(initialItem as MediaItem).rtScore && omdbApiKey) {
+              // Check if we already fetched it locally in 'details' to avoid loops
+              if (details.rtScore) return;
+
+              const score = await getOmdbRatings(details.imdbId, omdbApiKey);
+              if (score) {
+                  console.log("Fetched retroactive RT score:", score);
+                  setDetails(prev => ({ ...prev, rtScore: score }));
+              }
+          }
+      };
+      
+      if (details) {
+          fetchRetroactiveRating();
+      }
+  }, [details, initialItem, omdbApiKey]);
 
   useEffect(() => {
     setPlayingTrailer(false);
@@ -133,6 +156,10 @@ export const DetailView: React.FC<DetailViewProps> = ({
 
   const currentStatus = existingItem?.status;
   const isFav = existingItem?.isFavorite;
+
+  // RT Score Handling (Prioritize retroactive fetch in details over existing item)
+  const rtScore = details?.rtScore || (initialItem as MediaItem).rtScore; 
+  const hasRtScore = rtScore && rtScore !== "N/A";
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
   
@@ -293,6 +320,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
 
                       {/* Rating & Vibe Section */}
                       <div className="flex flex-wrap items-center gap-y-4 gap-x-6 mb-8">
+                          {/* TMDB Score */}
                           <div className="flex items-center gap-3">
                               <div className="relative w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-slate-900/80 rounded-full border-2 border-slate-800 shadow-lg flex-shrink-0">
                                 <svg viewBox="0 0 36 36" className="w-10 h-10 md:w-12 md:h-12 transform -rotate-90">
@@ -301,9 +329,23 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                 </svg>
                                 <span className="absolute text-xs font-bold text-white">{percentage}<span className="text-[9px]">%</span></span>
                               </div>
-                              <span className="font-bold text-white leading-tight text-sm drop-shadow-md whitespace-nowrap">{t('user_rating')}</span>
+                              <span className="font-bold text-white leading-tight text-sm drop-shadow-md whitespace-nowrap hidden sm:inline">TMDB</span>
                           </div>
                           
+                          {/* RT Score Display */}
+                          {hasRtScore && (
+                              <div className="flex items-center gap-3 bg-slate-900/40 rounded-full pr-4 border border-slate-700/50 backdrop-blur-sm animate-in fade-in zoom-in">
+                                  <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-[#FA320A] rounded-full text-white shadow-lg">
+                                     {/* Simplified Tomato Icon Representation */}
+                                     <span className="font-black text-xs md:text-sm">RT</span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                      <span className="text-lg md:text-xl font-bold text-white leading-none">{rtScore}</span>
+                                      <span className="text-[10px] text-slate-300 font-medium">Tomatometer</span>
+                                  </div>
+                              </div>
+                          )}
+
                           <div className="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 backdrop-blur-sm border border-white/10 shadow-lg hidden sm:flex">
                               <span className="text-xl hover:scale-125 transition-transform cursor-default">😍</span>
                               <span className="text-xl hover:scale-125 transition-transform cursor-default">🤯</span>

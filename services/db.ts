@@ -27,6 +27,7 @@ export const fetchMediaItems = async (): Promise<MediaItem[]> => {
     genre: item.genre || [],
     plot: item.plot,
     rating: item.rating,
+    rtScore: item.rt_score, // Added mapping
     posterPath: item.poster_path,
     backdropPath: item.backdrop_path,
     status: item.status,
@@ -58,6 +59,7 @@ export const addMediaItem = async (item: MediaItem, userId: string): Promise<Med
     genre: item.genre,
     plot: item.plot,
     rating: item.rating,
+    rt_score: item.rtScore, // Added mapping
     poster_path: item.posterPath,
     backdrop_path: item.backdropPath,
     status: item.status,
