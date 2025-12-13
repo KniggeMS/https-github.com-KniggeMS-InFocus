@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Film, Clock, MonitorPlay, Heart, Bookmark, Play, ChevronLeft, Layers, Check, PlayCircle, User, ExternalLink, Clapperboard, ImageOff, MessageSquareQuote, BrainCircuit, Loader2, Star, Users } from 'lucide-react';
 import { MediaItem, SearchResult, MediaType, WatchStatus, PublicReview } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, BACKDROP_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
@@ -23,6 +23,28 @@ interface DetailViewProps {
   apiKey: string;
   omdbApiKey?: string;
 }
+
+// --- HELPER: Language Detection ---
+const detectReviewLanguage = (text: string): 'de' | 'en' | 'neutral' => {
+  if (!text || text.length < 5) return 'neutral'; // Too short to decide
+  
+  const lower = text.toLowerCase();
+  
+  // Common stop words unique to each language
+  const deWords = ['und', 'der', 'die', 'das', 'ist', 'nicht', 'ein', 'eine', 'film', 'serie', 'gut', 'schlecht', 'aber', 'auch', 'gesehen', 'handlung', 'schauspieler', 'langweilig', 'super'];
+  const enWords = ['and', 'the', 'is', 'not', 'a', 'an', 'movie', 'series', 'good', 'bad', 'but', 'also', 'watched', 'plot', 'story', 'actor', 'boring', 'awesome'];
+
+  let deCount = 0;
+  let enCount = 0;
+
+  deWords.forEach(w => { if (new RegExp(`\\b${w}\\b`).test(lower)) deCount++; });
+  enWords.forEach(w => { if (new RegExp(`\\b${w}\\b`).test(lower)) enCount++; });
+
+  if (deCount > enCount) return 'de';
+  if (enCount > deCount) return 'en';
+  
+  return 'neutral'; // Ambiguous or mostly names/emojis
+};
 
 // Refined Tomato Icon (Plumper)
 const TomatoIcon = ({ className }: { className?: string }) => (
@@ -59,7 +81,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
   apiKey,
   omdbApiKey 
 }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { user } = useAuth();
   const [details, setDetails] = useState<Partial<MediaItem> | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -107,6 +129,15 @@ export const DetailView: React.FC<DetailViewProps> = ({
       };
       loadReviews();
   }, [initialItem.tmdbId, isExisting, user]);
+
+  // FILTER REVIEWS BY LANGUAGE
+  const visibleReviews = useMemo(() => {
+      return communityReviews.filter(review => {
+          const lang = detectReviewLanguage(review.content);
+          // Show if matches current language OR if it's neutral (mostly stars/emojis)
+          return lang === 'neutral' || lang === language;
+      });
+  }, [communityReviews, language]);
 
   // Retroactive RT Rating Fetching
   useEffect(() => {
@@ -564,13 +595,13 @@ export const DetailView: React.FC<DetailViewProps> = ({
                             </div>
 
                             {/* Community Reviews List */}
-                            {communityReviews.length > 0 && (
+                            {visibleReviews.length > 0 && (
                                 <div className="bg-slate-900/30 p-6 rounded-xl border border-slate-800">
                                     <h4 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
                                         <Users size={16} className="text-purple-400" /> {t('community_reviews')}
                                     </h4>
                                     <div className="space-y-4">
-                                        {communityReviews.map((review, idx) => (
+                                        {visibleReviews.map((review, idx) => (
                                             <div key={idx} className="bg-slate-800 p-4 rounded-lg border border-slate-700">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <div className="flex items-center gap-3">
