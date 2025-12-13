@@ -361,6 +361,11 @@ const AppContent: React.FC = () => {
       await db.updateMediaItemNotes(id, notes);
   };
 
+  const updateRtScore = async (id: string, score: string) => {
+      setItems(prev => prev.map(item => item.id === id ? { ...item, rtScore: score } : item));
+      await db.updateMediaItemRtScore(id, score);
+  };
+
   const deleteItem = async (id: string) => {
     setItems(prev => prev.filter(item => item.id !== id));
     await db.deleteMediaItem(id);
@@ -835,7 +840,7 @@ const AppContent: React.FC = () => {
       {canSmartImport && <ImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImport={handleBatchImport} apiKey={tmdbApiKey} omdbApiKey={omdbApiKey} />}
       {shareList && <ShareModal isOpen={!!shareList} onClose={() => setShareList(null)} list={shareList} onShare={shareListWithUsers} />}
       {viewingUserProfile && <PublicProfileModal user={viewingUserProfile} allLists={customLists} allItems={items} onClose={() => setViewingUserProfile(null)} />}
-      {viewingItem && <DetailView item={viewingItem} isExisting={true} apiKey={tmdbApiKey} omdbApiKey={omdbApiKey} onClose={() => setViewingItem(null)} onUpdateStatus={updateStatus} onToggleFavorite={toggleFavorite} onUpdateNotes={updateNotes} />}
+      {viewingItem && <DetailView item={viewingItem} isExisting={true} apiKey={tmdbApiKey} omdbApiKey={omdbApiKey} onClose={() => setViewingItem(null)} onUpdateStatus={updateStatus} onToggleFavorite={toggleFavorite} onUpdateNotes={updateNotes} onUpdateRtScore={updateRtScore} />}
     </div>
   );
 };

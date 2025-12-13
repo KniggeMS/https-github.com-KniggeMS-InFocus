@@ -14,11 +14,12 @@ interface DetailViewProps {
   onAdd?: (item: SearchResult, initialStatus?: WatchStatus, isFav?: boolean) => void;
   onUpdateStatus?: (id: string, status: WatchStatus) => void;
   onToggleFavorite?: (id: string) => void;
-  onUpdateNotes?: (id: string, notes: string) => void; // New prop
+  onUpdateNotes?: (id: string, notes: string) => void; 
+  onUpdateRtScore?: (id: string, score: string) => void; // New prop for persistence
   // Context
   isExisting: boolean;
   apiKey: string;
-  omdbApiKey?: string; // New prop for retroactive fetching
+  omdbApiKey?: string;
 }
 
 export const DetailView: React.FC<DetailViewProps> = ({ 
@@ -28,6 +29,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
   onUpdateStatus, 
   onToggleFavorite, 
   onUpdateNotes,
+  onUpdateRtScore,
   isExisting, 
   apiKey,
   omdbApiKey 
@@ -74,6 +76,11 @@ export const DetailView: React.FC<DetailViewProps> = ({
               if (score) {
                   console.log("Fetched retroactive RT score:", score);
                   setDetails(prev => ({ ...prev, rtScore: score }));
+                  
+                  // Persist to DB if item exists
+                  if (isExisting && existingItem && onUpdateRtScore) {
+                      onUpdateRtScore(existingItem.id, score);
+                  }
               }
           }
       };
@@ -81,7 +88,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
       if (details) {
           fetchRetroactiveRating();
       }
-  }, [details, initialItem, omdbApiKey]);
+  }, [details, initialItem, omdbApiKey, isExisting, existingItem, onUpdateRtScore]);
 
   useEffect(() => {
     setPlayingTrailer(false);

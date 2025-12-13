@@ -107,6 +107,10 @@ export const updateMediaItemNotes = async (id: string, notes: string) => {
   await supabase.from('media_items').update({ user_notes: notes }).eq('id', id);
 };
 
+export const updateMediaItemRtScore = async (id: string, score: string) => {
+  await supabase.from('media_items').update({ rt_score: score }).eq('id', id);
+};
+
 export const deleteMediaItem = async (id: string) => {
   await supabase.from('media_items').delete().eq('id', id);
 };

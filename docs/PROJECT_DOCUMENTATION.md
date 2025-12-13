@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.7.0
+**Version:** 1.8.0
 
 ---
 
@@ -96,7 +96,8 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-009** | Standard | **User Mgmt** | Admin-Dashboard zur Verwaltung von Benutzerrollen (RBAC: User, Manager, Admin). | ✅ Done |
 | **RFC-010** | Standard | **Documentation** | Erstellung der Landing Page (`docs/index.html`) und ITIL-Dokumentation. | ✅ Done |
 | **RFC-011** | Minor | **Ext. Data** | Integration von **Rotten Tomatoes Scores** via OMDb API. Erweiterung des DB-Schemas um `rt_score`. Anzeige in DetailView und MediaCard. | ✅ Done |
-| **RFC-012** | Minor | **UX/Data** | **Retroactive Fetching:** Implementierung eines Fallbacks in der Detailansicht, der fehlende RT-Scores live nachlädt, falls das Item vor der OMDb-Integration hinzugefügt wurde. | ✅ Done |
+| **RFC-012** | Minor | **UX/Data** | **Retroactive Fetching:** Implementierung eines Fallbacks in der Detailansicht, der fehlende RT-Scores live nachlädt. | ✅ Done |
+| **RFC-013** | Minor | **Data Integrity** | **Rating Persistence:** Nachträglich geladene RT-Scores werden nun sofort in der Datenbank (`media_items`) gespeichert, damit sie auch in der Übersicht (Grid) sichtbar sind. | ✅ Done |
 
 ---
 
