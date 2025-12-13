@@ -9,6 +9,7 @@ import { Stats } from './components/Stats';
 import { AuthPage } from './components/AuthPage';
 import { RecoveryPage } from './components/RecoveryPage';
 import { ProfilePage } from './components/ProfilePage';
+import { GuidePage } from './components/GuidePage';
 import { MobileNav } from './components/MobileNav';
 import { CreateListModal } from './components/CreateListModal';
 import { ShareModal } from './components/ShareModal';
@@ -21,7 +22,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { getMediaDetails } from './services/tmdb';
 import * as db from './services/db';
-import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing } from 'lucide-react';
+import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing, BookOpen } from 'lucide-react';
 
 const API_KEY_STORAGE_KEY = 'cinelog_tmdb_key';
 const OMDB_KEY_STORAGE_KEY = 'cinelog_omdb_key';
@@ -447,7 +448,6 @@ const AppContent: React.FC = () => {
       );
     }
     
-    // UPDATED: Use 2-column grid on mobile (grid-cols-2) instead of 1
     return (
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 pb-24 md:pb-0">
         {filteredAndSorted.map(item => (
@@ -532,6 +532,10 @@ const AppContent: React.FC = () => {
         {/* Desktop Settings Panel */}
         {isSettingsOpen && (
             <div className="mx-4 mb-4 p-4 bg-slate-800 rounded-xl border border-slate-700 animate-in slide-in-from-top-2">
+                 <button onClick={() => { setIsSettingsOpen(false); navigate('/guide'); }} className="w-full mb-4 py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded text-xs font-bold transition-all shadow-lg">
+                     <BookOpen size={14} /> Handbuch öffnen
+                 </button>
+
                  {/* THEME SWITCHER */}
                  <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">{t('appearance')}</h4>
                  <div className="flex gap-1 mb-4 bg-slate-900 rounded-lg p-1 border border-slate-700">
@@ -602,22 +606,24 @@ const AppContent: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-grow p-4 md:p-8 overflow-y-auto h-screen scroll-smooth pb-24 md:pb-8">
-        <div className="md:hidden flex items-center justify-between mb-6">
-             <div className="flex items-center gap-2 text-cyan-400">
-                <Clapperboard size={24} />
-                <h1 className="text-xl font-bold text-white">
-                    <span className="text-cyan-400">InFocus</span>
-                </h1>
-             </div>
-             <div className="flex gap-4">
-                 <button onClick={() => navigate('/profile')} className="text-slate-400 hover:text-white"><UserIcon size={24} /></button>
-                 <button onClick={() => setIsMobileListsOpen(true)} className="text-slate-400 hover:text-white relative">
-                     <ListPlus size={24} />
-                     {hasNewSharedLists && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-cyan-500 rounded-full border border-slate-900"></span>}
-                 </button>
-                 <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="text-slate-400 hover:text-white"><Settings size={24} /></button>
-             </div>
-        </div>
+        {!location.pathname.startsWith('/guide') && (
+            <div className="md:hidden flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2 text-cyan-400">
+                    <Clapperboard size={24} />
+                    <h1 className="text-xl font-bold text-white">
+                        <span className="text-cyan-400">InFocus</span>
+                    </h1>
+                </div>
+                <div className="flex gap-4">
+                    <button onClick={() => navigate('/profile')} className="text-slate-400 hover:text-white"><UserIcon size={24} /></button>
+                    <button onClick={() => setIsMobileListsOpen(true)} className="text-slate-400 hover:text-white relative">
+                        <ListPlus size={24} />
+                        {hasNewSharedLists && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-cyan-500 rounded-full border border-slate-900"></span>}
+                    </button>
+                    <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="text-slate-400 hover:text-white"><Settings size={24} /></button>
+                </div>
+            </div>
+        )}
         
         {/* MOBILE LISTS DRAWER (Upgraded Visuals) */}
         {isMobileListsOpen && (
@@ -712,6 +718,10 @@ const AppContent: React.FC = () => {
                         <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 bg-slate-900/50 p-2 rounded-full"><X size={20} /></button>
                       </div>
                       <div className="space-y-6">
+                            <button onClick={() => { setIsSettingsOpen(false); navigate('/guide'); }} className="w-full py-3 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg">
+                                <BookOpen size={16} /> Handbuch öffnen
+                            </button>
+
                             {/* Mobile Theme Switcher */}
                             <div>
                                 <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">{t('appearance')}</h4>
@@ -735,7 +745,7 @@ const AppContent: React.FC = () => {
                                     <button onClick={saveSettings} className="w-full py-3 bg-cyan-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-cyan-900/20">{t('remember')}</button>
                                 </div>
                             ) : (
-                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-center gap-2"><ShieldAlert size={16} /><span>API Keys sind verwaltet (Read-only).</span></div>
+                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-center gap-2"><ShieldAlert size={16} /><span>API Keys sind verwaltet.</span></div>
                             )}
                             <div>
                                 <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">{t('language')}</h4>
@@ -752,7 +762,7 @@ const AppContent: React.FC = () => {
              </div>
         )}
 
-        {!location.pathname.startsWith('/lists/') && location.pathname !== '/profile' && (
+        {!location.pathname.startsWith('/lists/') && location.pathname !== '/profile' && !location.pathname.startsWith('/guide') && (
             <header className="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
             <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2">{location.pathname === '/' ? t('collection') : location.pathname === '/watchlist' ? t('planned') : location.pathname === '/watching' ? t('watching') : location.pathname === '/favorites' ? t('favorites') : t('seen')}</h2>
@@ -780,15 +790,19 @@ const AppContent: React.FC = () => {
           <Route path="/watched" element={renderGrid(WatchStatus.WATCHED)} />
           <Route path="/favorites" element={renderGrid()} />
           <Route path="/lists/:id" element={<CustomListView />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          {/* UPDATED: Pass items to ProfilePage */}
+          <Route path="/profile" element={<ProfilePage items={items} />} />
+          <Route path="/guide" element={<GuidePage />} />
         </Routes>
       </main>
       
-      <MobileNav 
-        onSearchClick={() => setIsSearchOpen(true)} 
-        onListsClick={() => setIsMobileListsOpen(true)}
-        hasNotification={hasNewSharedLists}
-      />
+      {!location.pathname.startsWith('/guide') && (
+          <MobileNav 
+            onSearchClick={() => setIsSearchOpen(true)} 
+            onListsClick={() => setIsMobileListsOpen(true)}
+            hasNotification={hasNewSharedLists}
+          />
+      )}
       
       <ChatBot items={items} />
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={addItem} apiKey={tmdbApiKey} />

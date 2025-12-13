@@ -1,0 +1,298 @@
+
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft, Search, Camera, Sparkles, BrainCircuit, 
+  Share2, Trophy, List, Key, Shield, Smartphone, 
+  MessageCircle, Layers, Star
+} from 'lucide-react';
+
+const MockCard = ({ title, icon: Icon, color }: any) => (
+  <div className="w-32 h-48 bg-slate-800 rounded-lg border border-slate-700 relative overflow-hidden flex flex-col shadow-lg">
+    <div className={`h-32 w-full bg-${color}-900/30 flex items-center justify-center`}>
+      <Icon className={`text-${color}-400 opacity-50`} size={32} />
+    </div>
+    <div className="p-2">
+      <div className="h-2 w-20 bg-slate-600 rounded mb-1"></div>
+      <div className="h-2 w-12 bg-slate-700 rounded"></div>
+    </div>
+  </div>
+);
+
+export const GuidePage: React.FC = () => {
+  const navigate = useNavigate();
+
+  const scrollTo = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) element.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-20 relative overflow-x-hidden">
+      {/* Background Ambience */}
+      <div className="fixed inset-0 pointer-events-none">
+         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2"></div>
+         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px] translate-x-1/2 translate-y-1/2"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        {/* Header */}
+        <header className="py-8 flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-slate-800/50 border border-slate-700 hover:bg-slate-700 transition-colors backdrop-blur-md">
+            <ArrowLeft size={24} />
+          </button>
+          <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+            Benutzerhandbuch
+          </h1>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          
+          {/* Sidebar Navigation (Desktop) */}
+          <aside className="hidden lg:block sticky top-8 h-fit space-y-2">
+            <nav className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-xl">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 px-2">Inhalt</p>
+              {[
+                { id: 'start', label: 'Erste Schritte', icon: Key },
+                { id: 'search', label: 'Suchen & Vision', icon: Search },
+                { id: 'ai', label: 'AI Power Features', icon: Sparkles },
+                { id: 'lists', label: 'Listen & Social', icon: List },
+                { id: 'gamification', label: 'Level & Trophäen', icon: Trophy },
+              ].map((item) => (
+                <button 
+                  key={item.id}
+                  onClick={() => scrollTo(item.id)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 hover:text-cyan-400 transition-all text-sm font-medium text-left"
+                >
+                  <item.icon size={16} /> {item.label}
+                </button>
+              ))}
+            </nav>
+          </aside>
+
+          {/* Main Content */}
+          <main className="lg:col-span-3 space-y-12">
+
+            {/* SECTION 1: ERSTE SCHRITTE */}
+            <section id="start" className="scroll-mt-24">
+              <div className="bg-slate-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                
+                <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+                  <Key className="text-cyan-400" /> Erste Schritte
+                </h2>
+                <p className="text-slate-300 mb-6 leading-relaxed">
+                  Damit InFocus CineLog funktioniert, benötigt die App Zugang zu Filmdatenbanken. Keine Sorge, das musst du nur einmal machen.
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                    <h3 className="font-bold text-white mb-2">1. TMDB API Key</h3>
+                    <p className="text-sm text-slate-400 mb-3">Notwendig für Filmdaten, Cover und Schauspieler.</p>
+                    <div className="text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-cyan-400 truncate">
+                      4115939bdc... (Beispiel)
+                    </div>
+                  </div>
+                  <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                    <h3 className="font-bold text-white mb-2">2. OMDb API Key (Optional)</h3>
+                    <p className="text-sm text-slate-400 mb-3">Hilft beim "Smart Import", wenn TMDB einen Titel nicht sofort findet.</p>
+                  </div>
+                </div>
+                
+                <div className="mt-6 flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                  <Shield className="text-yellow-500 shrink-0 mt-1" size={20} />
+                  <p className="text-xs text-yellow-200">
+                    <strong>Hinweis:</strong> Deine Keys werden nur lokal in deinem Browser gespeichert. Wir haben keinen Zugriff darauf. Wenn du Admin bist, sind diese Felder für deine Benutzer bereits vorkonfiguriert.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* SECTION 2: SUCHEN & VISION */}
+            <section id="search" className="scroll-mt-24">
+              <div className="bg-slate-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Search className="text-purple-400" /> Suchen & Hinzufügen
+                </h2>
+
+                <div className="space-y-8">
+                  {/* Text Search Mockup */}
+                  <div className="flex flex-col md:flex-row gap-6 items-center">
+                    <div className="w-full md:w-1/2">
+                      <h3 className="text-lg font-bold text-white mb-2">Klassische Suche</h3>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                        Klicke auf das große <strong className="text-white">+</strong> oder die Lupe. Gib einfach den Titel ein. Wir zeigen dir sofort Ergebnisse mit Cover, Jahr und Bewertung an.
+                      </p>
+                    </div>
+                    <div className="w-full md:w-1/2 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
+                      <div className="flex items-center gap-3 bg-slate-900 rounded-lg p-3 border border-slate-600 mb-3">
+                        <Search size={18} className="text-slate-400"/>
+                        <span className="text-slate-500 text-sm">Matrix...</span>
+                      </div>
+                      <div className="flex gap-3 items-center p-2 bg-slate-700/50 rounded-lg">
+                        <div className="w-8 h-12 bg-green-900/50 rounded border border-green-500/30"></div>
+                        <div className="flex-grow">
+                          <div className="h-2 w-24 bg-slate-500 rounded mb-1"></div>
+                          <div className="h-1.5 w-16 bg-slate-600 rounded"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vision Search Mockup */}
+                  <div className="flex flex-col md:flex-row-reverse gap-6 items-center border-t border-white/5 pt-8">
+                    <div className="w-full md:w-1/2">
+                      <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <Camera className="text-cyan-400" size={20}/> Vision Search
+                      </h3>
+                      <p className="text-slate-400 text-sm leading-relaxed">
+                        Du bist im Kino oder siehst eine DVD bei einem Freund? <br/>
+                        Fotografiere das Cover einfach ab! Unsere AI erkennt den Film automatisch und fügt ihn deiner Suche hinzu. Kein Tippen nötig.
+                      </p>
+                    </div>
+                    <div className="w-full md:w-1/2 relative group">
+                       <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full opacity-50 group-hover:opacity-80 transition-opacity"></div>
+                       <div className="relative bg-slate-800 p-6 rounded-xl border border-slate-700 text-center">
+                          <Camera size={48} className="mx-auto text-slate-500 mb-2 group-hover:text-cyan-400 transition-colors" />
+                          <span className="text-xs text-slate-400 uppercase tracking-widest">AI Scanner Ready</span>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* SECTION 3: AI POWER */}
+            <section id="ai" className="scroll-mt-24">
+              <div className="bg-gradient-to-br from-indigo-900/40 to-slate-900/60 backdrop-blur-md border border-indigo-500/30 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Sparkles className="text-yellow-400" /> AI Features
+                </h2>
+
+                <div className="grid md:grid-cols-3 gap-4">
+                  {/* Feature 1 */}
+                  <div className="bg-slate-800/60 p-5 rounded-2xl border border-white/5 hover:border-indigo-500/50 transition-colors">
+                    <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center mb-4 text-indigo-300">
+                      <Sparkles size={20} />
+                    </div>
+                    <h3 className="font-bold text-white mb-2">AI Empfehlungen</h3>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Klicke auf den <span className="text-indigo-300 font-bold">AI Tipp</span> Button in der Sidebar. Die AI analysiert deine Favoriten und schlägt dir EINEN perfekten Film vor, den du noch nicht kennst.
+                    </p>
+                  </div>
+
+                  {/* Feature 2 */}
+                  <div className="bg-slate-800/60 p-5 rounded-2xl border border-white/5 hover:border-purple-500/50 transition-colors">
+                    <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center mb-4 text-purple-300">
+                      <BrainCircuit size={20} />
+                    </div>
+                    <h3 className="font-bold text-white mb-2">Deep Analysis</h3>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Wenn du Notizen zu einem Film machst ("Hat mir gefallen, aber das Ende war doof"), liest die AI diese Notizen und gibt dir beim nächsten Mal noch präzisere Tipps ("Deep Insight").
+                    </p>
+                  </div>
+
+                  {/* Feature 3 */}
+                  <div className="bg-slate-800/60 p-5 rounded-2xl border border-white/5 hover:border-cyan-500/50 transition-colors">
+                    <div className="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center mb-4 text-cyan-300">
+                      <MessageCircle size={20} />
+                    </div>
+                    <h3 className="font-bold text-white mb-2">CineChat</h3>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Unten rechts findest du den Chatbot. Frag ihn Dinge wie: "Welche Horrorfilme aus den 80ern habe ich auf meiner Watchlist?". Er kennt deine Sammlung!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* SECTION 4: LISTEN & SOCIAL */}
+            <section id="lists" className="scroll-mt-24">
+              <div className="bg-slate-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Share2 className="text-green-400" /> Listen & Social
+                </h2>
+
+                <div className="space-y-6">
+                  <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/50 flex flex-col md:flex-row gap-6">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <Layers size={18} className="text-slate-400"/> Eigene Listen
+                      </h3>
+                      <p className="text-sm text-slate-400 mb-4">
+                        Neben "Gesehen" und "Watchlist" kannst du eigene Listen erstellen (z.B. "Halloween Marathon" oder "Marvel Phase 1").
+                      </p>
+                      <ul className="text-sm text-slate-300 space-y-2 list-disc list-inside">
+                        <li>Klicke auf das <span className="text-white bg-slate-700 px-1 rounded text-xs">+</span> neben "Eigene Listen".</li>
+                        <li>Füge Filme über das Menü auf der Filmkarte hinzu.</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="w-px bg-slate-700 hidden md:block"></div>
+
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                        <Share2 size={18} className="text-green-400"/> Mit Freunden teilen
+                      </h3>
+                      <p className="text-sm text-slate-400 mb-4">
+                        Das Beste: Du kannst jede eigene Liste mit anderen Benutzern der App teilen!
+                      </p>
+                      <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 text-xs text-green-200">
+                        Sobald du eine Liste teilst, erscheint sie beim Freund unter "Geteilt mit". Auf dem Handy gibt es dafür ein extra Menü unten rechts!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* SECTION 5: GAMIFICATION */}
+            <section id="gamification" className="scroll-mt-24">
+              <div className="bg-gradient-to-r from-slate-900 to-slate-800 border border-yellow-500/20 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent"></div>
+                
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Trophy className="text-yellow-500" /> Level & Trophäen
+                </h2>
+
+                <div className="flex flex-col md:flex-row gap-8 items-center">
+                  <div className="flex-1">
+                    <p className="text-slate-300 mb-4">
+                      InFocus CineLog belohnt dich fürs Schauen! Für jede Minute Laufzeit deiner gesehenen Filme erhältst du <strong className="text-yellow-400">XP</strong>.
+                    </p>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
+                        <Star className="text-yellow-500" size={20} />
+                        <div>
+                          <div className="text-sm font-bold text-white">Level System</div>
+                          <div className="text-xs text-slate-400">Vom "Statist" zur "Hollywood Legende".</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
+                        <Trophy className="text-orange-500" size={20} />
+                        <div>
+                          <div className="text-sm font-bold text-white">Trophäen</div>
+                          <div className="text-xs text-slate-400">Sammle Auszeichnungen wie "Binge Master" oder "Genre Guru".</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="w-full md:w-1/3 bg-slate-950 p-6 rounded-full aspect-square flex flex-col items-center justify-center border-4 border-slate-800 shadow-inner relative">
+                    <div className="absolute inset-0 rounded-full border-4 border-cyan-500/30 border-t-cyan-500 animate-spin-slow"></div>
+                    <span className="text-3xl font-bold text-white">Lvl 5</span>
+                    <span className="text-xs text-cyan-400 uppercase tracking-widest mt-1">Drehbuchautor</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+};

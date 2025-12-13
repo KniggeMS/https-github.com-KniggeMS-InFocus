@@ -17,7 +17,12 @@ const LEVEL_THRESHOLDS = [
     { level: 10, xp: 100000, title: "Hollywood Legende" } // Legend
 ];
 
-export const calculateUserStats = (items: MediaItem[]): UserStats => {
+// Extend interface to include collection count
+export interface ExtendedUserStats extends UserStats {
+    collectionSize: number;
+}
+
+export const calculateUserStats = (items: MediaItem[]): ExtendedUserStats => {
     const watchedItems = items.filter(i => i.status === WatchStatus.WATCHED);
     
     let totalRuntime = 0;
@@ -36,7 +41,7 @@ export const calculateUserStats = (items: MediaItem[]): UserStats => {
             const seasons = item.seasons || 1;
             // If we have precise data use it, otherwise fallback to 400 mins per entry
             if (item.episodes) {
-                totalRuntime += (epRuntime * eps); // Total eps across all seasons usually not provided directly by API easily in this flat structure, assuming seasons * eps if available, else flat
+                totalRuntime += (epRuntime * eps); 
             } else {
                 totalRuntime += 400; 
             }
@@ -48,7 +53,8 @@ export const calculateUserStats = (items: MediaItem[]): UserStats => {
         moviesWatched: movies,
         seriesWatched: series,
         totalRatings: items.filter(i => i.userRating && i.userRating > 0).length,
-        favoritesCount: items.filter(i => i.isFavorite).length
+        favoritesCount: items.filter(i => i.isFavorite).length,
+        collectionSize: items.length
     };
 };
 

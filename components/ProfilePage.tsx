@@ -5,11 +5,13 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { generateAvatar } from '../services/gemini';
 import { calculateUserStats, calculateLevel, getAchievements } from '../services/gamification';
 import { MediaItem, UserRole } from '../types';
-import { User, Lock, Upload, Sparkles, Loader2, Save, CheckCircle, AlertCircle, Trophy, Star, Tv, Film, Timer, BrainCircuit, Hourglass, Library, Popcorn, Crown, Eye, Shield, EyeOff, Calendar, Key } from 'lucide-react';
+import { User, Lock, Upload, Sparkles, Loader2, Save, CheckCircle, AlertCircle, Trophy, Star, Tv, Film, Timer, BrainCircuit, Hourglass, Library, Popcorn, Crown, Eye, Shield, EyeOff, Calendar, Key, List } from 'lucide-react';
 
-const LOCAL_STORAGE_KEY = 'cinelog_items';
+interface ProfilePageProps {
+    items: MediaItem[];
+}
 
-export const ProfilePage: React.FC = () => {
+export const ProfilePage: React.FC<ProfilePageProps> = ({ items }) => {
   const { user, updateProfile, changePassword } = useAuth();
   const { t } = useTranslation();
 
@@ -37,18 +39,9 @@ export const ProfilePage: React.FC = () => {
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
 
   // Gamification Data
-  const [userItems, setUserItems] = useState<MediaItem[]>([]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if(saved) {
-        try { setUserItems(JSON.parse(saved)); } catch(e) {}
-    }
-  }, []);
-
-  const stats = useMemo(() => calculateUserStats(userItems), [userItems]);
+  const stats = useMemo(() => calculateUserStats(items), [items]);
   const levelData = useMemo(() => calculateLevel(stats), [stats]);
-  const achievements = useMemo(() => getAchievements(userItems, stats), [userItems, stats]);
+  const achievements = useMemo(() => getAchievements(items, stats), [items, stats]);
 
   // Icon Mapping for dynamic rendering
   const IconMap: Record<string, any> = {
@@ -228,6 +221,15 @@ export const ProfilePage: React.FC = () => {
             <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg flex flex-col justify-center">
                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-700 pb-2">{t('stats')}</h4>
                  <div className="space-y-4">
+                     {/* Collection Size (Always populated if user has items) */}
+                     <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3 text-slate-300">
+                             <div className="p-2 bg-slate-700 rounded-lg"><List size={16} className="text-emerald-400"/></div>
+                             <span className="text-sm">In Sammlung</span>
+                         </div>
+                         <span className="text-white font-bold font-mono">{stats.collectionSize}</span>
+                     </div>
+
                      <div className="flex items-center justify-between">
                          <div className="flex items-center gap-3 text-slate-300">
                              <div className="p-2 bg-slate-700 rounded-lg"><Timer size={16} className="text-orange-400"/></div>
