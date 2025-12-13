@@ -43,23 +43,19 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
     [WatchStatus.WATCHED]: 'bg-green-500/20 text-green-400 border-green-500/30',
   };
 
-  const statusLabels = {
-    [WatchStatus.TO_WATCH]: t('planned'),
-    [WatchStatus.WATCHING]: t('watching'),
-    [WatchStatus.WATCHED]: t('seen'),
-  };
-
   const posterUrl = item.posterPath ? `${IMAGE_BASE_URL}${item.posterPath}` : null;
 
   // Determine Badge Type (RT vs IMDb)
   const isRT = item.rtScore && item.rtScore.includes('%');
   let badgeLabel = isRT ? 'RT' : 'IMDb';
-  let badgeColor = isRT ? 'bg-[#FA320A]/90 text-white' : 'bg-gradient-to-br from-[#F5C518] to-[#E0B000] text-black shadow-sm';
+  
+  // Use specific text colors instead of full backgrounds
+  let textColorClass = isRT ? 'text-[#FA320A]' : 'text-[#F5C518]';
   
   if (isRT) {
       const val = parseInt(item.rtScore || '0');
       if (!isNaN(val) && val < 60) {
-          badgeColor = 'bg-[#5F9E3F]/90 text-white'; // Rotten Green
+          textColorClass = 'text-[#5F9E3F]'; // Rotten Green
       }
   }
 
@@ -229,17 +225,18 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
             )}
       </div>
       
-      {/* Badges Container */}
-      <div className="absolute top-2 left-2 z-30 flex flex-col gap-1">
+      {/* Badges Container - CLEAN GLASS STYLE */}
+      <div className="absolute top-2 left-2 z-30 flex flex-col gap-1.5 items-start">
           {(item.userRating || 0) > 0 && (
-                <div className="bg-yellow-500/90 text-slate-900 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-sm flex items-center gap-1 w-fit">
-                <Star size={10} className="fill-slate-900 sm:w-3 sm:h-3" />
-                {item.userRating}
+                <div className="bg-black/60 backdrop-blur-md border border-yellow-500/30 text-yellow-400 px-2 py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-lg flex items-center gap-1.5">
+                    <Star size={10} className="fill-yellow-400 sm:w-3 sm:h-3" />
+                    {item.userRating}
                 </div>
           )}
           {item.rtScore && item.rtScore !== "N/A" && (
-              <div className={`${badgeColor} px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-sm flex items-center gap-1 w-fit`}>
-                 <span className="text-[8px] sm:text-[10px] font-black">{badgeLabel}</span> {item.rtScore}
+              <div className={`bg-black/60 backdrop-blur-md border border-white/10 ${textColorClass} px-2 py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-lg flex items-center gap-1.5`}>
+                 <span className="text-[9px] uppercase tracking-wide text-slate-300 font-medium">{badgeLabel}</span>
+                 <span className="text-white font-black">{item.rtScore}</span>
               </div>
           )}
       </div>

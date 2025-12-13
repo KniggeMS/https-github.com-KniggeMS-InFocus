@@ -22,22 +22,26 @@ interface DetailViewProps {
   omdbApiKey?: string;
 }
 
-// Custom Icons for RT
+// Refined Tomato Icon (Plumper)
 const TomatoIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M12 2C7.5 2 4 5.5 4 9C4 13.5 8 19 12 22C16 19 20 13.5 20 9C20 5.5 16.5 2 12 2ZM12 4C13.5 4 14.5 5 14.5 5S13 7 12 7C11 7 9.5 5 9.5 5S10.5 4 12 4Z" />
+    <path d="M8 2.5C8 2.5 9 5 12 5C15 5 16 2.5 16 2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
 
 const RottenIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M12 2L14 6L18 5L17 9L21 11L17 14L19 18L15 17L12 21L9 17L5 18L7 14L3 11L7 9L6 5L10 6L12 2Z" />
+    <path d="M11.99 2C13.5 2.5 15 3 16 5C17.5 4 19 4 20 5.5C21.5 7.5 21 10 20 12C21 14 20.5 16 19 17.5C17 19.5 14 20 12 21C10 20 7 19.5 5 17.5C3.5 16 3 14 4 12C3 10 2.5 7.5 4 5.5C5 4 6.5 4 8 5C9 3 10.5 2.5 11.99 2Z" />
+    <circle cx="9" cy="10" r="1.5" className="text-slate-900" fill="currentColor"/>
+    <circle cx="15" cy="10" r="1.5" className="text-slate-900" fill="currentColor"/>
+    <path d="M9 15C9 15 10 16 12 16C14 16 15 15 15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-slate-900"/>
   </svg>
 );
 
 const StarRatingIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
   </svg>
 );
 
@@ -186,33 +190,24 @@ export const DetailView: React.FC<DetailViewProps> = ({
   // RT Score Handling
   const rtScore = details?.rtScore || (initialItem as MediaItem).rtScore; 
   const hasRtScore = rtScore && rtScore !== "N/A";
-  
-  // Logic: RT vs IMDb visual
   const isRT = hasRtScore && rtScore.includes('%');
-  let badgeLabel = isRT ? 'RT' : 'IMDb';
-  let badgeSubtext = isRT ? 'Tomatometer' : 'IMDb Rating';
-  let badgeColor = 'bg-slate-700';
-  let badgeIcon = null;
-
+  
+  // Design Logic for RT
+  let rtIcon = null;
+  let rtColorClass = "text-slate-400";
   if (isRT) {
-      const scoreVal = parseInt(rtScore);
-      if (!isNaN(scoreVal)) {
-          if (scoreVal >= 60) {
-              badgeColor = 'bg-gradient-to-br from-[#FA320A] to-[#D91A00] shadow-[0_0_15px_rgba(250,50,10,0.4)]';
-              badgeIcon = <TomatoIcon className="w-5 h-5 text-white" />;
-          } else {
-              badgeColor = 'bg-gradient-to-br from-[#5F9E3F] to-[#4A8030] shadow-[0_0_15px_rgba(95,158,63,0.4)]';
-              badgeIcon = <RottenIcon className="w-5 h-5 text-white" />;
-              badgeSubtext = "Rotten";
-          }
+      const val = parseInt(rtScore);
+      if (!isNaN(val) && val >= 60) {
+          rtIcon = <TomatoIcon className="w-5 h-5 text-[#FA320A]" />;
+          rtColorClass = "text-white";
       } else {
-          // Fallback if parsing fails but string has %
-          badgeColor = 'bg-[#FA320A]';
+          rtIcon = <RottenIcon className="w-5 h-5 text-[#5F9E3F]" />;
+          rtColorClass = "text-white";
       }
-  } else {
-      // IMDb Modern Gold
-      badgeColor = 'bg-gradient-to-br from-[#F5C518] to-[#E0B000] shadow-[0_0_15px_rgba(245,197,24,0.5)]';
-      badgeIcon = <StarRatingIcon className="w-6 h-6 text-black" />; // Black star on yellow
+  } else if (hasRtScore) {
+      // IMDb Fallback via OMDB field
+      rtIcon = <StarRatingIcon className="w-5 h-5 text-[#F5C518]" />;
+      rtColorClass = "text-white";
   }
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
@@ -372,39 +367,58 @@ export const DetailView: React.FC<DetailViewProps> = ({
                           )}
                       </div>
 
-                      {/* Rating & Vibe Section */}
-                      <div className="flex flex-wrap items-center gap-y-4 gap-x-6 mb-8">
-                          {/* TMDB Score */}
-                          <div className="flex items-center gap-3">
-                              <div className="relative w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-slate-900/80 rounded-full border-2 border-slate-800 shadow-lg flex-shrink-0">
-                                <svg viewBox="0 0 36 36" className="w-10 h-10 md:w-12 md:h-12 transform -rotate-90">
-                                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1e293b" strokeWidth="3" />
+                      {/* UNIFIED RATINGS BAR (Glassmorphism) */}
+                      <div className="flex flex-wrap items-center gap-4 mb-8">
+                          
+                          <div className="flex items-center bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/10 p-2 pr-6 shadow-xl overflow-hidden">
+                              
+                              {/* TMDB Ring */}
+                              <div className="relative w-12 h-12 flex items-center justify-center mr-4">
+                                <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90 drop-shadow-md">
+                                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#334155" strokeWidth="3" />
                                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={percentage > 70 ? '#22c55e' : percentage > 40 ? '#eab308' : '#ef4444'} strokeWidth="3" strokeDasharray={strokeDasharray} />
                                 </svg>
-                                <span className="absolute text-xs font-bold text-white">{percentage}<span className="text-[9px]">%</span></span>
+                                <div className="absolute inset-0 flex items-center justify-center flex-col">
+                                    <span className="text-[10px] font-black text-white leading-none">{percentage}</span>
+                                    <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tighter">TMDB</span>
+                                </div>
                               </div>
-                              <span className="font-bold text-white leading-tight text-sm drop-shadow-md whitespace-nowrap hidden sm:inline">TMDB</span>
-                          </div>
-                          
-                          {/* External Score Display (RT or IMDb) */}
-                          {hasRtScore && (
-                              <div className="flex items-center gap-3 bg-slate-900/40 rounded-full pr-4 border border-slate-700/50 backdrop-blur-sm animate-in fade-in zoom-in group/score">
-                                  <div className={`w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full shadow-lg ${badgeColor} transition-transform group-hover/score:scale-110`}>
-                                     {badgeIcon ? badgeIcon : <span className={`font-black text-xs md:text-sm ${isRT ? 'text-white' : 'text-black'}`}>{badgeLabel}</span>}
-                                  </div>
-                                  <div className="flex flex-col">
-                                      <span className="text-lg md:text-xl font-bold text-white leading-none">{rtScore}</span>
-                                      <span className="text-[10px] text-slate-300 font-medium">{badgeSubtext}</span>
-                                  </div>
-                              </div>
-                          )}
 
-                          <div className="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 backdrop-blur-sm border border-white/10 shadow-lg hidden sm:flex">
-                              <span className="text-xl hover:scale-125 transition-transform cursor-default">😍</span>
-                              <span className="text-xl hover:scale-125 transition-transform cursor-default">🤯</span>
-                              <span className="text-xl hover:scale-125 transition-transform cursor-default">😢</span>
-                              <div className="w-[1px] h-6 bg-white/20 mx-1"></div>
-                              <span className="text-xs text-white font-medium whitespace-nowrap">{t('your_vibe')}</span>
+                              {/* Vertical Divider */}
+                              <div className="w-px h-8 bg-white/10 mr-4"></div>
+
+                              {/* External Ratings */}
+                              <div className="flex items-center gap-6">
+                                  {/* IMDb */}
+                                  <div className="flex flex-col">
+                                      <div className="flex items-center gap-1.5">
+                                          <StarRatingIcon className="w-4 h-4 text-[#F5C518]" />
+                                          <span className="text-base font-bold text-white leading-none">{displayItem.rating.toFixed(1)}</span>
+                                          <span className="text-[10px] text-slate-500 font-medium">/10</span>
+                                      </div>
+                                      <span className="text-[8px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">IMDb Rating</span>
+                                  </div>
+
+                                  {/* RT / Metacritic / etc */}
+                                  {hasRtScore && (
+                                      <>
+                                        <div className="w-px h-8 bg-white/10"></div>
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-1.5">
+                                                {rtIcon}
+                                                <span className={`text-base font-bold leading-none ${rtColorClass}`}>{rtScore}</span>
+                                            </div>
+                                            <span className="text-[8px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">{isRT ? 'Tomatometer' : 'Score'}</span>
+                                        </div>
+                                      </>
+                                  )}
+                              </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-2 backdrop-blur-sm border border-white/5 shadow-lg hidden sm:flex hover:bg-white/10 transition-colors cursor-help" title={t('your_vibe')}>
+                              <span className="text-lg grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">😍</span>
+                              <span className="text-lg grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">🤯</span>
+                              <span className="text-lg grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">😢</span>
                           </div>
                       </div>
 
