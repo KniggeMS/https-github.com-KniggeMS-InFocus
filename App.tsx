@@ -21,10 +21,11 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { getMediaDetails } from './services/tmdb';
 import * as db from './services/db';
-import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone } from 'lucide-react';
+import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing } from 'lucide-react';
 
 const API_KEY_STORAGE_KEY = 'cinelog_tmdb_key';
 const OMDB_KEY_STORAGE_KEY = 'cinelog_omdb_key';
+const SEEN_LISTS_STORAGE_KEY = 'cinelog_seen_lists'; // New: Store IDs of seen lists
 const DEFAULT_TMDB_KEY = '4115939bdc412c5f7b0c4598fcf29b77';
 const DEFAULT_OMDB_KEY = '33df5dc9';
 
@@ -37,19 +38,27 @@ const getRandomColor = () => {
   return `hsl(${hue}, 40%, 30%)`;
 };
 
-const NavItem: React.FC<{ to: string; icon: any; label: string }> = ({ to, icon: Icon, label }) => (
+const NavItem: React.FC<{ to: string; icon: any; label: string; isNew?: boolean }> = ({ to, icon: Icon, label, isNew }) => (
   <NavLink 
     to={to} 
     className={({ isActive }) => 
-      `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+      `flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${
         isActive 
           ? 'bg-cyan-500/10 text-cyan-400 font-medium' 
           : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
       }`
     }
   >
-    <Icon size={20} />
-    <span>{label}</span>
+    <div className="flex items-center gap-3">
+        <Icon size={20} className={isNew ? 'text-cyan-400 animate-pulse' : ''} />
+        <span>{label}</span>
+    </div>
+    {isNew && (
+        <span className="flex h-2.5 w-2.5 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
+        </span>
+    )}
   </NavLink>
 );
 
@@ -66,6 +75,10 @@ const AppContent: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  
+  // Notification State
+  const [seenListIds, setSeenListIds] = useState<string[]>([]);
+  const [notificationMsg, setNotificationMsg] = useState<{title: string, subtitle: string} | null>(null);
   
   // Modals
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
@@ -129,19 +142,42 @@ const AppContent: React.FC = () => {
           
           const dbLists = await db.fetchCustomLists();
           setCustomLists(dbLists);
+          return dbLists; // Return for notification check
       } catch (e) {
           console.error(e);
+          return [];
       } finally {
           setIsDataLoading(false);
       }
   };
 
-  // Initial Load
+  // Initial Load & Notifications
   useEffect(() => {
     if (isAuthenticated && !isAuthLoading && !isRecoveryMode) {
-        loadData().then(() => {
-            // Check migration after initial load
+        // Load seen lists from local storage
+        const storedSeen = JSON.parse(localStorage.getItem(SEEN_LISTS_STORAGE_KEY) || '[]');
+        setSeenListIds(storedSeen);
+
+        loadData().then((fetchedLists) => {
             checkAndMigrateData();
+            
+            // Check for new shared lists
+            if (fetchedLists && user) {
+                const sharedWithMe = fetchedLists.filter(l => l.sharedWith.includes(user.id) && l.ownerId !== user.id);
+                const newLists = sharedWithMe.filter(l => !storedSeen.includes(l.id));
+                
+                if (newLists.length > 0) {
+                    // Trigger Notification
+                    const listNames = newLists.map(l => l.name).join(', ');
+                    setNotificationMsg({
+                        title: "Neue geteilte Liste!",
+                        subtitle: `${newLists.length} neue Liste(n): ${listNames}`
+                    });
+                    
+                    // Auto-hide notification
+                    setTimeout(() => setNotificationMsg(null), 8000);
+                }
+            }
         });
         
         // Load API Keys from Local (Non-sync settings)
@@ -152,6 +188,18 @@ const AppContent: React.FC = () => {
         if (savedOmdbKey) { setOmdbApiKey(savedOmdbKey); setTempOmdbKey(savedOmdbKey); }
     }
   }, [isAuthenticated, isAuthLoading, isRecoveryMode]);
+
+  // Mark list as seen when visiting
+  useEffect(() => {
+      if (location.pathname.startsWith('/lists/')) {
+          const listId = location.pathname.split('/')[2];
+          if (listId && !seenListIds.includes(listId)) {
+              const newSeen = [...seenListIds, listId];
+              setSeenListIds(newSeen);
+              localStorage.setItem(SEEN_LISTS_STORAGE_KEY, JSON.stringify(newSeen));
+          }
+      }
+  }, [location.pathname, seenListIds]);
 
   // PWA Install
   useEffect(() => {
@@ -230,6 +278,10 @@ const AppContent: React.FC = () => {
       const created = await db.createCustomList(newList, user.id);
       if (created) {
           setCustomLists(prev => [...prev, created]);
+          // Auto mark own lists as seen
+          const newSeen = [...seenListIds, created.id];
+          setSeenListIds(newSeen);
+          localStorage.setItem(SEEN_LISTS_STORAGE_KEY, JSON.stringify(newSeen));
           navigate(`/lists/${created.id}`);
       }
   };
@@ -413,7 +465,7 @@ const AppContent: React.FC = () => {
 
   if (isAuthLoading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center"><Loader2 size={40} className="text-cyan-500 animate-spin" /></div>;
   
-  // NEW: Intercept Recovery Mode (User clicked Reset Password Link)
+  // NEW: Intercept Recovery Mode
   if (isRecoveryMode) {
       return <RecoveryPage />;
   }
@@ -424,7 +476,7 @@ const AppContent: React.FC = () => {
   const sharedLists = customLists.filter(l => l.sharedWith.includes(user?.id || ''));
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col md:flex-row relative">
       
       {/* MIGRATION OVERLAY */}
       {isMigrating && (
@@ -432,6 +484,20 @@ const AppContent: React.FC = () => {
               <CloudUpload size={64} className="text-cyan-400 animate-bounce mb-4" />
               <h2 className="text-2xl font-bold mb-2">Cloud Synchronisierung</h2>
               <p className="text-slate-400">Deine lokalen Daten werden in die Cloud übertragen...</p>
+          </div>
+      )}
+
+      {/* NOTIFICATION TOAST */}
+      {notificationMsg && (
+          <div className="fixed top-4 right-4 z-[90] bg-slate-800 border-l-4 border-cyan-500 shadow-2xl rounded-lg p-4 flex items-start gap-3 animate-in slide-in-from-right-10 duration-500 max-w-sm">
+               <div className="p-2 bg-cyan-500/10 rounded-full">
+                   <BellRing size={20} className="text-cyan-400" />
+               </div>
+               <div className="flex-grow">
+                   <h4 className="text-sm font-bold text-white">{notificationMsg.title}</h4>
+                   <p className="text-xs text-slate-400 mt-1 leading-snug">{notificationMsg.subtitle}</p>
+               </div>
+               <button onClick={() => setNotificationMsg(null)} className="text-slate-500 hover:text-white"><X size={16}/></button>
           </div>
       )}
 
@@ -518,7 +584,10 @@ const AppContent: React.FC = () => {
           {sharedLists.length > 0 && (
              <>
                 <div className="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('shared_with')}</div>
-                {sharedLists.map(list => <NavItem key={list.id} to={`/lists/${list.id}`} icon={Share2} label={list.name} />)}
+                {sharedLists.map(list => {
+                    const isNew = !seenListIds.includes(list.id);
+                    return <NavItem key={list.id} to={`/lists/${list.id}`} icon={Share2} label={list.name} isNew={isNew} />;
+                })}
              </>
           )}
 
