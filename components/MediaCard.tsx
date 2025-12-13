@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { MediaItem, WatchStatus, MediaType, CustomList } from '../types';
 import { Trash2, Check, Clock, PlayCircle, Film, Tv, Layers, ListVideo, Heart, Bookmark, Star, ListPlus, FolderPlus, ChevronRight } from 'lucide-react';
@@ -219,7 +220,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
       </div>
 
       {/* User Rating Badge - Outside Image Container */}
-      {item.userRating && item.userRating > 0 && (
+      {(item.userRating || 0) > 0 && (
             <div className="absolute top-2 left-2 z-30 bg-yellow-500/90 text-slate-900 px-2 py-1 rounded-md text-xs font-bold shadow-sm flex items-center gap-1">
             <Star size={12} className="fill-slate-900" />
             {item.userRating}
@@ -230,7 +231,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
       <div className="p-4 flex-grow flex flex-col rounded-b-xl">
         
         <div className="mb-3 flex flex-wrap gap-2 text-xs text-slate-400">
-           {item.type === MediaType.SERIES && (item.seasons || item.episodes) && (
+           {item.type === MediaType.SERIES && ((item.seasons || 0) > 0 || (item.episodes || 0) > 0) && (
               <div className="flex items-center gap-1.5 bg-slate-900/50 px-2 py-1 rounded border border-slate-700/50">
                  <Layers size={12} className="text-purple-400" />
                  <span>{item.seasons} {t('seasons')}</span>
