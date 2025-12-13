@@ -149,9 +149,15 @@ const dictionary: Translations = {
     "your_vibe": "Wie ist dein Vibe?",
     "play_trailer": "Trailer abspielen",
     "close_trailer": "Schließen",
-    "private_notes": "Deine Rezension",
-    "notes_placeholder": "Was hat dir gefallen? Was nicht? Diese Rezension hilft der AI und ist für andere Nutzer sichtbar.",
+    
+    // Reviews
+    "public_review": "Deine Rezension",
+    "review_placeholder": "Teile deine Meinung mit der Community! Was hat dir gefallen? Was nicht? Deine Rezension hilft auch der AI.",
+    "review_public_badge": "Öffentlich sichtbar",
+    "review_saved": "Veröffentlicht",
+    "review_saving": "Speichere...",
     "community_reviews": "Community Stimmen",
+    
     "ai_insight": "Deep Content Analysis",
     "analyzing_content": "Analysiere Inhalt...",
 
@@ -347,9 +353,15 @@ const dictionary: Translations = {
     "your_vibe": "What's your vibe?",
     "play_trailer": "Play Trailer",
     "close_trailer": "Close",
-    "private_notes": "Your Review",
-    "notes_placeholder": "What did you like? What not? This review helps the AI and is visible to other users.",
+    
+    // Reviews
+    "public_review": "Your Review",
+    "review_placeholder": "Share your opinion with the community! What did you like? This review also helps the AI.",
+    "review_public_badge": "Publicly Visible",
+    "review_saved": "Published",
+    "review_saving": "Publishing...",
     "community_reviews": "Community Reviews",
+    
     "ai_insight": "Deep Content Analysis",
     "analyzing_content": "Analyzing content...",
 

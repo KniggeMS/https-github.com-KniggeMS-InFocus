@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Film, Clock, MonitorPlay, Heart, Bookmark, Play, ChevronLeft, Layers, Check, PlayCircle, User, ExternalLink, Clapperboard, ImageOff, MessageSquareQuote, BrainCircuit, Loader2, Star, Users } from 'lucide-react';
+import { X, Film, Clock, MonitorPlay, Heart, Bookmark, Play, ChevronLeft, Layers, Check, PlayCircle, User, ExternalLink, Clapperboard, ImageOff, MessageSquare, BrainCircuit, Loader2, Star, Users, PenTool } from 'lucide-react';
 import { MediaItem, SearchResult, MediaType, WatchStatus, PublicReview } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, BACKDROP_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 import { analyzeMovieContext } from '../services/gemini';
@@ -576,20 +576,25 @@ export const DetailView: React.FC<DetailViewProps> = ({
                     {/* Public Reviews Section (Replaced Private Notes) */}
                     {isExisting && (
                         <div className="space-y-6">
-                            {/* User's Review */}
-                            <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50">
+                            {/* User's Review Input - Visual Overhaul */}
+                            <div className="bg-gradient-to-br from-slate-800 to-slate-800/80 p-6 rounded-xl border border-cyan-500/20 shadow-lg relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500"></div>
                                 <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                                    <MessageSquareQuote size={16} className="text-cyan-400" /> {t('private_notes')} <span className="text-[10px] bg-cyan-900/50 px-2 py-0.5 rounded text-cyan-200 uppercase">Öffentlich</span>
+                                    <PenTool size={16} className="text-cyan-400" /> {t('public_review')} 
+                                    <span className="ml-auto text-[10px] bg-cyan-900/30 px-2 py-0.5 rounded text-cyan-300 uppercase font-medium border border-cyan-500/20 flex items-center gap-1">
+                                        <Users size={10} /> {t('review_public_badge')}
+                                    </span>
                                 </h4>
                                 <textarea 
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-slate-300 text-sm focus:border-cyan-500 focus:outline-none min-h-[100px] resize-y"
-                                    placeholder={t('notes_placeholder')}
+                                    className="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 text-slate-200 text-sm focus:border-cyan-500 focus:bg-slate-900 focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-slate-500"
+                                    placeholder={t('review_placeholder')}
                                 />
                                 <div className="flex justify-end mt-2">
-                                    <span className="text-[10px] text-slate-500">
-                                        {notes === existingItem?.userNotes ? 'Gespeichert' : 'Änderungen werden gespeichert...'}
+                                    <span className={`text-[10px] flex items-center gap-1 ${notes === existingItem?.userNotes ? 'text-green-400' : 'text-slate-500'}`}>
+                                        {notes === existingItem?.userNotes ? <Check size={10} /> : <Loader2 size={10} className="animate-spin" />}
+                                        {notes === existingItem?.userNotes ? t('review_saved') : t('review_saving')}
                                     </span>
                                 </div>
                             </div>
