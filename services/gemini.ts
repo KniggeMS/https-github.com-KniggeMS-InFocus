@@ -3,26 +3,59 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MediaType, SearchResult, MediaItem, ChatMessage } from "../types";
 
 // Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 const MODEL_NAME = "gemini-2.5-flash";
 const IMAGE_MODEL_NAME = "gemini-2.5-flash-image";
 
+// --- FALLBACK LOGIC ---
+
+/**
+ * Generates a deterministic "analysis" based on metadata when the AI is offline or quota is reached.
+ */
+const generateOfflineAnalysis = (item: MediaItem, userNotes?: string): string => {
+    const genres = item.genre.slice(0, 3).join(', ');
+    
+    // Rating Context
+    let ratingContext = "Ein Werk mit gemischten Bewertungen";
+    if (item.rating >= 8) ratingContext = "Ein von Kritikern gefeierter Titel";
+    else if (item.rating >= 6) ratingContext = "Ein solider Genre-Vertreter";
+    else if (item.rating > 0) ratingContext = "Ein Titel mit polarisierenden Bewertungen";
+
+    // Vibe Construction
+    let vibe = `Das ist ${ratingContext.toLowerCase()} aus dem Bereich ${genres}.`;
+    
+    // Plot Analysis (Heuristic)
+    if (item.plot) {
+        if (item.plot.toLowerCase().includes('murder') || item.plot.toLowerCase().includes('kill')) {
+            vibe += " Die Handlung verspricht Spannung und dunkle Themen.";
+        } else if (item.plot.toLowerCase().includes('love') || item.plot.toLowerCase().includes('romance')) {
+            vibe += " Es scheinen emotionale zwischenmenschliche Themen im Vordergrund zu stehen.";
+        } else {
+            vibe += " Die Geschichte wirkt komplex und vielschichtig.";
+        }
+    }
+
+    // Notes Integration
+    if (userNotes && userNotes.length > 0) {
+        vibe += ` Basierend auf deinen Notizen ("${userNotes}") scheint dies genau deinen aktuellen Interessen zu entsprechen.`;
+    }
+
+    return `(Offline Modus) ${vibe}`;
+};
+
+// --- API FUNCTIONS ---
+
 /**
  * Advanced Recommendation Engine (Hybrid Filtering)
- * Uses Gemini as an ML engine to analyze user behavior, ratings, and private notes.
  */
 export const getRecommendations = async (items: MediaItem[]): Promise<SearchResult[]> => {
   if (items.length === 0) return [];
+  if (!process.env.API_KEY) return [];
 
-  // 1. Data Preparation (Feature Extraction)
-  // We prioritize: Favorites, High User Ratings (>=4), and Items with Notes.
   const relevantItems = items.filter(i => i.isFavorite || (i.userRating && i.userRating >= 4) || (i.userNotes && i.userNotes.length > 5));
-  
-  // If not enough data, take the last 10 added items
   const sourceItems = relevantItems.length < 3 ? items.slice(0, 10) : relevantItems.slice(0, 20);
 
-  // 2. Construct User Profile Context for the LLM
   const profileSummary = sourceItems.map(item => {
       let info = `- "${item.title}" (${item.year}, ${item.genre.join('/')})`;
       if (item.userRating) info += ` [Rating: ${item.userRating}/5]`;
@@ -33,16 +66,11 @@ export const getRecommendations = async (items: MediaItem[]): Promise<SearchResu
 
   try {
     const prompt = `
-      Act as a sophisticated movie recommendation engine using Hybrid Filtering (Content-Based + Collaborative logic).
-      
-      Analyze the following user profile based on their watch history, ratings, and specific notes:
+      Act as a sophisticated movie recommendation engine.
+      Analyze this user profile:
       ${profileSummary}
 
-      Task:
-      1. Analyze the 'User Notes' to understand specific elements the user likes (e.g., "plot twists", "cinematography", "dark atmosphere").
-      2. Analyze the high-rated items to identify preferred genres and themes.
-      3. Recommend 3 NEW movies or series that fit this specific taste profile. Do not recommend items already in the list.
-      
+      Task: Recommend 3 NEW movies/series fitting this profile.
       Return JSON format.
     `;
     
@@ -60,7 +88,7 @@ export const getRecommendations = async (items: MediaItem[]): Promise<SearchResu
               year: { type: Type.NUMBER },
               type: { type: Type.STRING, enum: ["MOVIE", "SERIES"] },
               genre: { type: Type.ARRAY, items: { type: Type.STRING } },
-              plot: { type: Type.STRING, description: "Warum passt das zu meinem Profil? (Auf Deutsch)" },
+              plot: { type: Type.STRING, description: "Warum passt das? (DE)" },
               rating: { type: Type.NUMBER },
             },
             required: ["title", "year", "type", "genre", "plot", "rating"],
@@ -74,57 +102,45 @@ export const getRecommendations = async (items: MediaItem[]): Promise<SearchResu
         return data.map((item: any) => ({
           ...item,
           type: item.type === "SERIES" ? MediaType.SERIES : MediaType.MOVIE,
-          posterPath: null, // Gemini recommendations won't have TMDB paths by default
+          posterPath: null,
           backdropPath: null
         }));
     }
     return [];
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Recommendation Error:", error);
     return [];
   }
 };
 
-/**
- * Generates a profile picture for the user based on their username.
- * Uses gemini-2.5-flash-image ("NanoBanana").
- */
 export const generateAvatar = async (username: string): Promise<string | null> => {
+    if (!process.env.API_KEY) return null;
     try {
         const prompt = `A cool, artistic, high-quality circular avatar profile picture for a movie lover named "${username}". Pop art style or cinematic lighting. Minimalist background.`;
         
         const response = await ai.models.generateContent({
             model: IMAGE_MODEL_NAME,
-            contents: {
-                parts: [{ text: prompt }]
-            }
+            contents: { parts: [{ text: prompt }] }
         });
 
-        // Loop through parts to find the image
         for (const part of response.candidates?.[0]?.content?.parts || []) {
-            if (part.inlineData) {
-                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-            }
+            if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         }
         return null;
     } catch (error) {
-        console.error("Gemini Avatar Generation Error:", error);
+        console.error("Gemini Avatar Error:", error);
         return null;
     }
 };
 
-/**
- * Vision Search: Identifies a movie/series from an image (DVD cover, poster, scene).
- */
 export const identifyMovieFromImage = async (base64Image: string): Promise<string | null> => {
+    if (!process.env.API_KEY) return null;
     try {
-        const prompt = "Identify the movie or TV series shown in this image. Return ONLY the exact title. If not sure, return nothing.";
-        
-        // Remove header if present (data:image/jpeg;base64,)
+        const prompt = "Identify the movie or TV series. Return ONLY the title.";
         const base64Data = base64Image.split(',')[1];
 
         const response = await ai.models.generateContent({
-            model: MODEL_NAME, // Gemini 2.5 Flash is multimodal
+            model: MODEL_NAME,
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
@@ -140,60 +156,52 @@ export const identifyMovieFromImage = async (base64Image: string): Promise<strin
     }
 };
 
-/**
- * ChatBot: Answer questions based on the user's collection context.
- */
 export const chatWithAI = async (message: string, collection: MediaItem[], history: ChatMessage[]): Promise<string> => {
+    if (!process.env.API_KEY) return "Der Chatbot ist momentan nicht verfügbar (API Key fehlt).";
     try {
-        // Create a summary of the user's collection for context
-        // Limit to last 50 items to save tokens
         const collectionContext = collection.slice(0, 50).map(i => 
             `${i.title} (${i.year}) - Status: ${i.status}, Rating: ${i.userRating || 'N/A'}`
         ).join('\n');
 
         const systemInstruction = `
-            You are 'CineLog AI', a helpful movie assistant.
-            You have access to the user's movie collection/watchlist provided below.
-            
-            User's Collection Context:
+            You are 'CineLog AI'. Access to user's collection:
             ${collectionContext}
-
-            Rules:
-            1. If the user asks "Where can I watch X?", try to answer generally or ask them to check the app's streaming info.
-            2. If they ask for recommendations, consider what they have already watched/rated.
-            3. Keep answers concise, friendly, and in the language of the user (German/English).
-            4. You can filter their collection (e.g., "Show me 80s horror movies I haven't watched").
+            Keep answers concise, friendly, and in German/English.
         `;
 
         const response = await ai.models.generateContent({
             model: MODEL_NAME,
             contents: message,
-            config: {
-                systemInstruction: systemInstruction,
-            }
+            config: { systemInstruction }
         });
 
-        return response.text || "Sorry, I couldn't generate a response.";
+        return response.text || "Sorry, keine Antwort möglich.";
     } catch (error) {
         console.error("Chat Error:", error);
-        return "Sorry, I'm having trouble connecting to the AI right now.";
+        return "Verbindungsprobleme mit der AI.";
     }
 };
 
 /**
  * Deep Content Analysis: Analyzes plot vs user preferences/notes.
+ * FALLBACK: If API fails (Quota/Network), generates a local static analysis.
  */
 export const analyzeMovieContext = async (item: MediaItem, userNotes: string | undefined): Promise<string> => {
+    // 1. Check if API Key exists
+    if (!process.env.API_KEY) {
+        return generateOfflineAnalysis(item, userNotes);
+    }
+
     try {
         const prompt = `
             Analyze the movie/series "${item.title}".
             Plot: "${item.plot}"
-            User's Private Notes on this item: "${userNotes || 'None'}"
+            User's Private Notes: "${userNotes || 'None'}"
             
             Task:
             Provide a short, 2-sentence "Deep Insight".
             1. Mention if the "Vibe" matches the plot (e.g. "Dark & Complex").
-            2. Warn about structural things like Cliffhangers if it's a series, or if the user notes indicate they liked/disliked something specific about it.
+            2. Warn about structural things like Cliffhangers if it's a series.
             
             Output Language: German.
         `;
@@ -203,8 +211,12 @@ export const analyzeMovieContext = async (item: MediaItem, userNotes: string | u
             contents: prompt,
         });
 
-        return response.text || "Keine Analyse verfügbar.";
-    } catch (error) {
-        return "Analyse fehlgeschlagen.";
+        if (!response.text) throw new Error("Empty response");
+        return response.text;
+
+    } catch (error: any) {
+        console.warn("Deep Content Analysis Failed (falling back to offline mode):", error.message);
+        // 2. Fallback to Local Analysis
+        return generateOfflineAnalysis(item, userNotes);
     }
 };
