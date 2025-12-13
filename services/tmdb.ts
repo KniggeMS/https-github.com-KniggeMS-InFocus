@@ -134,9 +134,10 @@ export const getMediaDetails = async (item: SearchResult, apiKey: string): Promi
   try {
     // 1. Fetch Main Details with extensive appends
     // IMPORTANT: include_video_language=de,en is crucial to get trailers if no German one exists
+    // RFC-012 FIX: Added 'external_ids' to appendToResponse for BOTH types to fetch IMDb ID reliably
     const appendToResponse = item.type === MediaType.MOVIE 
-        ? 'videos,credits,release_dates' 
-        : 'videos,credits,content_ratings';
+        ? 'videos,credits,release_dates,external_ids' 
+        : 'videos,credits,content_ratings,external_ids';
         
     const detailsRes = await fetch(`${BASE_URL}/${endpoint}/${item.tmdbId}?api_key=${apiKey}&language=de-DE&append_to_response=${appendToResponse}&include_video_language=de,en`);
     
@@ -233,7 +234,8 @@ export const getMediaDetails = async (item: SearchResult, apiKey: string): Promi
       // Use existing if details are null/empty, but usually API returns valid strings or null
       posterPath: details.poster_path || item.posterPath, 
       backdropPath: details.backdrop_path || item.backdropPath,
-      imdbId: details.imdb_id, // Store IMDb ID if available
+      // FIX: Check nested external_ids for series
+      imdbId: details.imdb_id || details.external_ids?.imdb_id, 
       
       providers: providers.slice(0, 5),
       trailerKey: trailerKey,
