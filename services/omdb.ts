@@ -18,6 +18,7 @@ interface OMDbResponse {
 
 interface OMDbDetailResponse {
     Ratings?: { Source: string; Value: string }[];
+    imdbRating?: string;
     Response: string;
 }
 
@@ -59,6 +60,7 @@ export const searchOMDB = async (query: string, year: string | null, type: Media
 
 /**
  * Fetches Rotten Tomatoes rating specifically using IMDb ID.
+ * Fallback to IMDb Rating if RT is missing (common for Series).
  */
 export const getOmdbRatings = async (imdbId: string, apiKey: string): Promise<string | undefined> => {
     if (!apiKey || !imdbId) return undefined;
@@ -68,9 +70,17 @@ export const getOmdbRatings = async (imdbId: string, apiKey: string): Promise<st
         const res = await fetch(url);
         const data: OMDbDetailResponse = await res.json();
 
-        if (data.Response === "True" && data.Ratings) {
-            const rt = data.Ratings.find(r => r.Source === "Rotten Tomatoes");
-            return rt ? rt.Value : undefined;
+        if (data.Response === "True") {
+            // Priority 1: Rotten Tomatoes
+            const rt = data.Ratings?.find(r => r.Source === "Rotten Tomatoes");
+            if (rt) return rt.Value;
+
+            // Priority 2: IMDb (Fallback for Series)
+            // Sometimes it's in Ratings array, sometimes top level property
+            const imdbInRatings = data.Ratings?.find(r => r.Source === "Internet Movie Database");
+            if (imdbInRatings) return imdbInRatings.Value;
+            
+            if (data.imdbRating && data.imdbRating !== "N/A") return `${data.imdbRating}/10`;
         }
         return undefined;
     } catch (e) {

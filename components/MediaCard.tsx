@@ -51,6 +51,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
 
   const posterUrl = item.posterPath ? `${IMAGE_BASE_URL}${item.posterPath}` : null;
 
+  // Determine Badge Type (RT vs IMDb)
+  const isRT = item.rtScore && item.rtScore.includes('%');
+  const badgeLabel = isRT ? 'RT' : 'IMDb';
+  const badgeColor = isRT ? 'bg-[#FA320A]/90 text-white' : 'bg-[#F5C518]/90 text-black';
+
   return (
     <div 
         onClick={() => onClick(item)}
@@ -225,9 +230,9 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                 {item.userRating}
                 </div>
           )}
-          {item.rtScore && (
-              <div className="bg-[#FA320A]/90 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-sm flex items-center gap-1 w-fit">
-                 <span className="text-[8px] sm:text-[10px] font-black">RT</span> {item.rtScore}
+          {item.rtScore && item.rtScore !== "N/A" && (
+              <div className={`${badgeColor} px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold shadow-sm flex items-center gap-1 w-fit`}>
+                 <span className="text-[8px] sm:text-[10px] font-black">{badgeLabel}</span> {item.rtScore}
               </div>
           )}
       </div>

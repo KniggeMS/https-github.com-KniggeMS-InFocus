@@ -74,7 +74,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
 
               const score = await getOmdbRatings(details.imdbId, omdbApiKey);
               if (score) {
-                  console.log("Fetched retroactive RT score:", score);
+                  console.log("Fetched retroactive Score:", score);
                   setDetails(prev => ({ ...prev, rtScore: score }));
                   
                   // Persist to DB if item exists
@@ -167,6 +167,12 @@ export const DetailView: React.FC<DetailViewProps> = ({
   // RT Score Handling (Prioritize retroactive fetch in details over existing item)
   const rtScore = details?.rtScore || (initialItem as MediaItem).rtScore; 
   const hasRtScore = rtScore && rtScore !== "N/A";
+  
+  // Determine Badge Type
+  const isRT = hasRtScore && rtScore.includes('%');
+  const badgeLabel = isRT ? 'RT' : 'IMDb';
+  const badgeColor = isRT ? 'bg-[#FA320A]' : 'bg-[#F5C518] text-black';
+  const badgeSubtext = isRT ? 'Tomatometer' : 'IMDb Rating';
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
   
@@ -339,16 +345,15 @@ export const DetailView: React.FC<DetailViewProps> = ({
                               <span className="font-bold text-white leading-tight text-sm drop-shadow-md whitespace-nowrap hidden sm:inline">TMDB</span>
                           </div>
                           
-                          {/* RT Score Display */}
+                          {/* External Score Display (RT or IMDb) */}
                           {hasRtScore && (
                               <div className="flex items-center gap-3 bg-slate-900/40 rounded-full pr-4 border border-slate-700/50 backdrop-blur-sm animate-in fade-in zoom-in">
-                                  <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-[#FA320A] rounded-full text-white shadow-lg">
-                                     {/* Simplified Tomato Icon Representation */}
-                                     <span className="font-black text-xs md:text-sm">RT</span>
+                                  <div className={`w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full shadow-lg ${badgeColor}`}>
+                                     <span className="font-black text-xs md:text-sm">{badgeLabel}</span>
                                   </div>
                                   <div className="flex flex-col">
                                       <span className="text-lg md:text-xl font-bold text-white leading-none">{rtScore}</span>
-                                      <span className="text-[10px] text-slate-300 font-medium">Tomatometer</span>
+                                      <span className="text-[10px] text-slate-300 font-medium">{badgeSubtext}</span>
                                   </div>
                               </div>
                           )}
