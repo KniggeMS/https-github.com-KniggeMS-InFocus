@@ -6,6 +6,8 @@ import {
   Share2, Trophy, List, Key, Shield, Smartphone, 
   MessageCircle, Layers, Star
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { UserRole } from '../types';
 
 const MockCard = ({ title, icon: Icon, color }: any) => (
   <div className="w-32 h-48 bg-slate-800 rounded-lg border border-slate-700 relative overflow-hidden flex flex-col shadow-lg">
@@ -21,11 +23,21 @@ const MockCard = ({ title, icon: Icon, color }: any) => (
 
 export const GuidePage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === UserRole.ADMIN;
 
   const scrollTo = (id: string) => {
     const element = document.getElementById(id);
     if (element) element.scrollIntoView({ behavior: 'smooth' });
   };
+
+  const navItems = [
+    ...(isAdmin ? [{ id: 'start', label: 'Erste Schritte', icon: Key }] : []),
+    { id: 'search', label: 'Suchen & Vision', icon: Search },
+    { id: 'ai', label: 'AI Power Features', icon: Sparkles },
+    { id: 'lists', label: 'Listen & Social', icon: List },
+    { id: 'gamification', label: 'Level & Trophäen', icon: Trophy },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-20 relative overflow-x-hidden">
@@ -53,13 +65,7 @@ export const GuidePage: React.FC = () => {
           <aside className="hidden lg:block sticky top-8 h-fit space-y-2">
             <nav className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-xl">
               <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 px-2">Inhalt</p>
-              {[
-                { id: 'start', label: 'Erste Schritte', icon: Key },
-                { id: 'search', label: 'Suchen & Vision', icon: Search },
-                { id: 'ai', label: 'AI Power Features', icon: Sparkles },
-                { id: 'lists', label: 'Listen & Social', icon: List },
-                { id: 'gamification', label: 'Level & Trophäen', icon: Trophy },
-              ].map((item) => (
+              {navItems.map((item) => (
                 <button 
                   key={item.id}
                   onClick={() => scrollTo(item.id)}
@@ -74,40 +80,42 @@ export const GuidePage: React.FC = () => {
           {/* Main Content */}
           <main className="lg:col-span-3 space-y-12">
 
-            {/* SECTION 1: ERSTE SCHRITTE */}
-            <section id="start" className="scroll-mt-24">
-              <div className="bg-slate-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                
-                <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
-                  <Key className="text-cyan-400" /> Erste Schritte
-                </h2>
-                <p className="text-slate-300 mb-6 leading-relaxed">
-                  Damit InFocus CineLog funktioniert, benötigt die App Zugang zu Filmdatenbanken. Keine Sorge, das musst du nur einmal machen.
-                </p>
+            {/* SECTION 1: ERSTE SCHRITTE (ADMIN ONLY) */}
+            {isAdmin && (
+                <section id="start" className="scroll-mt-24">
+                <div className="bg-slate-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                    
+                    <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
+                    <Key className="text-cyan-400" /> Erste Schritte (Admin)
+                    </h2>
+                    <p className="text-slate-300 mb-6 leading-relaxed">
+                    Damit InFocus CineLog funktioniert, benötigt die App Zugang zu Filmdatenbanken. Als Admin verwaltest du diese Keys für alle Nutzer.
+                    </p>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
-                    <h3 className="font-bold text-white mb-2">1. TMDB API Key</h3>
-                    <p className="text-sm text-slate-400 mb-3">Notwendig für Filmdaten, Cover und Schauspieler.</p>
-                    <div className="text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-cyan-400 truncate">
-                      4115939bdc... (Beispiel)
+                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                        <h3 className="font-bold text-white mb-2">1. TMDB API Key</h3>
+                        <p className="text-sm text-slate-400 mb-3">Notwendig für Filmdaten, Cover und Schauspieler.</p>
+                        <div className="text-xs bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-cyan-400 truncate">
+                        4115939bdc... (Beispiel)
+                        </div>
                     </div>
-                  </div>
-                  <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
-                    <h3 className="font-bold text-white mb-2">2. OMDb API Key (Optional)</h3>
-                    <p className="text-sm text-slate-400 mb-3">Hilft beim "Smart Import", wenn TMDB einen Titel nicht sofort findet.</p>
-                  </div>
+                    <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+                        <h3 className="font-bold text-white mb-2">2. OMDb API Key (Optional)</h3>
+                        <p className="text-sm text-slate-400 mb-3">Hilft beim "Smart Import", wenn TMDB einen Titel nicht sofort findet.</p>
+                    </div>
+                    </div>
+                    
+                    <div className="mt-6 flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                    <Shield className="text-yellow-500 shrink-0 mt-1" size={20} />
+                    <p className="text-xs text-yellow-200">
+                        <strong>Admin Hinweis:</strong> Diese Sektion ist für normale Benutzer unsichtbar. Konfiguriere die Keys in den Einstellungen (Zahnrad).
+                    </p>
+                    </div>
                 </div>
-                
-                <div className="mt-6 flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                  <Shield className="text-yellow-500 shrink-0 mt-1" size={20} />
-                  <p className="text-xs text-yellow-200">
-                    <strong>Hinweis:</strong> Deine Keys werden nur lokal in deinem Browser gespeichert. Wir haben keinen Zugriff darauf. Wenn du Admin bist, sind diese Felder für deine Benutzer bereits vorkonfiguriert.
-                  </p>
-                </div>
-              </div>
-            </section>
+                </section>
+            )}
 
             {/* SECTION 2: SUCHEN & VISION */}
             <section id="search" className="scroll-mt-24">
