@@ -2,11 +2,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { MediaType, SearchResult, MediaItem, ChatMessage } from "../types";
 
-// Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-
+// CONSTANTS
+const GEMINI_KEY_STORAGE_KEY = 'cinelog_gemini_key';
 const MODEL_NAME = "gemini-2.5-flash";
 const IMAGE_MODEL_NAME = "gemini-2.5-flash-image";
+
+// --- CLIENT FACTORY ---
+// Helper to create client dynamically so we pick up key changes instantly
+const getAiClient = () => {
+    // Priority: 1. LocalStorage (User Input), 2. Env Var (Deployment)
+    const apiKey = localStorage.getItem(GEMINI_KEY_STORAGE_KEY) || process.env.API_KEY || '';
+    return new GoogleGenAI({ apiKey });
+};
 
 // --- CACHING UTILS ---
 
@@ -89,8 +96,9 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
       console.warn("Cache read error", e);
   }
 
-  // 2. Check API Key
-  if (!process.env.API_KEY) return [];
+  // 2. Check API Key validity (Simple check)
+  const ai = getAiClient();
+  // We can't easily check if key is valid without making a call, but we proceed.
 
   const relevantItems = items.filter(i => i.isFavorite || (i.userRating && i.userRating >= 4) || (i.userNotes && i.userNotes.length > 5));
   const sourceItems = relevantItems.length < 3 ? items.slice(0, 10) : relevantItems.slice(0, 20);
@@ -172,8 +180,8 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
 };
 
 export const generateAvatar = async (username: string): Promise<string | null> => {
-    if (!process.env.API_KEY) return null;
     try {
+        const ai = getAiClient();
         const prompt = `A cool, artistic, high-quality circular avatar profile picture for a movie lover named "${username}". Pop art style or cinematic lighting. Minimalist background.`;
         
         const response = await ai.models.generateContent({
@@ -192,8 +200,8 @@ export const generateAvatar = async (username: string): Promise<string | null> =
 };
 
 export const identifyMovieFromImage = async (base64Image: string): Promise<string | null> => {
-    if (!process.env.API_KEY) return null;
     try {
+        const ai = getAiClient();
         const prompt = "Identify the movie or TV series. Return ONLY the title.";
         const base64Data = base64Image.split(',')[1];
 
@@ -215,8 +223,8 @@ export const identifyMovieFromImage = async (base64Image: string): Promise<strin
 };
 
 export const chatWithAI = async (message: string, collection: MediaItem[], history: ChatMessage[]): Promise<string> => {
-    if (!process.env.API_KEY) return "Der Chatbot ist momentan nicht verfügbar (API Key fehlt).";
     try {
+        const ai = getAiClient();
         const collectionContext = collection.slice(0, 50).map(i => 
             `${i.title} (${i.year}) - Status: ${i.status}, Rating: ${i.userRating || 'N/A'}`
         ).join('\n');
@@ -263,13 +271,9 @@ export const analyzeMovieContext = async (item: MediaItem, userNotes: string | u
         console.warn("Cache read error", e);
     }
 
-    // 2. Check API Key
-    if (!process.env.API_KEY) {
-        return generateOfflineAnalysis(item, userNotes);
-    }
-
-    // 3. Call API
+    // 2. Call API
     try {
+        const ai = getAiClient();
         const prompt = `
             Analyze the movie/series "${item.title}".
             Plot: "${item.plot}"
@@ -290,7 +294,7 @@ export const analyzeMovieContext = async (item: MediaItem, userNotes: string | u
 
         if (!response.text) throw new Error("Empty response");
         
-        // 4. Save to Cache
+        // 3. Save to Cache
         const newEntry: AnalysisCacheEntry = {
             timestamp: Date.now(),
             userNotesHash: currentNotesHash,
@@ -303,9 +307,8 @@ export const analyzeMovieContext = async (item: MediaItem, userNotes: string | u
     } catch (error: any) {
         console.warn("Deep Content Analysis Failed (falling back):", error.message);
         
-        // 5. Fallback Strategy:
+        // 4. Fallback Strategy:
         // If we have a stale cache (notes changed but item is same), return that instead of offline text
-        // because it's still better quality than the offline algo.
         try {
             const cachedRaw = localStorage.getItem(cacheKey);
             if (cachedRaw) {
@@ -314,7 +317,7 @@ export const analyzeMovieContext = async (item: MediaItem, userNotes: string | u
             }
         } catch(e) {}
 
-        // 6. Last Resort: Offline Algo
+        // 5. Last Resort: Offline Algo
         return generateOfflineAnalysis(item, userNotes);
     }
 };

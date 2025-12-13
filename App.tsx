@@ -28,6 +28,7 @@ import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, M
 
 const API_KEY_STORAGE_KEY = 'cinelog_tmdb_key';
 const OMDB_KEY_STORAGE_KEY = 'cinelog_omdb_key';
+const GEMINI_KEY_STORAGE_KEY = 'cinelog_gemini_key';
 const SEEN_LISTS_STORAGE_KEY = 'cinelog_seen_lists'; // New: Store IDs of seen lists
 const DEFAULT_TMDB_KEY = '4115939bdc412c5f7b0c4598fcf29b77';
 const DEFAULT_OMDB_KEY = '33df5dc9';
@@ -99,6 +100,10 @@ const AppContent: React.FC = () => {
   const [tempApiKey, setTempApiKey] = useState(DEFAULT_TMDB_KEY);
   const [omdbApiKey, setOmdbApiKey] = useState(DEFAULT_OMDB_KEY);
   const [tempOmdbKey, setTempOmdbKey] = useState(DEFAULT_OMDB_KEY);
+  
+  // Gemini AI Key State
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [tempGeminiKey, setTempGeminiKey] = useState('');
   
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
@@ -193,6 +198,9 @@ const AppContent: React.FC = () => {
         
         const savedOmdbKey = localStorage.getItem(OMDB_KEY_STORAGE_KEY);
         if (savedOmdbKey) { setOmdbApiKey(savedOmdbKey); setTempOmdbKey(savedOmdbKey); }
+
+        const savedGeminiKey = localStorage.getItem(GEMINI_KEY_STORAGE_KEY);
+        if (savedGeminiKey) { setGeminiApiKey(savedGeminiKey); setTempGeminiKey(savedGeminiKey); }
     }
   }, [isAuthenticated, isAuthLoading, isRecoveryMode]);
 
@@ -226,6 +234,10 @@ const AppContent: React.FC = () => {
   };
 
   const saveSettings = () => {
+    // Gemini Key is always editable by user to solve their Quota/Demo issues
+    localStorage.setItem(GEMINI_KEY_STORAGE_KEY, tempGeminiKey);
+    setGeminiApiKey(tempGeminiKey);
+
     if (canEditKeys) {
         localStorage.setItem(API_KEY_STORAGE_KEY, tempApiKey);
         setTmdbApiKey(tempApiKey);
@@ -568,17 +580,22 @@ const AppContent: React.FC = () => {
                      </button>
                  </div>
 
+                 {/* Gemini Key Input (Always available) */}
+                 <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2 text-purple-400"><Sparkles size={12} /> Google Gemini Key</h4>
+                 <input type="password" value={tempGeminiKey} onChange={(e) => setTempGeminiKey(e.target.value)} placeholder="Gemini API Key..." className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white mb-2 focus:border-purple-500 focus:outline-none" />
+
                  {canEditKeys ? (
                     <>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2"><Key size={12} /> TMDB API Key</h4>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2 mt-2"><Key size={12} /> TMDB API Key</h4>
                         <input type="password" value={tempApiKey} onChange={(e) => setTempApiKey(e.target.value)} placeholder="TMDB Key..." className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white mb-2 focus:border-cyan-500 focus:outline-none" />
                         <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2 mt-3"><Database size={12} /> OMDb API Key</h4>
                         <input type="password" value={tempOmdbKey} onChange={(e) => setTempOmdbKey(e.target.value)} placeholder="OMDb Key..." className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white mb-2 focus:border-cyan-500 focus:outline-none" />
-                        <button onClick={saveSettings} className="w-full py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs rounded font-medium transition-colors mb-4">{t('remember')}</button>
                     </>
                  ) : (
-                    <div className="mb-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-xs text-red-400 flex items-center gap-2"><ShieldAlert size={14} /><span>API Keys sind verwaltet.</span></div>
+                    <div className="mb-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-xs text-red-400 flex items-center gap-2"><ShieldAlert size={14} /><span>TMDB Keys verwaltet.</span></div>
                  )}
+                 <button onClick={saveSettings} className="w-full py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs rounded font-medium transition-colors mb-4 mt-2">{t('remember')}</button>
+
                 <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2"><Languages size={12} /> {t('language')}</h4>
                 <div className="flex gap-2 mb-4">
                      <button onClick={() => setLanguage('de')} className={`flex-1 py-1 text-xs rounded border ${language === 'de' ? 'bg-slate-600 border-slate-500 text-white' : 'border-slate-700 text-slate-400'}`}>DE</button>
@@ -761,6 +778,11 @@ const AppContent: React.FC = () => {
                                 </div>
                             </div>
                             
+                            {/* Mobile Gemini Key Input */}
+                            <div className="space-y-3">
+                                <div><h4 className="text-xs font-bold text-purple-400 uppercase mb-2">Google Gemini API Key</h4><input type="password" value={tempGeminiKey} onChange={(e) => setTempGeminiKey(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500" /></div>
+                            </div>
+
                             {/* Mobile Admin Link */}
                             {canManageUsers && (
                                 <button onClick={() => { setIsSettingsOpen(false); navigate('/admin'); }} className="w-full py-3 bg-slate-700/50 text-cyan-400 border border-slate-600 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
@@ -772,11 +794,12 @@ const AppContent: React.FC = () => {
                                 <div className="space-y-3">
                                     <div><h4 className="text-xs font-bold text-slate-400 uppercase mb-2">API Key (TMDB)</h4><input type="password" value={tempApiKey} onChange={(e) => setTempApiKey(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500" /></div>
                                     <div><h4 className="text-xs font-bold text-slate-400 uppercase mb-2">API Key (OMDb)</h4><input type="password" value={tempOmdbKey} onChange={(e) => setTempOmdbKey(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500" /></div>
-                                    <button onClick={saveSettings} className="w-full py-3 bg-cyan-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-cyan-900/20">{t('remember')}</button>
                                 </div>
                             ) : (
-                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-center gap-2"><ShieldAlert size={16} /><span>API Keys sind verwaltet.</span></div>
+                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-center gap-2"><ShieldAlert size={16} /><span>TMDB Keys sind verwaltet.</span></div>
                             )}
+                            <button onClick={saveSettings} className="w-full py-3 bg-cyan-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-cyan-900/20">{t('remember')}</button>
+
                             <div>
                                 <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">{t('language')}</h4>
                                 <div className="flex gap-2 bg-slate-900/50 p-1 rounded-xl">
