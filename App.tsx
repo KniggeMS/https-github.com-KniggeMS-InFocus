@@ -74,6 +74,7 @@ const AppContent: React.FC = () => {
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isMobileListsOpen, setIsMobileListsOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   
   // Notification State
@@ -283,6 +284,7 @@ const AppContent: React.FC = () => {
           setSeenListIds(newSeen);
           localStorage.setItem(SEEN_LISTS_STORAGE_KEY, JSON.stringify(newSeen));
           navigate(`/lists/${created.id}`);
+          setIsMobileListsOpen(false);
       }
   };
 
@@ -474,9 +476,10 @@ const AppContent: React.FC = () => {
 
   const myCustomLists = customLists.filter(l => l.ownerId === user?.id);
   const sharedLists = customLists.filter(l => l.sharedWith.includes(user?.id || ''));
+  const hasNewSharedLists = sharedLists.some(l => !seenListIds.includes(l.id));
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50 flex flex-col md:flex-row relative">
+    <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col md:flex-row relative">
       
       {/* MIGRATION OVERLAY */}
       {isMigrating && (
@@ -612,11 +615,80 @@ const AppContent: React.FC = () => {
              </div>
              <div className="flex gap-4">
                  <button onClick={() => navigate('/profile')} className="text-slate-400 hover:text-white"><UserIcon size={24} /></button>
-                 <button onClick={() => setIsCreateListOpen(true)} className="text-slate-400 hover:text-white"><ListPlus size={24} /></button>
+                 <button onClick={() => setIsMobileListsOpen(true)} className="text-slate-400 hover:text-white relative">
+                     <ListPlus size={24} />
+                     {hasNewSharedLists && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-cyan-500 rounded-full border border-slate-900"></span>}
+                 </button>
                  <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="text-slate-400 hover:text-white"><Settings size={24} /></button>
              </div>
         </div>
-        <button id="mobile-menu-trigger" className="hidden" onClick={() => setIsCreateListOpen(true)}></button>
+        
+        {/* MOBILE LISTS DRAWER */}
+        {isMobileListsOpen && (
+            <div className="md:hidden fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-sm flex flex-col justify-end animate-in fade-in">
+                 <div className="flex-grow" onClick={() => setIsMobileListsOpen(false)}></div>
+                 <div className="bg-slate-800 p-6 rounded-t-2xl border-t border-slate-700 shadow-2xl relative animate-in slide-in-from-bottom-10 max-h-[85vh] overflow-y-auto pb-safe">
+                      <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-6"></div>
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-white flex items-center gap-2"><List size={20} className="text-cyan-400"/> {t('custom_lists')}</h3>
+                        <button onClick={() => setIsMobileListsOpen(false)} className="text-slate-400 bg-slate-900/50 p-2 rounded-full"><X size={20} /></button>
+                      </div>
+                      
+                      <div className="space-y-4">
+                           {/* My Lists Section */}
+                           <div>
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('my_lists')}</h4>
+                                {myCustomLists.length === 0 ? (
+                                    <div className="p-3 text-slate-500 text-sm italic">{t('no_custom_lists')}</div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {myCustomLists.map(list => (
+                                            <div 
+                                                key={list.id} 
+                                                onClick={() => { navigate(`/lists/${list.id}`); setIsMobileListsOpen(false); }}
+                                                className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-xl flex items-center gap-3 cursor-pointer"
+                                            >
+                                                <List size={18} className="text-slate-400"/>
+                                                <span className="text-white font-medium">{list.name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                           </div>
+
+                           {/* Shared Lists Section */}
+                           {sharedLists.length > 0 && (
+                               <div>
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 mt-4">{t('shared_with')}</h4>
+                                    <div className="space-y-2">
+                                        {sharedLists.map(list => {
+                                            const isNew = !seenListIds.includes(list.id);
+                                            return (
+                                                <div 
+                                                    key={list.id} 
+                                                    onClick={() => { navigate(`/lists/${list.id}`); setIsMobileListsOpen(false); }}
+                                                    className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-xl flex items-center gap-3 cursor-pointer border border-transparent hover:border-cyan-500/30 transition-colors"
+                                                >
+                                                    <Share2 size={18} className={isNew ? "text-cyan-400" : "text-slate-400"}/>
+                                                    <span className="text-white font-medium">{list.name}</span>
+                                                    {isNew && <span className="ml-auto text-xs bg-cyan-600 text-white px-2 py-0.5 rounded-full">NEU</span>}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                               </div>
+                           )}
+
+                           <button 
+                               onClick={() => setIsCreateListOpen(true)}
+                               className="w-full mt-4 py-3 bg-cyan-600/10 border border-cyan-600/30 text-cyan-400 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-cyan-600/20 transition-colors"
+                           >
+                               <PlusCircle size={18} /> {t('create_list')}
+                           </button>
+                      </div>
+                 </div>
+            </div>
+        )}
 
         {isSettingsOpen && (
              <div className="md:hidden fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-sm flex flex-col justify-end animate-in fade-in">
@@ -700,7 +772,12 @@ const AppContent: React.FC = () => {
         </Routes>
       </main>
       
-      <MobileNav onSearchClick={() => setIsSearchOpen(true)} />
+      <MobileNav 
+        onSearchClick={() => setIsSearchOpen(true)} 
+        onListsClick={() => setIsMobileListsOpen(true)}
+        hasNotification={hasNewSharedLists}
+      />
+      
       <ChatBot items={items} />
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={addItem} apiKey={tmdbApiKey} />
       <CreateListModal isOpen={isCreateListOpen} onClose={() => setIsCreateListOpen(false)} onCreate={createList} />
