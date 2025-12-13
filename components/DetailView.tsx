@@ -35,6 +35,12 @@ const RottenIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const StarRatingIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+  </svg>
+);
+
 export const DetailView: React.FC<DetailViewProps> = ({ 
   item: initialItem, 
   onClose, 
@@ -204,8 +210,9 @@ export const DetailView: React.FC<DetailViewProps> = ({
           badgeColor = 'bg-[#FA320A]';
       }
   } else {
-      // IMDb Yellow
-      badgeColor = 'bg-[#F5C518] text-black shadow-[0_0_15px_rgba(245,197,24,0.3)]';
+      // IMDb Modern Gold
+      badgeColor = 'bg-gradient-to-br from-[#F5C518] to-[#E0B000] shadow-[0_0_15px_rgba(245,197,24,0.5)]';
+      badgeIcon = <StarRatingIcon className="w-6 h-6 text-black" />; // Black star on yellow
   }
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';

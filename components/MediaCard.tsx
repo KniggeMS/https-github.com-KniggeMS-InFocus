@@ -54,7 +54,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
   // Determine Badge Type (RT vs IMDb)
   const isRT = item.rtScore && item.rtScore.includes('%');
   let badgeLabel = isRT ? 'RT' : 'IMDb';
-  let badgeColor = isRT ? 'bg-[#FA320A]/90 text-white' : 'bg-[#F5C518]/90 text-black';
+  let badgeColor = isRT ? 'bg-[#FA320A]/90 text-white' : 'bg-gradient-to-br from-[#F5C518] to-[#E0B000] text-black shadow-sm';
   
   if (isRT) {
       const val = parseInt(item.rtScore || '0');
