@@ -1,14 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { generateAvatar } from '../services/gemini';
-import { Clapperboard, Loader2, Upload, Sparkles, Languages, UserCheck, KeyRound, ArrowLeft } from 'lucide-react';
+import { Clapperboard, Loader2, Upload, Sparkles, Languages, UserCheck, KeyRound, ArrowLeft, Info } from 'lucide-react';
 
 type AuthView = 'login' | 'register' | 'forgot';
 
 export const AuthPage: React.FC = () => {
-  const { login, register, resetPassword } = useAuth();
+  const { login, register, resetPassword, getAllUsers } = useAuth();
   const { t, language, setLanguage } = useTranslation();
   
   const [view, setView] = useState<AuthView>('login');
@@ -27,6 +27,14 @@ export const AuthPage: React.FC = () => {
   
   // Image Gen State
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
+
+  // Dev Help
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+      // Just for UX in this specific demo context
+      setAvailableUsers(getAllUsers());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,18 +60,23 @@ export const AuthPage: React.FC = () => {
           avatar,
           createdAt: Date.now()
         }, password);
+
+        // Explicit UX handling for successful registration
+        setSuccess(t('registration_success'));
+        setView('login');
+        // Reset password fields for security
+        setPassword('');
+        setConfirmPassword('');
       } else if (view === 'forgot') {
-          if (!username || !email || !password) throw new Error("Missing required fields");
-          if (password !== confirmPassword) throw new Error("Passwords do not match");
+          if (!email) throw new Error("Missing required fields");
           
-          resetPassword(username, email, password);
-          setSuccess(t('password_reset_success'));
+          await resetPassword(email);
+          setSuccess(t('reset_link_sent'));
+          // Keep showing success message for a bit, then switch back to login
           setTimeout(() => {
               setView('login');
-              setPassword('');
-              setConfirmPassword('');
               setSuccess('');
-          }, 3000);
+          }, 6000);
       }
     } catch (err: any) {
       setError(err.message || "Authentication failed");
@@ -137,7 +150,9 @@ export const AuthPage: React.FC = () => {
                 <div className="bg-cyan-600 p-3 rounded-2xl shadow-xl shadow-cyan-900/40 mb-4">
                     <Clapperboard size={32} className="text-white" />
                 </div>
-                <h1 className="text-3xl font-bold text-white tracking-tight">CineLog</h1>
+                <h1 className="text-3xl font-bold text-white tracking-tight">
+                    <span className="text-cyan-400">InFocus</span> CineLog
+                </h1>
                 <p className="text-slate-400 mt-2 text-center">
                     {view === 'login' && t('login_subtitle')}
                     {view === 'register' && t('register_subtitle')}
@@ -150,12 +165,12 @@ export const AuthPage: React.FC = () => {
                     
                     {/* Status Msgs */}
                     {error && (
-                        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg text-center">
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg text-center animate-in fade-in slide-in-from-top-2">
                             {error}
                         </div>
                     )}
                     {success && (
-                        <div className="p-3 bg-green-500/10 border border-green-500/20 text-green-400 text-sm rounded-lg text-center">
+                        <div className="p-3 bg-green-500/10 border border-green-500/20 text-green-400 text-sm rounded-lg text-center animate-in fade-in slide-in-from-top-2">
                             {success}
                         </div>
                     )}
@@ -197,18 +212,12 @@ export const AuthPage: React.FC = () => {
                         </>
                     )}
 
-                    {/* Forgot Password View */}
+                    {/* Forgot Password View - UPDATED TO ONLY ASK EMAIL */}
                     {view === 'forgot' && (
                         <>
-                             <div className="space-y-1">
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('username')}</label>
-                                <input 
-                                    type="text" 
-                                    value={username} 
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl focus:border-cyan-500 focus:outline-none transition-colors"
-                                    required
-                                />
+                            <div className="bg-slate-800/80 p-3 rounded-lg text-xs text-slate-300 border border-slate-700 mb-2 flex gap-2">
+                                <Info size={16} className="text-cyan-400 flex-shrink-0" />
+                                <span>{t('reset_subtitle')}</span>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('email')}</label>
@@ -219,30 +228,6 @@ export const AuthPage: React.FC = () => {
                                     className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl focus:border-cyan-500 focus:outline-none transition-colors"
                                     required
                                 />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('new_password')}</label>
-                                    <input 
-                                        type="password" 
-                                        value={password} 
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl focus:border-cyan-500 focus:outline-none transition-colors"
-                                        required
-                                        minLength={6}
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t('confirm_password')}</label>
-                                    <input 
-                                        type="password" 
-                                        value={confirmPassword} 
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl focus:border-cyan-500 focus:outline-none transition-colors"
-                                        required
-                                        minLength={6}
-                                    />
-                                </div>
                             </div>
                         </>
                     )}
@@ -340,7 +325,7 @@ export const AuthPage: React.FC = () => {
                         {isLoading && <Loader2 size={18} className="animate-spin" />}
                         {view === 'login' && t('login_button')}
                         {view === 'register' && t('register_button')}
-                        {view === 'forgot' && t('reset_password')}
+                        {view === 'forgot' && t('send_reset_link')}
                     </button>
 
                     {view === 'login' && (
@@ -365,12 +350,24 @@ export const AuthPage: React.FC = () => {
                     )}
                     {view !== 'forgot' && (
                          <button 
-                            onClick={() => { setView(view === 'login' ? 'register' : 'login'); setError(''); }}
+                            onClick={() => { setView(view === 'login' ? 'register' : 'login'); setError(''); setSuccess(''); }}
                             className="text-slate-400 hover:text-white text-sm transition-colors"
                         >
                             {view === 'login' ? t('switch_to_register') : t('switch_to_login')}
                         </button>
                     )}
+                </div>
+
+                {/* DEBUG / DEMO HELP FOR FORGOTTEN CREDENTIALS */}
+                <div className="mt-4 text-center">
+                    <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-2">Lokale Demo-Benutzer</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                        {availableUsers.map((u, i) => (
+                            <span key={i} className="text-xs bg-slate-800 px-2 py-1 rounded border border-slate-700 text-slate-400">
+                                {u.username}
+                            </span>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

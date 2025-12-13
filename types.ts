@@ -20,6 +20,12 @@ export enum SortOption {
 
 export type Language = 'de' | 'en';
 
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  USER = 'USER',
+}
+
 export interface User {
   id: string;
   username: string;
@@ -28,6 +34,8 @@ export interface User {
   firstName?: string;
   lastName?: string;
   createdAt: number;
+  role: UserRole; // New: RBAC
+  isStatsPublic: boolean; // New: Privacy Setting
 }
 
 export interface StreamingProvider {
@@ -114,4 +122,31 @@ export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
   timestamp: number;
+}
+
+// --- GAMIFICATION TYPES ---
+
+export interface Achievement {
+  id: string;
+  icon: string; // Lucide icon name or emoji
+  unlocked: boolean;
+  progress: number; // 0-100
+  currentValue: number;
+  targetValue: number;
+}
+
+export interface UserLevel {
+  currentLevel: number;
+  title: string;
+  xp: number;
+  nextLevelXp: number;
+  progress: number; // 0-100 for current level
+}
+
+export interface UserStats {
+  totalRuntimeMinutes: number;
+  moviesWatched: number;
+  seriesWatched: number;
+  totalRatings: number;
+  favoritesCount: number;
 }

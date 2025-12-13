@@ -26,11 +26,16 @@ const dictionary: Translations = {
     "generating": "Generiere...",
     "forgot_password": "Passwort vergessen?",
     "reset_password": "Passwort zurücksetzen",
-    "reset_subtitle": "Gib deine Daten ein, um ein neues Passwort zu setzen.",
+    "reset_subtitle": "Gib deine E-Mail Adresse ein, um einen Link zum Zurücksetzen zu erhalten.",
+    "send_reset_link": "Link senden",
+    "reset_link_sent": "E-Mail gesendet! Bitte überprüfe deinen Posteingang und klicke auf den Link.",
     "new_password": "Neues Passwort",
+    "set_new_password": "Neues Passwort festlegen",
+    "set_password_btn": "Passwort speichern & Anmelden",
     "back_to_login": "Zurück zur Anmeldung",
+    "registration_success": "Registrierung erfolgreich! Bitte überprüfe deine E-Mails und melde dich an.",
     
-    // Profile
+    // Profile & Gamification
     "profile": "Profil",
     "edit_profile": "Profil bearbeiten",
     "security": "Sicherheit",
@@ -40,6 +45,44 @@ const dictionary: Translations = {
     "profile_updated": "Profil aktualisiert",
     "password_updated": "Passwort erfolgreich geändert",
     "password_reset_success": "Passwort wurde zurückgesetzt. Bitte neu anmelden.",
+    "level": "Level",
+    "next_level": "Nächstes Level",
+    "xp": "XP",
+    "stats": "Deine Statistiken",
+    "total_time": "Gesehene Zeit",
+    "hours": "Std.",
+    "movies_watched": "Filme gesehen",
+    "series_watched": "Serien gesehen",
+    "achievements": "Trophäen",
+    "locked": "Gesperrt",
+    
+    // Privacy & Roles
+    "privacy_settings": "Privatsphäre",
+    "public_stats": "Statistiken öffentlich sichtbar",
+    "public_stats_desc": "Andere Benutzer können dein Level und deine Trophäen sehen.",
+    "role": "Rolle",
+    "role_admin": "Admin",
+    "role_manager": "Manager",
+    "role_user": "Benutzer",
+    "access_denied": "Zugriff verweigert",
+    "private_profile": "Dieses Profil ist privat.",
+    "member_since": "Mitglied seit",
+
+    // Achievement Titles (DE)
+    "ach_first_blood_title": "Erster Schritt",
+    "ach_first_blood_desc": "Markiere deinen ersten Film als gesehen.",
+    "ach_collector_novice_title": "Sammler",
+    "ach_collector_novice_desc": "Habe 10 Items in deiner Sammlung.",
+    "ach_binge_master_title": "Binge Master",
+    "ach_binge_master_desc": "Schau dir 5 komplette Serien an.",
+    "ach_critic_title": "Kritiker",
+    "ach_critic_desc": "Bewerte 10 Filme oder Serien.",
+    "ach_genre_guru_title": "Genre Guru",
+    "ach_genre_guru_desc": "Schau 10 Filme desselben Genres.",
+    "ach_time_traveler_title": "Zeitreisender",
+    "ach_time_traveler_desc": "Schau 5 Filme vor 1990.",
+    "ach_marathon_runner_title": "Marathonläufer",
+    "ach_marathon_runner_desc": "Erreiche 100 Stunden Wiedergabezeit.",
 
     // Navigation
     "overview": "Übersicht",
@@ -55,6 +98,12 @@ const dictionary: Translations = {
     "new_rec": "Neu",
     "remember": "Merken",
     
+    // Theme
+    "appearance": "Erscheinungsbild",
+    "theme_dark": "Dark",
+    "theme_light": "Light",
+    "theme_glass": "iOS Glass",
+
     // Main Headers
     "collection": "Deine Sammlung",
     "collection_sub": "Verwalte deine Filme und Serien an einem Ort.",
@@ -137,7 +186,7 @@ const dictionary: Translations = {
     // Chat
     "chat_title": "CineChat AI",
     "chat_placeholder": "Frag mich nach 80er Horrorfilmen...",
-    "chat_welcome": "Hallo! Ich bin dein CineLog Assistent. Frag mich etwas zu deiner Sammlung oder lass dir neue Filme empfehlen!",
+    "chat_welcome": "Hallo! Ich bin dein InFocus CineLog Assistent. Frag mich etwas zu deiner Sammlung oder lass dir neue Filme empfehlen!",
   },
   en: {
     // Auth
@@ -160,11 +209,16 @@ const dictionary: Translations = {
     "generating": "Generating...",
     "forgot_password": "Forgot Password?",
     "reset_password": "Reset Password",
-    "reset_subtitle": "Enter your details to set a new password.",
+    "reset_subtitle": "Enter your email address to receive a reset link.",
+    "send_reset_link": "Send Link",
+    "reset_link_sent": "Email sent! Please check your inbox and click the link.",
     "new_password": "New Password",
+    "set_new_password": "Set New Password",
+    "set_password_btn": "Save Password & Login",
     "back_to_login": "Back to Login",
+    "registration_success": "Registration successful! Please check your email and log in.",
 
-    // Profile
+    // Profile & Gamification
     "profile": "Profile",
     "edit_profile": "Edit Profile",
     "security": "Security",
@@ -174,6 +228,44 @@ const dictionary: Translations = {
     "profile_updated": "Profile updated",
     "password_updated": "Password changed successfully",
     "password_reset_success": "Password reset successfully. Please login.",
+    "level": "Level",
+    "next_level": "Next Level",
+    "xp": "XP",
+    "stats": "Your Stats",
+    "total_time": "Total Time",
+    "hours": "Hrs",
+    "movies_watched": "Movies Watched",
+    "series_watched": "Series Watched",
+    "achievements": "Trophies",
+    "locked": "Locked",
+    
+    // Privacy & Roles
+    "privacy_settings": "Privacy",
+    "public_stats": "Public Statistics",
+    "public_stats_desc": "Other users can see your level and trophies.",
+    "role": "Role",
+    "role_admin": "Admin",
+    "role_manager": "Manager",
+    "role_user": "User",
+    "access_denied": "Access Denied",
+    "private_profile": "This profile is private.",
+    "member_since": "Member since",
+
+    // Achievement Titles (EN)
+    "ach_first_blood_title": "First Step",
+    "ach_first_blood_desc": "Mark your first movie as watched.",
+    "ach_collector_novice_title": "Collector",
+    "ach_collector_novice_desc": "Have 10 items in your collection.",
+    "ach_binge_master_title": "Binge Master",
+    "ach_binge_master_desc": "Watch 5 complete series.",
+    "ach_critic_title": "The Critic",
+    "ach_critic_desc": "Rate 10 movies or series.",
+    "ach_genre_guru_title": "Genre Guru",
+    "ach_genre_guru_desc": "Watch 10 items of the same genre.",
+    "ach_time_traveler_title": "Time Traveler",
+    "ach_time_traveler_desc": "Watch 5 movies from before 1990.",
+    "ach_marathon_runner_title": "Marathon Runner",
+    "ach_marathon_runner_desc": "Reach 100 hours of watch time.",
     
     // Navigation
     "overview": "Overview",
@@ -188,6 +280,12 @@ const dictionary: Translations = {
     "ai_tip": "AI Tip",
     "new_rec": "New",
     "remember": "Save",
+    
+    // Theme
+    "appearance": "Appearance",
+    "theme_dark": "Dark",
+    "theme_light": "Light",
+    "theme_glass": "iOS Glass",
 
     // Main Headers
     "collection": "Your Collection",
@@ -271,7 +369,7 @@ const dictionary: Translations = {
     // Chat
     "chat_title": "CineChat AI",
     "chat_placeholder": "Ask about 80s horror movies...",
-    "chat_welcome": "Hello! I am your CineLog assistant. Ask me about your collection or for recommendations!",
+    "chat_welcome": "Hello! I am your InFocus CineLog assistant. Ask me about your collection or for recommendations!",
   }
 };
 

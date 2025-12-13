@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, MonitorPlay, Heart, List, Search } from 'lucide-react';
@@ -9,12 +10,12 @@ interface MobileNavProps {
 
 export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick }) => {
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 pb-safe z-50 shadow-[0_-5px_10px_rgba(0,0,0,0.3)]">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xl border-t border-slate-800 pb-safe z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
       <div className="flex justify-around items-center h-16 px-2">
         <NavLink 
           to="/" 
           className={({ isActive }) => 
-            `flex flex-col items-center justify-center w-16 h-full space-y-1 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`
+            `flex flex-col items-center justify-center w-16 h-full space-y-1 transition-colors active:scale-90 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`
           }
         >
           <LayoutDashboard size={22} />
@@ -23,7 +24,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick }) => {
         <NavLink 
           to="/watchlist" 
           className={({ isActive }) => 
-            `flex flex-col items-center justify-center w-16 h-full space-y-1 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`
+            `flex flex-col items-center justify-center w-16 h-full space-y-1 transition-colors active:scale-90 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`
           }
         >
           <MonitorPlay size={22} />
@@ -42,7 +43,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick }) => {
         <NavLink 
           to="/favorites" 
           className={({ isActive }) => 
-            `flex flex-col items-center justify-center w-16 h-full space-y-1 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`
+            `flex flex-col items-center justify-center w-16 h-full space-y-1 transition-colors active:scale-90 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`
           }
         >
           <Heart size={22} />
@@ -51,7 +52,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick }) => {
         {/* Menu for Custom Lists */}
         <button 
             onClick={() => document.getElementById('mobile-menu-trigger')?.click()}
-            className="flex flex-col items-center justify-center w-16 h-full space-y-1 text-slate-500"
+            className="flex flex-col items-center justify-center w-16 h-full space-y-1 text-slate-500 active:scale-90 transition-transform"
         >
           <List size={22} />
         </button>

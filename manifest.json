@@ -1,6 +1,7 @@
+
 {
-  "name": "CineLog",
-  "short_name": "CineLog",
+  "name": "InFocus CineLog",
+  "short_name": "InFocus",
   "description": "Deine moderne Watchlist für Filme und Serien.",
   "start_url": "/",
   "display": "standalone",

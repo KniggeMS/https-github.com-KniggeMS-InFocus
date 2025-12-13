@@ -1,9 +1,14 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { generateAvatar } from '../services/gemini';
-import { User, Lock, Upload, Sparkles, Loader2, Save, CheckCircle, AlertCircle } from 'lucide-react';
+import { calculateUserStats, calculateLevel, getAchievements } from '../services/gamification';
+import { MediaItem, UserRole } from '../types';
+import { User, Lock, Upload, Sparkles, Loader2, Save, CheckCircle, AlertCircle, Trophy, Star, Tv, Film, Timer, BrainCircuit, Hourglass, Library, Popcorn, Crown, Eye, Shield, EyeOff, Calendar } from 'lucide-react';
+
+const LOCAL_STORAGE_KEY = 'cinelog_items';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateProfile, changePassword } = useAuth();
@@ -19,6 +24,7 @@ export const ProfilePage: React.FC = () => {
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [avatar, setAvatar] = useState<string | undefined>(user?.avatar);
+  const [isStatsPublic, setIsStatsPublic] = useState(user?.isStatsPublic || false);
 
   // Password Form
   const [currentPw, setCurrentPw] = useState('');
@@ -27,6 +33,25 @@ export const ProfilePage: React.FC = () => {
 
   // Avatar Gen
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
+
+  // Gamification Data
+  const [userItems, setUserItems] = useState<MediaItem[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if(saved) {
+        try { setUserItems(JSON.parse(saved)); } catch(e) {}
+    }
+  }, []);
+
+  const stats = useMemo(() => calculateUserStats(userItems), [userItems]);
+  const levelData = useMemo(() => calculateLevel(stats), [stats]);
+  const achievements = useMemo(() => getAchievements(userItems, stats), [userItems, stats]);
+
+  // Icon Mapping for dynamic rendering
+  const IconMap: Record<string, any> = {
+      Popcorn, Library, Tv, Star, BrainCircuit, Hourglass, Timer
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +65,8 @@ export const ProfilePage: React.FC = () => {
           email,
           firstName,
           lastName,
-          avatar
+          avatar,
+          isStatsPublic
       });
       setSuccessMsg(t('profile_updated'));
     } catch (err: any) {
@@ -98,11 +124,40 @@ export const ProfilePage: React.FC = () => {
 
   if (!user) return null;
 
+  const getRoleLabel = (role: UserRole) => {
+      switch(role) {
+          case UserRole.ADMIN: return t('role_admin');
+          case UserRole.MANAGER: return t('role_manager');
+          default: return t('role_user');
+      }
+  };
+
+  const getRoleColor = (role: UserRole) => {
+      switch(role) {
+          case UserRole.ADMIN: return 'bg-red-500 text-white';
+          case UserRole.MANAGER: return 'bg-orange-500 text-white';
+          default: return 'bg-slate-700 text-slate-300';
+      }
+  };
+
+  const memberSince = new Date(user.createdAt).toLocaleDateString();
+
   return (
-    <div className="max-w-4xl mx-auto pb-20">
-       <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-           <User size={32} className="text-cyan-400" /> {t('profile')}
-       </h2>
+    <div className="max-w-6xl mx-auto pb-20">
+       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+           <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+               <User size={32} className="text-cyan-400" /> {t('profile')}
+           </h2>
+           <div className="flex items-center gap-3">
+               <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800">
+                    <Calendar size={12} />
+                    <span>{t('member_since')}: {memberSince}</span>
+               </div>
+               <span className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 shadow-lg ${getRoleColor(user.role)}`}>
+                   <Shield size={12} /> {getRoleLabel(user.role)}
+               </span>
+           </div>
+       </div>
 
        {(successMsg || errorMsg) && (
            <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${successMsg ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
@@ -110,7 +165,117 @@ export const ProfilePage: React.FC = () => {
                <span>{successMsg || errorMsg}</span>
            </div>
        )}
+       
+       {/* GAMIFICATION DASHBOARD */}
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            
+            {/* Level Card */}
+            <div className="md:col-span-2 bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-6 border border-slate-700 shadow-lg relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-600/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none group-hover:bg-cyan-600/20 transition-colors"></div>
+                
+                <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
+                    <div className="relative">
+                        <div className="w-24 h-24 rounded-full bg-slate-950 border-4 border-cyan-500 flex items-center justify-center shadow-xl shadow-cyan-900/30">
+                            <Crown size={40} className="text-cyan-400" />
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 bg-cyan-600 text-white text-xs font-bold px-2 py-1 rounded-full border-2 border-slate-800">
+                            Lvl {levelData.currentLevel}
+                        </div>
+                    </div>
+                    
+                    <div className="flex-grow w-full text-center sm:text-left">
+                        <h3 className="text-sm font-bold text-cyan-400 uppercase tracking-wider mb-1">{t('level')} {levelData.currentLevel}</h3>
+                        <h2 className="text-3xl font-extrabold text-white mb-3">{levelData.title}</h2>
+                        
+                        <div className="w-full bg-slate-700/50 rounded-full h-4 mb-2 overflow-hidden border border-slate-700">
+                            <div 
+                                className="bg-gradient-to-r from-cyan-600 to-blue-500 h-full rounded-full transition-all duration-1000 ease-out"
+                                style={{ width: `${levelData.progress}%` }}
+                            ></div>
+                        </div>
+                        
+                        <div className="flex justify-between text-xs text-slate-400 font-mono">
+                            <span>{Math.floor(levelData.xp).toLocaleString()} XP</span>
+                            <span>{t('next_level')}: {Math.floor(levelData.nextLevelXp).toLocaleString()} XP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            {/* Stats Card */}
+            <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg flex flex-col justify-center">
+                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-700 pb-2">{t('stats')}</h4>
+                 <div className="space-y-4">
+                     <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3 text-slate-300">
+                             <div className="p-2 bg-slate-700 rounded-lg"><Timer size={16} className="text-orange-400"/></div>
+                             <span className="text-sm">{t('total_time')}</span>
+                         </div>
+                         <span className="text-white font-bold font-mono">{(stats.totalRuntimeMinutes / 60).toFixed(1)} {t('hours')}</span>
+                     </div>
+                     <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3 text-slate-300">
+                             <div className="p-2 bg-slate-700 rounded-lg"><Film size={16} className="text-blue-400"/></div>
+                             <span className="text-sm">{t('movies_watched')}</span>
+                         </div>
+                         <span className="text-white font-bold font-mono">{stats.moviesWatched}</span>
+                     </div>
+                     <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3 text-slate-300">
+                             <div className="p-2 bg-slate-700 rounded-lg"><Tv size={16} className="text-purple-400"/></div>
+                             <span className="text-sm">{t('series_watched')}</span>
+                         </div>
+                         <span className="text-white font-bold font-mono">{stats.seriesWatched}</span>
+                     </div>
+                 </div>
+            </div>
+
+            {/* Achievements Grid */}
+            <div className="md:col-span-3 bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg">
+                <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                    <Trophy className="text-yellow-500" size={20} /> {t('achievements')}
+                    <span className="text-xs font-normal text-slate-400 bg-slate-900 px-2 py-0.5 rounded-full ml-2">
+                        {achievements.filter(a => a.unlocked).length} / {achievements.length}
+                    </span>
+                </h3>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                    {achievements.map(ach => {
+                        const Icon = IconMap[ach.icon] || Trophy;
+                        return (
+                            <div 
+                                key={ach.id} 
+                                className={`relative p-4 rounded-xl border flex flex-col items-center text-center transition-all ${
+                                    ach.unlocked 
+                                        ? 'bg-gradient-to-b from-slate-700/50 to-slate-800 border-yellow-500/30 shadow-lg shadow-black/20 group hover:scale-105 hover:border-yellow-500/50' 
+                                        : 'bg-slate-900/50 border-slate-800 opacity-60 grayscale'
+                                }`}
+                            >
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${ach.unlocked ? 'bg-yellow-500/20 text-yellow-500 shadow-inner' : 'bg-slate-800 text-slate-600'}`}>
+                                    <Icon size={24} />
+                                </div>
+                                <h4 className={`text-xs font-bold mb-1 ${ach.unlocked ? 'text-white' : 'text-slate-500'}`}>
+                                    {t(`ach_${ach.id}_title`)}
+                                </h4>
+                                <p className="text-[10px] text-slate-400 leading-tight mb-2 h-8 overflow-hidden">
+                                    {t(`ach_${ach.id}_desc`)}
+                                </p>
+                                
+                                {/* Progress Bar for Locked Items */}
+                                {!ach.unlocked && (
+                                    <div className="w-full bg-slate-800 h-1.5 rounded-full mt-auto overflow-hidden">
+                                        <div className="bg-slate-600 h-full rounded-full" style={{ width: `${ach.progress}%` }}></div>
+                                    </div>
+                                )}
+                                {ach.unlocked && <CheckCircle size={14} className="text-green-500 mt-auto" />}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+       </div>
+
+       {/* SETTINGS GRID */}
        <div className="grid md:grid-cols-3 gap-8">
            
            {/* Left Column: Avatar & Basic Info */}
@@ -190,6 +355,22 @@ export const ProfilePage: React.FC = () => {
                                    onChange={e => setEmail(e.target.value)}
                                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none"
                                />
+                           </div>
+                           
+                           {/* Privacy Setting Toggle */}
+                           <div className="pt-2 border-t border-slate-700/50 mt-2">
+                               <label className="flex items-center gap-3 cursor-pointer group">
+                                   <div className={`w-10 h-5 rounded-full p-1 transition-colors ${isStatsPublic ? 'bg-cyan-600' : 'bg-slate-700'}`} onClick={() => setIsStatsPublic(!isStatsPublic)}>
+                                       <div className={`w-3 h-3 bg-white rounded-full shadow-md transform transition-transform ${isStatsPublic ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                   </div>
+                                   <div className="flex flex-col">
+                                       <span className="text-sm font-bold text-white flex items-center gap-2">
+                                           {isStatsPublic ? <Eye size={14} className="text-cyan-400"/> : <EyeOff size={14} className="text-slate-400"/>}
+                                           {t('public_stats')}
+                                       </span>
+                                       <span className="text-[10px] text-slate-500">{t('public_stats_desc')}</span>
+                                   </div>
+                               </label>
                            </div>
 
                            <div className="pt-4">

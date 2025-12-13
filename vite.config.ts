@@ -4,21 +4,21 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Lädt Umgebungsvariablen basierend auf dem Modus (development/production)
-  // (process as any) behebt TypeScript-Fehler, falls @types/node fehlt
   const env = loadEnv(mode, (process as any).cwd(), '');
 
   return {
     plugins: [react()],
     server: {
       host: '0.0.0.0',
+      port: 3000, // Enforce port 3000 to match Supabase default email links
       hmr: {
         clientPort: 443
       }
     },
     define: {
-      // Dies ersetzt "process.env.API_KEY" im Code durch den echten Wert beim Build
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
+      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
+      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY)
     }
   };
 });

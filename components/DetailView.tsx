@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { X, Film, Clock, MonitorPlay, Heart, Bookmark, Play, ChevronLeft, Layers, Check, PlayCircle, User, ExternalLink, Clapperboard, ImageOff, StickyNote, BrainCircuit, Loader2 } from 'lucide-react';
 import { MediaItem, SearchResult, MediaType, WatchStatus } from '../types';
@@ -80,7 +81,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
             .then(insight => setAiInsight(insight))
             .finally(() => setAnalyzing(false));
      }
-  }, [isExisting, existingItem, details, notes]); // Re-analyze if notes change significantly? Or maybe manual trigger? Keeping it auto for now on open.
+  }, [isExisting, existingItem, details, notes]);
 
   // Auto-save notes logic
   useEffect(() => {
@@ -148,16 +149,27 @@ export const DetailView: React.FC<DetailViewProps> = ({
     : null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-0 md:p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-0 md:p-4 bg-slate-900/95 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-slate-900 w-full max-w-5xl md:rounded-2xl shadow-2xl flex flex-col h-full md:h-auto md:max-h-[95vh] overflow-hidden relative border border-slate-800">
           
-          <div className="absolute top-4 right-4 z-50 flex gap-2">
-              <button onClick={onClose} className="p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-sm transition-colors">
+          {/* Navigation Bar for Mobile (Top) */}
+          <div className="absolute top-0 left-0 w-full z-50 p-4 flex justify-between items-start bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+              <button 
+                onClick={onClose} 
+                className="pointer-events-auto p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md border border-white/10 transition-colors md:hidden"
+              >
+                <ChevronLeft size={24} />
+              </button>
+
+              <button 
+                onClick={onClose} 
+                className="pointer-events-auto p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md border border-white/10 transition-colors hidden md:block"
+              >
                 <X size={24} />
               </button>
           </div>
 
-          <div className="relative w-full h-[40vh] md:h-[500px] flex-shrink-0 bg-slate-950 overflow-hidden group">
+          <div className="relative w-full h-[45vh] md:h-[500px] flex-shrink-0 bg-slate-950 overflow-hidden group">
               {/* Background Trailer */}
               {!playingTrailer && backgroundTrailerUrl && (
                  <div className="absolute inset-0 z-0 opacity-40 scale-[1.35]">
@@ -202,7 +214,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                         className="flex-grow"
                     ></iframe>
                     
-                    <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+                    <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent pointer-events-none pt-safe">
                         <button 
                             onClick={() => setPlayingTrailer(false)} 
                             className="pointer-events-auto bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-2 rounded-full shadow-lg uppercase font-bold tracking-wide flex items-center gap-2 transition-colors"
@@ -252,28 +264,28 @@ export const DetailView: React.FC<DetailViewProps> = ({
                   </div>
 
                   <div className="flex-grow min-w-0 pb-2">
-                      <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-2 leading-tight drop-shadow-lg text-balance">
-                          {displayItem.title} <span className="text-slate-400 font-light text-2xl">({displayItem.year})</span>
+                      <h1 className="text-2xl md:text-5xl font-extrabold text-white mb-2 leading-tight drop-shadow-lg text-balance">
+                          {displayItem.title} <span className="text-slate-400 font-light text-xl md:text-2xl">({displayItem.year})</span>
                       </h1>
                       
-                      <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-300 mb-6">
+                      <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm font-medium text-slate-300 mb-6">
                           {displayItem?.certification && (
-                              <span className="px-2 py-0.5 border border-slate-500 rounded text-slate-300 text-xs font-bold bg-slate-900/40 backdrop-blur-sm">
+                              <span className="px-2 py-0.5 border border-slate-500 rounded text-slate-300 text-[10px] md:text-xs font-bold bg-slate-900/40 backdrop-blur-sm">
                                   {displayItem.certification}
                               </span>
                           )}
-                          <span>{displayItem.genre.join(', ')}</span>
+                          <span>{displayItem.genre.slice(0,3).join(', ')}</span>
                           {displayItem?.runtime && (
                               <div className="flex items-center gap-1.5">
                                 <span className="w-1 h-1 bg-slate-500 rounded-full"></span>
-                                <Clock size={14} /> 
+                                <Clock size={12} /> 
                                 <span>{displayItem.runtime} Min</span>
                               </div>
                           )}
                           {displayItem?.seasons && (
                               <div className="flex items-center gap-1.5">
                                 <span className="w-1 h-1 bg-slate-500 rounded-full"></span>
-                                <Layers size={14} />
+                                <Layers size={12} />
                                 <span>{displayItem.seasons} {t('seasons')}</span>
                               </div>
                           )}
@@ -282,8 +294,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
                       {/* Rating & Vibe Section */}
                       <div className="flex flex-wrap items-center gap-y-4 gap-x-6 mb-8">
                           <div className="flex items-center gap-3">
-                              <div className="relative w-14 h-14 flex items-center justify-center bg-slate-900/80 rounded-full border-2 border-slate-800 shadow-lg flex-shrink-0">
-                                <svg viewBox="0 0 36 36" className="w-12 h-12 transform -rotate-90">
+                              <div className="relative w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-slate-900/80 rounded-full border-2 border-slate-800 shadow-lg flex-shrink-0">
+                                <svg viewBox="0 0 36 36" className="w-10 h-10 md:w-12 md:h-12 transform -rotate-90">
                                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1e293b" strokeWidth="3" />
                                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={percentage > 70 ? '#22c55e' : percentage > 40 ? '#eab308' : '#ef4444'} strokeWidth="3" strokeDasharray={strokeDasharray} />
                                 </svg>
@@ -292,7 +304,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                               <span className="font-bold text-white leading-tight text-sm drop-shadow-md whitespace-nowrap">{t('user_rating')}</span>
                           </div>
                           
-                          <div className="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 backdrop-blur-sm border border-white/10 shadow-lg">
+                          <div className="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 backdrop-blur-sm border border-white/10 shadow-lg hidden sm:flex">
                               <span className="text-xl hover:scale-125 transition-transform cursor-default">😍</span>
                               <span className="text-xl hover:scale-125 transition-transform cursor-default">🤯</span>
                               <span className="text-xl hover:scale-125 transition-transform cursor-default">😢</span>
@@ -306,9 +318,9 @@ export const DetailView: React.FC<DetailViewProps> = ({
                           {displayItem?.trailerKey && (
                               <button 
                                 onClick={() => setPlayingTrailer(true)}
-                                className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-slate-200 text-slate-900 rounded-full font-bold transition-all shadow-lg hover:scale-105 mr-2"
+                                className="flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 bg-white hover:bg-slate-200 text-slate-900 rounded-full font-bold transition-all shadow-lg hover:scale-105 mr-2 text-sm md:text-base"
                               >
-                                <Play size={20} className="fill-slate-900" />
+                                <Play size={18} className="fill-slate-900" />
                                 {t('play_trailer')}
                               </button>
                           )}
@@ -367,7 +379,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
               </div>
           </div>
 
-          <div className="flex-grow bg-slate-900 p-6 md:p-10 overflow-y-auto custom-scrollbar z-20">
+          <div className="flex-grow bg-slate-900 p-6 md:p-10 overflow-y-auto custom-scrollbar z-20 pb-safe">
               <div className="grid md:grid-cols-3 gap-10">
                   <div className="md:col-span-2 space-y-8">
                     
