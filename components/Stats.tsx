@@ -46,11 +46,6 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
           // Estimate series runtime
           const epRuntime = item.runtime || 45;
           const seasons = item.seasons || 1;
-          const eps = item.episodes || 10; // Better fallback
-          
-          // Logic: If episodes is huge (total eps), use it. If small (per season?), multiply by season.
-          // But TMDB usually returns total episodes for the show.
-          // Fallback: If no episode count, assume 10 eps per season.
           const totalEps = item.episodes && item.episodes > 0 ? item.episodes : (seasons * 10);
           itemRuntime = (epRuntime * totalEps); 
       }
@@ -58,13 +53,15 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
       // Accumulate total unique runtime
       libRuntime += itemRuntime;
 
-      // Distribute to genres
-      if (item.genre && item.genre.length > 0) {
+      // Distribute to genres - SAFE ACCESS
+      if (Array.isArray(item.genre) && item.genre.length > 0) {
           item.genre.forEach(g => {
-            const genre = g.trim();
-            if (!stats[genre]) stats[genre] = { count: 0, runtime: 0 };
-            stats[genre].count += 1;
-            stats[genre].runtime += itemRuntime;
+            if (typeof g === 'string') {
+                const genre = g.trim();
+                if (!stats[genre]) stats[genre] = { count: 0, runtime: 0 };
+                stats[genre].count += 1;
+                stats[genre].runtime += itemRuntime;
+            }
           });
       } else {
           // Handle items without genre
