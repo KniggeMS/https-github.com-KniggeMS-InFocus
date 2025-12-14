@@ -493,7 +493,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                               </div>
                           </div>
 
-                          {/* REPLACED SMILEYS WITH SHARE BUTTON */}
+                          {/* REPLACED SMILEYS WITH SMART SHARE BUTTON */}
                           <button
                               onClick={handleShare}
                               className="hidden sm:flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-full px-4 py-2 backdrop-blur-sm border border-white/5 shadow-lg transition-colors text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wide cursor-pointer"

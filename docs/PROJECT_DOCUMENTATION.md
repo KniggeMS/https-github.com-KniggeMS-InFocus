@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.10
+**Version:** 1.9.11
 
 ---
 
@@ -112,6 +112,7 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-023** | Bugfix | **DB / SQL** | **Postgres Array Syntax Fix:** Korrektur des SQL-Statements für die Sharing-Policy. Nutzung von `ANY (array)` statt des JSON-Operators `?`, um Fehler `42883` zu beheben. | ✅ Done |
 | **RFC-024** | Feature | **Social / DB** | **Shared Item Visibility:** Einführung einer SQL-Policy, die das Lesen von `media_items` erlaubt, wenn diese Teil einer geteilten Liste sind. Anpassung des Frontends, um geteilte Items in der Hauptansicht auszublenden. | ✅ Done |
 | **RFC-025** | Bugfix | **DB / SQL** | **UUID Casting Fix:** Korrektur der `media_items` Policy. Die `id` Spalte (UUID) muss explizit zu `text` gecastet werden (`::text`), um sie mit dem `items` Array (Text[]) in `custom_lists` zu vergleichen. Behebt Fehler `42883: operator does not exist: uuid = text`. | ✅ Done |
+| **RFC-026** | Minor | **UX / DetailView** | **Smart Share Upgrade:** Entfernung der "Vibe"-Smilies. Ersatz durch einen kontextsensitiven "Share"-Button, der auf Mobile das native Teilen-Menü öffnet und auf Desktop in die Zwischenablage kopiert. | ✅ Done |
 
 ---
 
@@ -178,4 +179,4 @@ Geplante Verbesserungen für kommende Sprints:
 
 ---
 
-*Dokumentation aktualisiert: Jetzt (Version 1.9.10) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.11) durch Senior Lead Engineer*
