@@ -66,9 +66,9 @@ export default function App() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Keys
-  const [tmdbKey, setTmdbKey] = useState(localStorage.getItem('tmdb_api_key') || '');
-  const [omdbKey, setOmdbKey] = useState(localStorage.getItem('omdb_api_key') || '');
+  // Keys - Default to localStorage, fallback to Environment Variables (System Keys)
+  const [tmdbKey, setTmdbKey] = useState(localStorage.getItem('tmdb_api_key') || process.env.VITE_TMDB_API_KEY || '');
+  const [omdbKey, setOmdbKey] = useState(localStorage.getItem('omdb_api_key') || process.env.VITE_OMDB_API_KEY || '');
 
   // SAFE DERIVED STATE (Moved to top level)
   const myLists = user ? customLists.filter(l => l.ownerId === user.id) : [];
@@ -286,7 +286,6 @@ export default function App() {
       {/* DESKTOP SIDEBAR */}
       <aside className="fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 hidden md:flex flex-col z-30">
         <div className="p-6">
-           {/* LOGO FIX */}
            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-2">
               <Clapperboard className="text-cyan-400" /> InFocus CineLog
            </h1>
