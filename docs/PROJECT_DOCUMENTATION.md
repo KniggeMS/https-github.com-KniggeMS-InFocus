@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.0
+**Version:** 1.9.1
 
 ---
 
@@ -100,6 +100,7 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-012** | Minor | **UX/Data** | **Retroactive Fetching:** Implementierung eines Fallbacks in der Detailansicht, der fehlende RT-Scores live nachlädt. | ✅ Done |
 | **RFC-013** | Minor | **Data Integrity** | **Rating Persistence:** Nachträglich geladene RT-Scores werden nun sofort in der Datenbank (`media_items`) gespeichert, damit sie auch in der Übersicht (Grid) sichtbar sind. | ✅ Done |
 | **RFC-014** | Major | **Social** | **Community Reviews:** Umwandlung von privaten Notizen in öffentliche Rezensionen. Integration eines Feeds in der Detailansicht, der Rezensionen anderer Nutzer anzeigt. | ✅ Done |
+| **RFC-015** | Bugfix | **Settings / AI** | **Key Persistence Fix:** Automatisches Speichern des Gemini Keys nach erfolgreichem Verbindungstest (Auto-Save). Erweitertes Error-Handling im Chat für Quota (429) und Auth (403) Fehler. | ✅ Done |
 
 ---
 
@@ -132,4 +133,4 @@ Geplante Verbesserungen für kommende Sprints:
 
 ---
 
-*Dokumentation aktualisiert am: 25.10.2023 durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.1) durch Senior Lead Engineer*

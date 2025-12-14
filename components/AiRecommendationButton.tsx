@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertCircle, Loader2, Sparkles, Plus, X, Quote, Film } from 'lucide-react';
 import { getRecommendations } from '../services/gemini';
 import { searchTMDB, getMediaDetails, IMAGE_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
@@ -109,10 +110,10 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
             {loading ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
         </button>
 
-        {/* Large Result Modal */}
-        {recommendation && (
-            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-300">
-                <div className="bg-slate-900 border border-purple-500/30 w-full max-w-lg rounded-2xl shadow-2xl relative overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-5 duration-300 max-h-[90vh] flex flex-col">
+        {/* Large Result Modal - Rendered via Portal to escape Sidebar Stacking Context */}
+        {recommendation && createPortal(
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+                <div className="bg-slate-900 border border-purple-500/30 w-full max-w-sm md:max-w-md lg:max-w-lg rounded-3xl shadow-2xl relative overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-5 duration-300 max-h-[85vh] flex flex-col ring-1 ring-white/10">
                     
                     {/* Background decoration */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
@@ -121,13 +122,13 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                     {/* Close Button */}
                     <button 
                         onClick={handleClose}
-                        className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-slate-400 hover:text-white rounded-full transition-colors z-20"
+                        className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-slate-400 hover:text-white rounded-full transition-colors z-20 backdrop-blur-sm"
                     >
                         <X size={20} />
                     </button>
 
                     <div className="p-6 md:p-8 relative z-10 text-center overflow-y-auto custom-scrollbar">
-                        <div className="w-12 h-12 md:w-16 md:h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-xl shadow-purple-900/40 rotate-3 overflow-hidden relative border-2 border-purple-400/50 flex-shrink-0">
+                        <div className="w-16 h-16 md:w-20 md:h-20 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-xl shadow-purple-900/40 rotate-3 overflow-hidden relative border-2 border-purple-400/50 flex-shrink-0 group hover:rotate-0 transition-transform duration-500">
                              {recommendation.posterPath ? (
                                 <img 
                                     src={`${IMAGE_BASE_URL}${recommendation.posterPath}`} 
@@ -139,16 +140,18 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                              )}
                         </div>
 
-                        <h2 className="text-xs md:text-sm font-bold text-purple-400 uppercase tracking-widest mb-2">Gemini Empfehlung</h2>
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[10px] font-bold uppercase tracking-widest mb-3">
+                            <Sparkles size={10} /> Gemini Empfehlung
+                        </div>
                         
-                        <h3 className="text-2xl md:text-3xl font-extrabold text-white mb-2 leading-tight">
+                        <h3 className="text-2xl md:text-3xl font-extrabold text-white mb-1 leading-tight text-balance">
                             {recommendation.title}
                         </h3>
-                        <p className="text-slate-400 text-base md:text-lg mb-4 md:mb-6">({recommendation.year})</p>
+                        <p className="text-slate-400 text-sm md:text-base mb-4 font-medium">({recommendation.year})</p>
 
                         <div className="flex flex-wrap justify-center gap-2 mb-6">
                             {recommendation.genre.map(g => (
-                                <span key={g} className="px-2 py-1 md:px-3 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-200 text-xs md:text-sm font-medium">
+                                <span key={g} className="px-2.5 py-1 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 text-xs font-medium">
                                     {g}
                                 </span>
                             ))}
@@ -156,12 +159,13 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
 
                         {/* Streaming Providers */}
                         {recommendation.providers && recommendation.providers.length > 0 && (
-                             <div className="flex justify-center gap-3 mb-6">
+                             <div className="flex justify-center items-center gap-3 mb-6 bg-slate-800/50 py-3 rounded-xl border border-slate-700/50">
+                                <span className="text-[10px] text-slate-500 uppercase tracking-wide font-bold mr-1">Stream:</span>
                                 {recommendation.providers.map(p => (
                                     <img 
                                         key={p.providerId} 
                                         src={`${LOGO_BASE_URL}${p.logoPath}`} 
-                                        className="w-6 h-6 md:w-8 md:h-8 rounded-md shadow-md"
+                                        className="w-6 h-6 md:w-8 md:h-8 rounded-md shadow-sm"
                                         title={p.providerName}
                                         alt={p.providerName}
                                     />
@@ -169,30 +173,31 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                              </div>
                         )}
 
-                        <div className="bg-slate-800/50 rounded-xl p-4 md:p-6 border border-slate-700/50 mb-6 md:mb-8 text-left relative">
-                            <Quote className="absolute top-4 left-4 text-purple-500/20 transform -scale-x-100" size={32} />
-                            <p className="text-slate-200 italic leading-relaxed relative z-10 pl-4 text-sm md:text-base">
+                        <div className="bg-slate-800/80 rounded-2xl p-5 border border-slate-700/80 mb-8 text-left relative shadow-inner">
+                            <Quote className="absolute top-4 left-4 text-purple-500/30 transform -scale-x-100" size={24} />
+                            <p className="text-slate-200 italic leading-relaxed relative z-10 pl-6 text-sm md:text-[15px]">
                                 "{recommendation.plot}"
                             </p>
                         </div>
 
-                        <div className="flex gap-3 mt-auto">
+                        <div className="flex flex-col sm:flex-row gap-3 mt-auto">
                             <button 
                                 onClick={handleClose}
-                                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl transition-colors text-sm md:text-base"
+                                className="flex-1 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl transition-colors text-sm"
                             >
                                 {t('close_trailer')}
                             </button>
                             <button 
                                 onClick={handleAdd}
-                                className="flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl shadow-lg shadow-purple-900/30 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 text-sm md:text-base"
+                                className="flex-1 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-purple-900/30 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 text-sm"
                             >
                                 <Plus size={18} /> {t('to_list')}
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
+            </div>,
+            document.body
         )}
     </>
   );
