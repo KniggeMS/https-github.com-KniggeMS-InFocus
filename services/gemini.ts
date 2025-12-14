@@ -1,11 +1,11 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { MediaType, SearchResult, MediaItem, ChatMessage } from "../types";
 
 // CONSTANTS
 const GEMINI_KEY_STORAGE_KEY = 'cinelog_gemini_key';
 const MODEL_NAME = "gemini-2.5-flash";
-const IMAGE_MODEL_NAME = "gemini-2.5-flash-image";
+// Note: We keep the image model ref for Vision Search, but remove it for Avatars to save quota.
+// const IMAGE_MODEL_NAME = "gemini-2.5-flash-image"; 
 
 // --- HELPERS ---
 
@@ -220,24 +220,22 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
   }
 };
 
+/**
+ * Uses DiceBear API (Adventurer Style).
+ * Deterministic generation based on username.
+ * No API Key required.
+ */
 export const generateAvatar = async (username: string): Promise<string | null> => {
-    try {
-        const ai = getAiClient();
-        const prompt = `A cool, artistic, high-quality circular avatar profile picture for a movie lover named "${username}". Pop art style or cinematic lighting. Minimalist background.`;
-        
-        const response = await ai.models.generateContent({
-            model: IMAGE_MODEL_NAME,
-            contents: { parts: [{ text: prompt }] }
-        });
-
-        for (const part of response.candidates?.[0]?.content?.parts || []) {
-            if (part.inlineData) return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        }
-        return null;
-    } catch (error) {
-        console.error("Gemini Avatar Error:", error);
-        return null;
-    }
+    // Style: 'adventurer' (Colorful, Illustrated Characters)
+    const style = 'adventurer';
+    
+    // We add a random background color via the API to make it pop
+    const url = `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(username)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffdfbf,ffd5dc`;
+    
+    // Simulate async to match previous interface
+    return new Promise((resolve) => {
+        setTimeout(() => resolve(url), 300);
+    });
 };
 
 export const identifyMovieFromImage = async (base64Image: string): Promise<string | null> => {
@@ -247,7 +245,7 @@ export const identifyMovieFromImage = async (base64Image: string): Promise<strin
         const base64Data = base64Image.split(',')[1];
 
         const response = await ai.models.generateContent({
-            model: MODEL_NAME,
+            model: MODEL_NAME, // Flash is cheaper/faster for this than Pro
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: base64Data } },

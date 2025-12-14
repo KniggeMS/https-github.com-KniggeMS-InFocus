@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -125,6 +124,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ items }) => {
   const handleGenerateAvatar = async () => {
     if (!username) return;
     setIsGeneratingImg(true);
+    // Updated: Only username needed for DiceBear
     const imgData = await generateAvatar(username);
     if (imgData) {
         setAvatar(imgData);
@@ -334,7 +334,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ items }) => {
                                    className="flex items-center justify-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs rounded-lg transition-colors w-full disabled:opacity-50"
                                >
                                    {isGeneratingImg ? <Loader2 size={12} className="animate-spin"/> : <Sparkles size={12}/>}
-                                   {isGeneratingImg ? t('generating') : t('generate_avatar')}
+                                   {isGeneratingImg ? t('generating') : "Auto Avatar (AI)"}
                                </button>
                                <label className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg cursor-pointer transition-colors w-full">
                                    <Upload size={12} />
