@@ -1,4 +1,4 @@
-// Tailwind Configuration - CommonJS for Vercel
+// Tailwind Configuration - Deployment Fix v1.0.3
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
