@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { MediaItem, MediaType } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts';
@@ -86,7 +85,7 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
   const activeItem = activeIndex !== null && data[activeIndex] ? data[activeIndex] : null;
   
   // Main Value (Big Number)
-  let centerValue: string | number = 0;
+  let centerValue: string = "0";
   // Sub Label (Small Text)
   let centerLabel = '';
   // Bottom context (Genre name or "Total")
@@ -94,17 +93,17 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
 
   if (activeItem) {
       // Hover State
-      centerValue = activeItem.displayValue;
+      centerValue = activeItem.displayValue.toLocaleString();
       centerLabel = metric === 'count' ? 'Titel' : 'Stunden';
       centerContext = activeItem.name;
   } else {
       // Default State
       if (metric === 'count') {
-          centerValue = totalLibraryCount;
+          centerValue = totalLibraryCount.toLocaleString();
           centerLabel = 'Titel';
           centerContext = 'Gesamt';
       } else {
-          centerValue = totalLibraryRuntime;
+          centerValue = totalLibraryRuntime.toLocaleString();
           centerLabel = 'Stunden';
           centerContext = 'Watchtime';
       }
@@ -126,7 +125,7 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
             </div>
             <div className="text-left flex-grow">
                 <h3 className="text-sm md:text-base font-bold group-hover:text-cyan-400 transition-colors">Statistik & Trends</h3>
-                <span className="text-xs text-slate-500 block">Genre-Verteilung</span>
+                <span className="text-xs text-slate-500 block">Genre-Verteilung (Deine Sammlung)</span>
             </div>
             <div className="sm:hidden">
                 {isExpanded ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
@@ -204,8 +203,7 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
                 <div className="grid grid-cols-2 sm:grid-cols-1 gap-x-4 gap-y-1.5">
                     {data.map((entry, index) => {
                         const isActive = activeIndex === index;
-                        // Calculate percentage relative to displayed data or total library? 
-                        // Relative to displayed chart sum makes more sense for the pie slice visual
+                        // Calculate percentage relative to displayed data
                         const percent = Math.round((entry.value / totalMetricValue) * 100) || 0;
                         
                         return (
