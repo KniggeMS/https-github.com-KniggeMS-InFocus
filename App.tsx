@@ -235,14 +235,23 @@ const AppContent: React.FC = () => {
 
   const saveSettings = () => {
     // Gemini Key is always editable by user to solve their Quota/Demo issues
-    localStorage.setItem(GEMINI_KEY_STORAGE_KEY, tempGeminiKey);
-    setGeminiApiKey(tempGeminiKey);
+    // TRIM THE KEYS to avoid whitespace errors
+    const cleanedGeminiKey = tempGeminiKey.trim();
+    localStorage.setItem(GEMINI_KEY_STORAGE_KEY, cleanedGeminiKey);
+    setGeminiApiKey(cleanedGeminiKey);
+    setTempGeminiKey(cleanedGeminiKey); // Update input field too to show trimmed
 
     if (canEditKeys) {
-        localStorage.setItem(API_KEY_STORAGE_KEY, tempApiKey);
-        setTmdbApiKey(tempApiKey);
-        localStorage.setItem(OMDB_KEY_STORAGE_KEY, tempOmdbKey);
-        setOmdbApiKey(tempOmdbKey);
+        const cleanedTmdb = tempApiKey.trim();
+        const cleanedOmdb = tempOmdbKey.trim();
+        
+        localStorage.setItem(API_KEY_STORAGE_KEY, cleanedTmdb);
+        setTmdbApiKey(cleanedTmdb);
+        setTempApiKey(cleanedTmdb);
+        
+        localStorage.setItem(OMDB_KEY_STORAGE_KEY, cleanedOmdb);
+        setOmdbApiKey(cleanedOmdb);
+        setTempOmdbKey(cleanedOmdb);
     }
     setIsSettingsOpen(false);
   };

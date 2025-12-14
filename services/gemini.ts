@@ -7,14 +7,23 @@ const GEMINI_KEY_STORAGE_KEY = 'cinelog_gemini_key';
 const MODEL_NAME = "gemini-2.5-flash";
 const IMAGE_MODEL_NAME = "gemini-2.5-flash-image";
 
+// --- HELPERS ---
+
+const cleanJsonString = (text: string): string => {
+    // Remove markdown code blocks if present
+    let cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    return cleaned;
+};
+
 // --- CLIENT FACTORY ---
-// Helper to create client dynamically so we pick up key changes instantly
 const getAiClient = () => {
     // Priority: 1. LocalStorage (User Input), 2. Env Var (Deployment)
-    const apiKey = localStorage.getItem(GEMINI_KEY_STORAGE_KEY) || process.env.API_KEY || '';
+    let apiKey = localStorage.getItem(GEMINI_KEY_STORAGE_KEY) || process.env.API_KEY || '';
+    apiKey = apiKey.trim(); // IMPORTANT: Remove whitespace
     
-    // If no key is found, this might throw or fail later, but we allow empty string for now
-    // to let the UI handle the error state gracefully.
+    if (!apiKey) {
+        console.warn("Gemini Client initialized without API Key.");
+    }
     return new GoogleGenAI({ apiKey });
 };
 
@@ -26,7 +35,7 @@ const REC_CACHE_TTL = 60 * 60 * 1000; // 1 Hour
 
 interface AnalysisCacheEntry {
     timestamp: number;
-    userNotesHash: string; // Simple string comparison
+    userNotesHash: string; 
     text: string;
 }
 
@@ -37,22 +46,16 @@ interface RecsCacheEntry {
 
 // --- FALLBACK LOGIC ---
 
-/**
- * Generates a deterministic "analysis" based on metadata when the AI is offline or quota is reached.
- */
 const generateOfflineAnalysis = (item: MediaItem, userNotes?: string): string => {
     const genres = item.genre.slice(0, 3).join(', ');
     
-    // Rating Context
     let ratingContext = "Ein Werk mit gemischten Bewertungen";
     if (item.rating >= 8) ratingContext = "Ein von Kritikern gefeierter Titel";
     else if (item.rating >= 6) ratingContext = "Ein solider Genre-Vertreter";
     else if (item.rating > 0) ratingContext = "Ein Titel mit polarisierenden Bewertungen";
 
-    // Vibe Construction
     let vibe = `Das ist ${ratingContext.toLowerCase()} aus dem Bereich ${genres}.`;
     
-    // Plot Analysis (Heuristic)
     if (item.plot) {
         const p = item.plot.toLowerCase();
         if (p.includes('mord') || p.includes('kill') || p.includes('tot')) {
@@ -66,7 +69,6 @@ const generateOfflineAnalysis = (item: MediaItem, userNotes?: string): string =>
         }
     }
 
-    // Notes Integration
     if (userNotes && userNotes.length > 0) {
         vibe += ` Deine Rezension ("${userNotes}") fließt in zukünftige Empfehlungen ein.`;
     }
@@ -76,20 +78,15 @@ const generateOfflineAnalysis = (item: MediaItem, userNotes?: string): string =>
 
 // --- API FUNCTIONS ---
 
-/**
- * Advanced Recommendation Engine (Hybrid Filtering) with Caching
- */
 export const getRecommendations = async (items: MediaItem[], forceRefresh = false): Promise<SearchResult[]> => {
   if (items.length === 0) return [];
 
-  // 1. Try Load from Cache
+  // 1. Cache Check
   try {
       const cachedRaw = localStorage.getItem(REC_CACHE_KEY);
       if (cachedRaw) {
           const cached: RecsCacheEntry = JSON.parse(cachedRaw);
           const age = Date.now() - cached.timestamp;
-          
-          // Return cached if fresh enough OR if we want to save quota (unless forced)
           if (!forceRefresh && age < REC_CACHE_TTL) {
               console.log("Serving Recommendations from Cache");
               return cached.data;
@@ -99,9 +96,9 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
       console.warn("Cache read error", e);
   }
 
-  // 2. Check API Key validity (Simple check)
   const ai = getAiClient();
 
+  // Filter relevant items for context
   const relevantItems = items.filter(i => i.isFavorite || (i.userRating && i.userRating >= 4) || (i.userNotes && i.userNotes.length > 5));
   const sourceItems = relevantItems.length < 3 ? items.slice(0, 10) : relevantItems.slice(0, 20);
 
@@ -109,7 +106,6 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
       let info = `- "${item.title}" (${item.year}, ${item.genre.join('/')})`;
       if (item.userRating) info += ` [Rating: ${item.userRating}/5]`;
       if (item.isFavorite) info += ` [Favorite]`;
-      if (item.userNotes) info += ` [User Review: "${item.userNotes}"]`;
       return info;
   }).join("\n");
 
@@ -120,7 +116,7 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
       ${profileSummary}
 
       Task: Recommend 3 NEW movies/series fitting this profile.
-      Return JSON format.
+      IMPORTANT: Return ONLY valid JSON array. No markdown.
     `;
     
     const response = await ai.models.generateContent({
@@ -147,7 +143,9 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
     });
 
     if (response.text) {
-        const data = JSON.parse(response.text);
+        const cleanedJson = cleanJsonString(response.text);
+        const data = JSON.parse(cleanedJson);
+        
         const mappedData = data.map((item: any) => ({
           ...item,
           type: item.type === "SERIES" ? MediaType.SERIES : MediaType.MOVIE,
@@ -155,7 +153,7 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
           backdropPath: null
         }));
 
-        // SAVE TO CACHE
+        // Cache Success
         const cacheEntry: RecsCacheEntry = {
             timestamp: Date.now(),
             data: mappedData
@@ -167,14 +165,10 @@ export const getRecommendations = async (items: MediaItem[], forceRefresh = fals
     return [];
   } catch (error: any) {
     console.error("Gemini Recommendation Error:", error);
-    
-    // Fallback: Return old cache if API fails (even if expired)
+    // Return stale cache if available on error
     try {
         const cachedRaw = localStorage.getItem(REC_CACHE_KEY);
-        if (cachedRaw) {
-            console.log("API failed, serving stale cache.");
-            return JSON.parse(cachedRaw).data;
-        }
+        if (cachedRaw) return JSON.parse(cachedRaw).data;
     } catch (e) {}
     
     return [];
@@ -232,48 +226,56 @@ export const chatWithAI = async (message: string, collection: MediaItem[], histo
         ).join('\n');
 
         const systemInstruction = `
-            You are 'CineLog AI'. Access to user's collection:
+            You are 'CineLog AI', a helpful movie assistant.
+            User's collection summary (first 50 items):
             ${collectionContext}
-            Keep answers concise, friendly, and in German/English.
+            
+            Answer concisely in German (or match user language).
+            If asked for recommendations, suggest real movies not in their collection.
         `;
 
-        const response = await ai.models.generateContent({
+        // Map internal history format to Gemini Chat history format
+        const chatHistory = history
+            .filter(msg => msg.id !== 'welcome') // Skip local welcome message
+            .map(msg => ({
+                role: msg.role,
+                parts: [{ text: msg.text }]
+            }));
+
+        const chat = ai.chats.create({
             model: MODEL_NAME,
-            contents: message,
+            history: chatHistory,
             config: { systemInstruction }
         });
 
-        return response.text || "Sorry, keine Antwort möglich.";
-    } catch (error) {
+        const response = await chat.sendMessage({ message: message });
+        return response.text || "Ich bin sprachlos.";
+
+    } catch (error: any) {
         console.error("Chat Error:", error);
-        return "Verbindungsprobleme mit der AI.";
+        // Return clearer error messages to the UI
+        if (error.message?.includes("API key")) return "Fehler: API Key ungültig oder fehlt.";
+        if (error.message?.includes("429")) return "Fehler: Zu viele Anfragen (Quota Limit).";
+        return "Verbindungsproblem: " + (error.message || "Unbekannt");
     }
 };
 
-/**
- * Deep Content Analysis: Analyzes plot vs user preferences/notes.
- * SMART CACHING + OFFLINE FALLBACK
- */
 export const analyzeMovieContext = async (item: MediaItem, userNotes: string | undefined): Promise<string> => {
     const cacheKey = `${CACHE_PREFIX}${item.id}`;
     const currentNotesHash = userNotes || '';
 
-    // 1. Try Load from Cache
+    // Cache
     try {
         const cachedRaw = localStorage.getItem(cacheKey);
         if (cachedRaw) {
             const cached: AnalysisCacheEntry = JSON.parse(cachedRaw);
-            // If notes haven't changed, the analysis is still 100% valid.
             if (cached.userNotesHash === currentNotesHash) {
-                console.log(`Serving Analysis for ${item.title} from Cache`);
                 return cached.text;
             }
         }
-    } catch (e) {
-        console.warn("Cache read error", e);
-    }
+    } catch (e) {}
 
-    // 2. Call API
+    // API
     try {
         const ai = getAiClient();
         const prompt = `
@@ -281,12 +283,7 @@ export const analyzeMovieContext = async (item: MediaItem, userNotes: string | u
             Plot: "${item.plot}"
             User's Public Review: "${userNotes || 'None'}"
             
-            Task:
-            Provide a short, 2-sentence "Deep Insight".
-            1. Mention if the "Vibe" matches the plot (e.g. "Dark & Complex").
-            2. Warn about structural things like Cliffhangers if it's a series.
-            
-            Output Language: German.
+            Task: Provide a short, 2-sentence "Deep Insight" in German.
         `;
 
         const response = await ai.models.generateContent({
@@ -296,7 +293,6 @@ export const analyzeMovieContext = async (item: MediaItem, userNotes: string | u
 
         if (!response.text) throw new Error("Empty response");
         
-        // 3. Save to Cache
         const newEntry: AnalysisCacheEntry = {
             timestamp: Date.now(),
             userNotesHash: currentNotesHash,
@@ -307,19 +303,14 @@ export const analyzeMovieContext = async (item: MediaItem, userNotes: string | u
         return response.text;
 
     } catch (error: any) {
-        console.warn("Deep Content Analysis Failed (falling back):", error.message);
+        console.warn("Analysis Failed:", error.message);
         
-        // 4. Fallback Strategy:
-        // If we have a stale cache (notes changed but item is same), return that instead of offline text
+        // Fallback: Stale Cache or Offline
         try {
             const cachedRaw = localStorage.getItem(cacheKey);
-            if (cachedRaw) {
-                const cached = JSON.parse(cachedRaw);
-                return `${cached.text} (Aus Cache - Notizen evtl. veraltet)`;
-            }
+            if (cachedRaw) return JSON.parse(cachedRaw).text + " (Offline Cache)";
         } catch(e) {}
 
-        // 5. Last Resort: Offline Algo
         return generateOfflineAnalysis(item, userNotes);
     }
 };
