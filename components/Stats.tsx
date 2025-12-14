@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { MediaItem, MediaType } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts';
-import { ChevronDown, ChevronUp, Activity, Clock, Hash, MousePointer2, Info } from 'lucide-react';
+import { ChevronDown, ChevronUp, Activity, Clock, Hash, MousePointer2 } from 'lucide-react';
 
 interface StatsProps {
   items: MediaItem[];
@@ -46,9 +46,8 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
       } else {
           // Estimate series runtime if total minutes not explicitly stored
           const epRuntime = item.runtime || 45;
-          const eps = item.episodes || 10;
           const seasons = item.seasons || 1;
-          // Simple heuristic: if episodes count exists use it, else guess per season
+          // Simple heuristic: if episodes count exists use it, else guess per season (10 eps)
           const totalEps = item.episodes ? item.episodes : (seasons * 10);
           itemRuntime = (epRuntime * totalEps); 
       }
