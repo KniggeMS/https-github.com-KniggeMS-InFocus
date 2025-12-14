@@ -1,3 +1,4 @@
+// Tailwind Configuration - CommonJS for Vercel
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
