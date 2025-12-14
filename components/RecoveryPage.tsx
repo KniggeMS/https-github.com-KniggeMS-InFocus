@@ -21,8 +21,8 @@ export const RecoveryPage: React.FC = () => {
       setError("Passwörter stimmen nicht überein");
       return;
     }
-    if (password.length < 6) {
-        setError("Passwort muss mindestens 6 Zeichen lang sein");
+    if (password.length < 8) {
+        setError("Passwort muss mindestens 8 Zeichen lang sein");
         return;
     }
 
@@ -79,17 +79,20 @@ export const RecoveryPage: React.FC = () => {
                     )}
                     
                     <div>
-                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('new_password')}</label>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-xs font-bold text-slate-400 uppercase">{t('new_password')}</label>
+                            {password.length > 0 && password.length < 8 && <span className="text-[10px] text-red-400">Min. 8 Zeichen</span>}
+                        </div>
                         <div className="relative">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                             <input 
                                 type="password" 
                                 value={password} 
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-10 pr-4 py-3 text-white focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all"
+                                className={`w-full bg-slate-800 border rounded-lg pl-10 pr-4 py-3 text-white focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all ${password && password.length < 8 ? 'border-red-500/50' : 'border-slate-600'}`}
                                 placeholder="••••••••"
                                 required
-                                minLength={6}
+                                minLength={8}
                             />
                         </div>
                     </div>
@@ -105,15 +108,15 @@ export const RecoveryPage: React.FC = () => {
                                 className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-10 pr-4 py-3 text-white focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all"
                                 placeholder="••••••••"
                                 required
-                                minLength={6}
+                                minLength={8}
                             />
                         </div>
                     </div>
 
                     <button 
                         type="submit" 
-                        disabled={isLoading}
-                        className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-cyan-900/20 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mt-2"
+                        disabled={isLoading || password.length < 8}
+                        className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-cyan-900/20 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mt-2 disabled:opacity-50 disabled:grayscale"
                     >
                         {isLoading ? <Loader2 size={18} className="animate-spin" /> : t('set_password_btn')}
                     </button>

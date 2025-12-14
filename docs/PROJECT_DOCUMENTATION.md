@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.3
+**Version:** 1.9.4
 
 ---
 
@@ -60,6 +60,7 @@ Das Ziel des Services **"InFocus CineLog"** ist die Bereitstellung einer hochver
 3.  **Datensicherheit:**
     *   Keine Speicherung von Passwörtern im Klartext (Supabase Auth).
     *   Trennung von User-Daten durch RLS.
+    *   **Neu (v1.9.4):** Erzwungene Passwort-Mindestlänge von 8 Zeichen mit visueller Stärke-Anzeige.
 
 ### 2.3 Capacity Management & Caching
 Um API-Quotas (Google Gemini / TMDB / OMDb) zu schonen und die Latenz zu verringern, wurde eine **Smart Caching Strategie** implementiert:
@@ -104,6 +105,7 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-016** | Minor | **UX / Admin** | **RBAC Visibility Check:** Implementierung einer visuellen Trennung (Header) für den Admin-Bereich in der Sidebar, um die Zugriffskontrolle transparent zu machen. | ✅ Done |
 | **RFC-017** | Bugfix | **UX / Layout** | **Modal Portal Fix:** Refactoring des `AiRecommendationButton` zur Nutzung von `React.createPortal`. Behebt Clipping-Probleme (z-index Context) innerhalb der Sidebar auf Mobile & Desktop. | ✅ Done |
 | **RFC-018** | Feature | **Help** | **In-App Guide:** Implementierung der `GuidePage` als interaktives Handbuch. Integration eines Links in den Einstellungen. | ✅ Done |
+| **RFC-019** | Major | **Security** | **Security Hardening:** Erhöhung der minimalen Passwortlänge von 6 auf 8 Zeichen. Implementierung eines visuellen "Strength Meter" bei der Registrierung für bessere UX bei erhöhter Sicherheit. | ✅ Done |
 
 ---
 
@@ -136,4 +138,4 @@ Geplante Verbesserungen für kommende Sprints:
 
 ---
 
-*Dokumentation aktualisiert: Jetzt (Version 1.9.3) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.4) durch Senior Lead Engineer*

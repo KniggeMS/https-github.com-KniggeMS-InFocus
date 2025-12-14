@@ -77,6 +77,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ items }) => {
     setSuccessMsg('');
     setErrorMsg('');
 
+    if (newPw.length < 8) {
+        setErrorMsg("Neues Passwort muss mindestens 8 Zeichen lang sein.");
+        setIsLoading(false);
+        return;
+    }
+
     if (newPw !== confirmNewPw) {
         setErrorMsg("Passwörter stimmen nicht überein");
         setIsLoading(false);
@@ -434,14 +440,17 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ items }) => {
                        <hr className="border-slate-700 my-4 opacity-50"/>
 
                        <div>
-                           <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{t('new_password')}</label>
+                           <div className="flex justify-between items-center mb-1">
+                                <label className="block text-xs font-bold text-slate-400 uppercase">{t('new_password')}</label>
+                                {newPw.length > 0 && newPw.length < 8 && <span className="text-[10px] text-red-400">Min. 8 Zeichen</span>}
+                           </div>
                            <input 
                                type="password" 
                                value={newPw}
                                onChange={e => setNewPw(e.target.value)}
-                               className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none"
+                               className={`w-full bg-slate-900 border rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none transition-colors ${newPw && newPw.length < 8 ? 'border-red-500/50' : 'border-slate-600'}`}
                                required
-                               minLength={6}
+                               minLength={8}
                            />
                        </div>
 
@@ -453,14 +462,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ items }) => {
                                onChange={e => setConfirmNewPw(e.target.value)}
                                className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-cyan-500 focus:outline-none"
                                required
-                               minLength={6}
+                               minLength={8}
                            />
                        </div>
 
                        <button 
                            type="submit"
-                           disabled={isLoading || !currentPw || !newPw}
-                           className="w-full py-2 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg shadow-lg shadow-orange-900/20 transition-all mt-2"
+                           disabled={isLoading || !currentPw || !newPw || newPw.length < 8}
+                           className="w-full py-2 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-lg shadow-lg shadow-orange-900/20 transition-all mt-2 disabled:opacity-50 disabled:grayscale"
                        >
                            {t('change_password')}
                        </button>

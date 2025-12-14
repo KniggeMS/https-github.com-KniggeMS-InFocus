@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { generateAvatar } from '../services/gemini';
-import { Clapperboard, Loader2, Upload, Sparkles, Languages, UserCheck, KeyRound, ArrowLeft, Info } from 'lucide-react';
+import { Clapperboard, Loader2, Upload, Sparkles, Languages, UserCheck, KeyRound, ArrowLeft, Info, Check, X as XIcon } from 'lucide-react';
 
 type AuthView = 'login' | 'register' | 'forgot';
 
@@ -32,9 +32,36 @@ export const AuthPage: React.FC = () => {
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 
   useEffect(() => {
-      // Just for UX in this specific demo context
       setAvailableUsers(getAllUsers());
   }, []);
+
+  // PASSWORD STRENGTH LOGIC
+  const getPasswordStrength = (pass: string) => {
+      let score = 0;
+      if (!pass) return 0;
+      if (pass.length >= 8) score += 1;
+      if (pass.length >= 12) score += 1;
+      if (/[A-Z]/.test(pass)) score += 1;
+      if (/[0-9]/.test(pass)) score += 1;
+      if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+      return score; // Max 5
+  };
+
+  const pwdScore = getPasswordStrength(password);
+  
+  const getStrengthColor = () => {
+      if (password.length === 0) return 'bg-slate-700';
+      if (password.length < 8) return 'bg-red-500';
+      if (pwdScore < 3) return 'bg-yellow-500';
+      return 'bg-green-500';
+  };
+
+  const getStrengthLabel = () => {
+      if (password.length === 0) return '';
+      if (password.length < 8) return 'Zu kurz (min. 8)';
+      if (pwdScore < 3) return 'Okay';
+      return 'Stark';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,12 +71,14 @@ export const AuthPage: React.FC = () => {
 
     try {
       if (view === 'login') {
-        await login(username, password); // Using username as field for both user/email input
+        await login(username, password); 
       } else if (view === 'register') {
         // Register Validation
         if (!username || !email || !password) throw new Error("Missing required fields");
-        if (password !== confirmPassword) throw new Error("Passwords do not match");
-        if (password.length < 6) throw new Error("Password too short");
+        if (password !== confirmPassword) throw new Error("Passwörter stimmen nicht überein");
+        
+        // Security Policy Check
+        if (password.length < 8) throw new Error("Passwort muss mindestens 8 Zeichen lang sein.");
 
         await register({
           id: crypto.randomUUID(),
@@ -61,10 +90,8 @@ export const AuthPage: React.FC = () => {
           createdAt: Date.now()
         }, password);
 
-        // Explicit UX handling for successful registration
         setSuccess(t('registration_success'));
         setView('login');
-        // Reset password fields for security
         setPassword('');
         setConfirmPassword('');
       } else if (view === 'forgot') {
@@ -72,7 +99,6 @@ export const AuthPage: React.FC = () => {
           
           await resetPassword(email);
           setSuccess(t('reset_link_sent'));
-          // Keep showing success message for a bit, then switch back to login
           setTimeout(() => {
               setView('login');
               setSuccess('');
@@ -212,7 +238,7 @@ export const AuthPage: React.FC = () => {
                         </>
                     )}
 
-                    {/* Forgot Password View - UPDATED TO ONLY ASK EMAIL */}
+                    {/* Forgot Password View */}
                     {view === 'forgot' && (
                         <>
                             <div className="bg-slate-800/80 p-3 rounded-lg text-xs text-slate-300 border border-slate-700 mb-2 flex gap-2">
@@ -234,7 +260,7 @@ export const AuthPage: React.FC = () => {
 
                     {/* Register View */}
                     {view === 'register' && (
-                        <div className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                        <div className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2 pb-2">
                              {/* Avatar Section */}
                             <div className="flex flex-col items-center gap-4 py-2">
                                 <div className="w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-700 overflow-hidden flex items-center justify-center relative group">
@@ -279,24 +305,50 @@ export const AuthPage: React.FC = () => {
                                     placeholder={`${t('email')} *`}
                                     required
                                 />
-                                <div className="grid grid-cols-2 gap-3">
+                                
+                                {/* PASSWORD SECTION WITH METER */}
+                                <div className="space-y-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700">
                                     <input 
                                         type="password" 
                                         value={password} 
                                         onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl focus:border-cyan-500 focus:outline-none"
+                                        className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl focus:border-cyan-500 focus:outline-none transition-colors"
                                         placeholder={`${t('password')} *`}
                                         required
                                     />
+                                    
+                                    {/* Strength Meter */}
+                                    {password && (
+                                        <div className="px-1">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-[10px] uppercase font-bold text-slate-500">Sicherheit</span>
+                                                <span className={`text-[10px] font-bold ${password.length < 8 ? 'text-red-400' : pwdScore < 3 ? 'text-yellow-400' : 'text-green-400'}`}>
+                                                    {getStrengthLabel()}
+                                                </span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full transition-all duration-500 ${getStrengthColor()}`}
+                                                    style={{ width: `${Math.min(100, Math.max(10, (password.length / 12) * 100))}%` }}
+                                                ></div>
+                                            </div>
+                                            {password.length < 8 && <p className="text-[10px] text-red-400 mt-1">Min. 8 Zeichen benötigt.</p>}
+                                        </div>
+                                    )}
+
                                     <input 
                                         type="password" 
                                         value={confirmPassword} 
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl focus:border-cyan-500 focus:outline-none"
+                                        className={`w-full bg-slate-800 border text-white px-4 py-3 rounded-xl focus:border-cyan-500 focus:outline-none transition-colors ${confirmPassword && password !== confirmPassword ? 'border-red-500/50' : 'border-slate-700'}`}
                                         placeholder={`${t('confirm_password')} *`}
                                         required
                                     />
+                                    {confirmPassword && password !== confirmPassword && (
+                                        <p className="text-[10px] text-red-400 px-1">Stimmt nicht überein</p>
+                                    )}
                                 </div>
+
                                 <div className="grid grid-cols-2 gap-3">
                                     <input 
                                         type="text" 
@@ -319,8 +371,8 @@ export const AuthPage: React.FC = () => {
 
                     <button 
                         type="submit" 
-                        disabled={isLoading}
-                        className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mt-4 ${view === 'forgot' ? 'bg-orange-600 hover:bg-orange-500 text-white shadow-orange-900/20' : 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/20'}`}
+                        disabled={isLoading || (view === 'register' && (password.length < 8 || password !== confirmPassword))}
+                        className={`w-full font-bold py-3.5 rounded-xl shadow-lg transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mt-4 disabled:opacity-50 disabled:grayscale ${view === 'forgot' ? 'bg-orange-600 hover:bg-orange-500 text-white shadow-orange-900/20' : 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/20'}`}
                     >
                         {isLoading && <Loader2 size={18} className="animate-spin" />}
                         {view === 'login' && t('login_button')}
@@ -358,7 +410,7 @@ export const AuthPage: React.FC = () => {
                     )}
                 </div>
 
-                {/* DEBUG / DEMO HELP FOR FORGOTTEN CREDENTIALS */}
+                {/* DEBUG / DEMO HELP */}
                 <div className="mt-4 text-center">
                     <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-2">Lokale Demo-Benutzer</p>
                     <div className="flex flex-wrap justify-center gap-2">
