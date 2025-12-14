@@ -53,19 +53,14 @@
     npm install
     ```
 
-3.  **Environment Variablen setzen**
-    Erstelle eine `.env` Datei im Hauptverzeichnis:
-
+3.  **Lokal Starten**
+    Erstelle eine `.env` Datei im Hauptverzeichnis für lokale Entwicklung:
     ```env
-    # Google Gemini API Key (für AI Features)
-    API_KEY=dein_gemini_api_key
-
-    # Supabase Konfiguration (für Datenbank & Auth)
-    VITE_SUPABASE_URL=deine_supabase_url
-    VITE_SUPABASE_ANON_KEY=dein_supabase_anon_key
+    VITE_TMDB_API_KEY=dein_tmdb_key
+    VITE_OMDB_API_KEY=dein_omdb_key
+    API_KEY=dein_gemini_key
     ```
-
-4.  **Starten**
+    Starten:
     ```bash
     npm run dev
     ```

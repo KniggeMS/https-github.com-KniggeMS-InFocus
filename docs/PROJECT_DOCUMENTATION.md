@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.18
+**Version:** 1.9.19
 
 ---
 
@@ -119,26 +119,24 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-028** | Critical | **Build / Ops** | **Config Stabilization:** Erzwingung von CommonJS in Config-Dateien (`module.exports`) und Bereitstellung von `index.css`, um Vercel-Deployment Warnungen und Fehler zu beheben. | ✅ Done |
 | **RFC-029** | Critical | **Build / Ops** | **Sync Force (Fix v1.0.3):** Version-Bump aller Config-Dateien auf 1.0.3 / 1.9.17, um Git-Tracking zu erzwingen und Deployment-Fehler endgültig zu beheben. | ✅ Done |
 | **RFC-030** | Critical | **Mobile / UX** | **Mobile Key Isolation Incident:** Korrektur des Umgangs mit dem TMDB API Key. Problem: `localStorage` ist geräteabhängig. Fix: Ersetzen des blockierenden Browser-Prompts durch ein integriertes Eingabe-UI im `SearchModal` und Implementierung eines Live-State-Updates, um Reloads zu vermeiden. | ✅ Done |
+| **RFC-031** | Revert | **Security** | **Key Exposure Rollback:** Rücknahme der Änderung, API Keys via `vite.config.ts` zu injizieren. Keys verbleiben strikt Client-Side im `localStorage`, um die "Bring Your Own Key" Architektur zu wahren. | ✅ Done |
 
 ---
 
 ## 4. Service Operation (Betrieb)
 
-### 4.1 Incident Report: Mobile Key Isolation (RFC-030)
+### 4.1 Incident Report: Mobile Key Isolation (RFC-030/031)
 
 **Problembeschreibung:**
-Benutzer berichteten, dass die App auf dem Desktop funktionierte, aber auf dem Smartphone nach dem API Key fragte, obwohl dieser bereits am Desktop eingegeben wurde. Zusätzlich wurde ein störendes Browser-Popup (`window.prompt`) verwendet.
+Benutzer berichteten, dass die App auf dem Desktop funktionierte, aber auf dem Smartphone nach dem API Key fragte, obwohl dieser bereits am Desktop eingegeben wurde.
 
 **Root Cause Analyse (RCA):**
 1.  **Client-Side Storage Isolation:** Die Architektur speichert API Keys (`tmdb_api_key`) ausschließlich im `localStorage` des Browsers. Dies ist ein Sicherheitsfeature ("Zero Knowledge" auf dem Server), bedeutet aber, dass **jedes Gerät** (Desktop, Handy, Tablet) den Key einmalig separat eingegeben bekommen muss. Es findet keine Synchronisation der Keys über die Cloud statt.
-2.  **UX Fehlentscheidung:** Der Versuch, einen fehlenden Key mittels `window.prompt()` abzufangen, unterbricht den Flow der PWA und wirkt unprofessionell. Zudem führen manche mobilen Browser diesen Prompt nicht korrekt aus oder blockieren ihn.
+2.  **Failed Resolution Attempt:** Ein Versuch, die Keys über Vercel Environment Variables (`process.env`) global bereitzustellen, wurde als Sicherheitsrisiko identifiziert, da dies die Keys im Client-Bundle exponieren würde.
 
 **Lösung:**
 1.  **UI Integration:** Das `SearchModal` erkennt nun automatisch, ob der Key fehlt, und rendert anstelle der Suchleiste ein freundliches Eingabeformular.
-2.  **State Management:** Die Eingabe des Keys aktualisiert nun direkt den React State in `App.tsx` (Lifting State Up), sodass die App sofort nutzbar ist, ohne die Seite neu laden zu müssen.
-
-**Präventivmaßnahmen:**
-Dokumentation aktualisiert (siehe 2.4), um klarzustellen, dass Keys geräteabhängig sind.
+2.  **Sicherheits-Rollback:** Die Injektion der Keys via Build-Prozess wurde rückgängig gemacht. Benutzer müssen Keys manuell eingeben, um die Hoheit über ihre Zugangsdaten zu behalten.
 
 ### 4.2 SQL Migration für Sharing (WICHTIG!)
 Standardmäßig erlaubt Supabase nur den Zugriff auf eigene Daten. Damit das Teilen von Listen funktioniert, muss folgende SQL-Policy im Supabase SQL Editor ausgeführt werden:
@@ -181,4 +179,4 @@ create policy "Allow viewing shared list items" on media_items
 
 ---
 
-*Dokumentation aktualisiert: Jetzt (Version 1.9.18) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.19) durch Senior Lead Engineer*
