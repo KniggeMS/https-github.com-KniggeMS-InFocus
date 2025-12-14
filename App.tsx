@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { useTranslation } from './contexts/LanguageContext';
@@ -24,7 +24,7 @@ import {
   fetchCustomLists, createCustomList, updateCustomListItems, deleteCustomList, shareCustomList
 } from './services/db';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole } from './types';
-import { LogOut, Search, Settings, User as UserIcon, List, Heart, MonitorPlay, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown } from 'lucide-react';
+import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu } from 'lucide-react';
 
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
     const { id } = useParams();
@@ -61,6 +61,10 @@ export default function App() {
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [viewingProfile, setViewingProfile] = useState<User | null>(null);
+  
+  // Desktop Header Menu
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Keys
   const [tmdbKey, setTmdbKey] = useState(localStorage.getItem('tmdb_api_key') || '');
@@ -76,6 +80,17 @@ export default function App() {
       loadData();
     }
   }, [user]);
+
+  // Close profile menu on click outside
+  useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+          if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+              setIsProfileMenuOpen(false);
+          }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const loadData = async () => {
     const [fetchedItems, fetchedLists] = await Promise.all([
@@ -264,8 +279,9 @@ export default function App() {
       {/* DESKTOP SIDEBAR */}
       <aside className="fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 hidden md:flex flex-col z-30">
         <div className="p-6">
-           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-2">
-              <MonitorPlay className="text-cyan-400" /> CineLog
+           {/* LOGO FIX */}
+           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-2">
+              <Clapperboard className="text-cyan-400" /> InFocus CineLog
            </h1>
         </div>
 
@@ -321,8 +337,9 @@ export default function App() {
             apiKey={tmdbKey}
         />
 
+        {/* SIDEBAR FOOTER (Small) */}
         <div className="p-4 border-t border-slate-800">
-            <div onClick={() => navigate('/profile')} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800 cursor-pointer mb-2">
+            <button onClick={() => navigate('/profile')} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800 cursor-pointer w-full text-left">
                 <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden">
                     {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon className="p-1 text-slate-400"/>}
                 </div>
@@ -330,39 +347,27 @@ export default function App() {
                     <div className="text-sm font-bold text-white truncate">{user.username}</div>
                     <div className="text-xs text-slate-500 truncate">{user.email}</div>
                 </div>
-                <Settings size={16} className="text-slate-500" />
-            </div>
-            <div className="flex justify-between items-center text-slate-500">
-                <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 hover:text-white">
-                    {theme === 'dark' ? <Moon size={18}/> : <Sun size={18}/>}
-                </button>
-                <button onClick={() => {
-                     const tKey = prompt("TMDB API Key:", tmdbKey);
-                     const oKey = prompt("OMDb API Key:", omdbKey);
-                     if (tKey !== null && oKey !== null) saveKeys(tKey, oKey);
-                }} className="text-xs hover:text-cyan-400">API Keys</button>
-
-                <button onClick={logout} className="p-2 hover:text-red-400">
-                    <LogOut size={18}/>
-                </button>
-            </div>
+            </button>
         </div>
       </aside>
 
       {/* MAIN CONTENT AREA */}
       <main className="md:ml-64 p-4 md:p-8 min-h-screen">
+        
+        {/* MOBILE HEADER */}
         <div className="md:hidden flex justify-between items-center mb-6">
-             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-2">
-                <MonitorPlay className="text-cyan-400" size={24} /> CineLog
+             <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-2">
+                <Clapperboard className="text-cyan-400" size={24} /> InFocus CineLog
              </h1>
              <div className="flex gap-4">
                 <button onClick={() => setIsSearchOpen(true)} className="text-white"><Search size={24}/></button>
-                <div onClick={() => navigate('/profile')} className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden border border-slate-600">
-                    {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : null}
+                <div onClick={() => setIsMobileMenuOpen(true)} className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden border border-slate-600">
+                    {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon className="p-1 text-slate-400" />}
                 </div>
              </div>
         </div>
 
+        {/* DESKTOP HEADER WITH PROFILE MENU */}
         <div className="hidden md:flex justify-between items-center mb-8">
             <div className="flex items-center gap-4">
                  <button 
@@ -377,6 +382,50 @@ export default function App() {
                  >
                     <Download size={18} /> Import
                  </button>
+            </div>
+
+            {/* Top Right Profile Dropdown */}
+            <div className="relative" ref={profileMenuRef}>
+                <button 
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                    className="flex items-center gap-3 bg-slate-800 hover:bg-slate-700 rounded-full pl-4 pr-2 py-1.5 border border-slate-700 transition-colors"
+                >
+                    <span className="text-sm font-bold text-white">{user.username}</span>
+                    <div className="w-8 h-8 rounded-full bg-slate-600 overflow-hidden">
+                        {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon className="p-1 text-slate-400" />}
+                    </div>
+                    <ChevronDown size={16} className="text-slate-400" />
+                </button>
+
+                {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 overflow-hidden animate-in fade-in zoom-in-95 z-50">
+                        <div className="p-3 border-b border-slate-700">
+                            <p className="text-xs text-slate-500 uppercase font-bold">Account</p>
+                            <p className="text-sm text-white truncate">{user.email}</p>
+                        </div>
+                        <div className="p-2">
+                            <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg">
+                                <UserIcon size={16} /> {t('profile')}
+                            </button>
+                            <button onClick={() => { 
+                                 const tKey = prompt("TMDB API Key:", tmdbKey);
+                                 const oKey = prompt("OMDb API Key:", omdbKey);
+                                 if (tKey !== null && oKey !== null) saveKeys(tKey, oKey);
+                                 setIsProfileMenuOpen(false);
+                            }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg">
+                                <Settings size={16} /> API Keys
+                            </button>
+                            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg">
+                                {theme === 'dark' ? <Moon size={16}/> : <Sun size={16}/>} Theme: {theme}
+                            </button>
+                        </div>
+                        <div className="p-2 border-t border-slate-700">
+                            <button onClick={() => { logout(); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg">
+                                <LogOut size={16} /> {t('logout')}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
 

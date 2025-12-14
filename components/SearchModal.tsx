@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Search, Loader2, Sparkles, Film, AlertCircle, Settings, ChevronLeft, Camera } from 'lucide-react';
 import { searchTMDB, IMAGE_BASE_URL } from '../services/tmdb';
@@ -89,6 +88,14 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
 
   const isMissingKey = !apiKey || apiKey.trim() === '';
 
+  const handleSetKey = () => {
+      const newKey = prompt("Bitte TMDB API Key eingeben:");
+      if (newKey) {
+          localStorage.setItem('tmdb_api_key', newKey);
+          window.location.reload(); // Simple reload to apply
+      }
+  };
+
   if (selectedItem) {
       return (
           <DetailView 
@@ -121,12 +128,20 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
         <div className="p-4 border-b border-slate-700 bg-slate-800/50">
           
           {isMissingKey && (
-             <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-start gap-3 text-red-200">
-                <AlertCircle className="mt-0.5 text-red-400 flex-shrink-0" size={18} />
-                <div className="text-sm">
-                   <strong className="font-semibold text-red-400 block mb-1">{t('api_key_missing')}</strong>
-                   <span className="opacity-90">{t('api_key_req')}</span>
+             <div className="mb-4 bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-red-200">
+                <div className="flex items-start gap-3">
+                    <AlertCircle className="mt-0.5 text-red-400 flex-shrink-0" size={18} />
+                    <div className="text-sm">
+                        <strong className="font-semibold text-red-400 block mb-1">{t('api_key_missing')}</strong>
+                        <span className="opacity-90">{t('api_key_req')}</span>
+                    </div>
                 </div>
+                <button 
+                    onClick={handleSetKey}
+                    className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-xs font-bold transition-colors whitespace-nowrap"
+                >
+                    Key eingeben
+                </button>
              </div>
           )}
 
