@@ -35,7 +35,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, list, o
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
           <h3 className="font-semibold text-white flex items-center gap-2">

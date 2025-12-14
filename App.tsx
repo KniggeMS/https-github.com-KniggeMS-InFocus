@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MediaItem, WatchStatus, MediaType, SearchResult, SortOption, CustomList, UserRole, User } from './types';
@@ -730,6 +729,7 @@ const AppContent: React.FC = () => {
             </button>
           </div>
         </nav>
+        {/* DESKTOP AI BUTTON - Only renders in sidebar due to CSS hidden md:flex of parent */}
         <AiRecommendationButton items={items} onAdd={addItem} apiKey={tmdbApiKey} />
       </aside>
 
@@ -896,6 +896,9 @@ const AppContent: React.FC = () => {
       )}
       
       <ChatBot items={items} />
+      {/* MOBILE AI BUTTON - Force Render for Mobile */}
+      <AiRecommendationButton items={items} onAdd={addItem} apiKey={tmdbApiKey} mobileFabOnly={true} />
+      
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={addItem} apiKey={tmdbApiKey} />
       <CreateListModal isOpen={isCreateListOpen} onClose={() => setIsCreateListOpen(false)} onCreate={createList} />
       {canSmartImport && <ImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImport={handleBatchImport} apiKey={tmdbApiKey} omdbApiKey={omdbApiKey} />}
@@ -909,13 +912,11 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <Router>
-      <ThemeProvider>
+      <LanguageProvider>
         <AuthProvider>
-          <LanguageProvider>
-            <AppContent />
-          </LanguageProvider>
+          <AppContent />
         </AuthProvider>
-      </ThemeProvider>
+      </LanguageProvider>
     </Router>
   );
 };

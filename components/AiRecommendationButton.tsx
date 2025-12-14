@@ -11,9 +11,10 @@ interface AiRecommendationButtonProps {
   items: MediaItem[];
   onAdd: (item: SearchResult, status: WatchStatus) => void;
   apiKey: string;
+  mobileFabOnly?: boolean;
 }
 
-export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ items, onAdd, apiKey }) => {
+export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ items, onAdd, apiKey, mobileFabOnly = false }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [recommendation, setRecommendation] = useState<SearchResult | null>(null);
@@ -74,43 +75,46 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
 
   return (
     <>
-        {/* Trigger Button in Sidebar */}
-        <div className="mt-auto px-4 pb-4 pt-2 border-t border-slate-800 hidden md:block">
-        <div className="bg-gradient-to-br from-purple-900/40 to-slate-800 rounded-xl p-1 border border-purple-500/20 backdrop-blur-sm shadow-lg relative overflow-hidden group">
-            
-            {/* Decorative background glow */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600/10 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-purple-600/20 transition-colors"></div>
+        {/* Trigger Button in Sidebar (Desktop) - Only show if NOT mobileFabOnly */}
+        {!mobileFabOnly && (
+            <div className="mt-auto px-4 pb-4 pt-2 border-t border-slate-800 hidden md:block">
+                <div className="bg-gradient-to-br from-purple-900/40 to-slate-800 rounded-xl p-1 border border-purple-500/20 backdrop-blur-sm shadow-lg relative overflow-hidden group">
+                    
+                    {/* Decorative background glow */}
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-purple-600/10 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-purple-600/20 transition-colors"></div>
 
-            <button 
-                onClick={getAiTip}
-                disabled={loading}
-                className="w-full flex items-center gap-3 text-left relative z-10 p-3 rounded-lg hover:bg-white/5 transition-colors"
-            >
-                <div className={`p-2.5 rounded-lg shadow-inner transition-all duration-500 ${loading ? 'bg-slate-800' : 'bg-purple-600 shadow-purple-900/30'}`}>
-                {loading ? <Loader2 className="w-5 h-5 animate-spin text-purple-400" /> : <Sparkles className="w-5 h-5 text-white" />}
+                    <button 
+                        onClick={getAiTip}
+                        disabled={loading}
+                        className="w-full flex items-center gap-3 text-left relative z-10 p-3 rounded-lg hover:bg-white/5 transition-colors"
+                    >
+                        <div className={`p-2.5 rounded-lg shadow-inner transition-all duration-500 ${loading ? 'bg-slate-800' : 'bg-purple-600 shadow-purple-900/30'}`}>
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin text-purple-400" /> : <Sparkles className="w-5 h-5 text-white" />}
+                        </div>
+                        <div>
+                        <p className="text-sm font-bold text-slate-100 group-hover:text-purple-200 transition-colors">
+                            {loading ? t('analyzing') : t('ai_tip')}
+                        </p>
+                        <p className="text-[10px] text-purple-300/80 uppercase tracking-wide font-medium">
+                            {loading ? "Gemini 2.5 Flash" : t('new_rec')}
+                        </p>
+                        </div>
+                    </button>
                 </div>
-                <div>
-                <p className="text-sm font-bold text-slate-100 group-hover:text-purple-200 transition-colors">
-                    {loading ? t('analyzing') : t('ai_tip')}
-                </p>
-                <p className="text-[10px] text-purple-300/80 uppercase tracking-wide font-medium">
-                    {loading ? "Gemini 2.5 Flash" : t('new_rec')}
-                </p>
-                </div>
-            </button>
-        </div>
-        </div>
+            </div>
+        )}
 
-        {/* Mobile FAB Trigger (Floating Action Button for AI) */}
+        {/* Mobile FAB Trigger - Only show if mobileFabOnly or if normal rendering (but handled via CSS md:hidden) */}
+        {/* We use mobileFabOnly prop to force render it in specific mobile contexts if needed */}
         <button 
             onClick={getAiTip}
             disabled={loading}
-            className="md:hidden fixed bottom-20 left-4 z-40 w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-900/40 border-2 border-slate-900 active:scale-95 transition-transform"
+            className={`md:hidden fixed bottom-24 left-4 z-50 w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-900/40 border-2 border-slate-900 active:scale-95 transition-transform ${!mobileFabOnly ? 'md:hidden' : ''}`}
         >
             {loading ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
         </button>
 
-        {/* Large Result Modal - Rendered via Portal to escape Sidebar Stacking Context */}
+        {/* Large Result Modal - Rendered via Portal */}
         {recommendation && createPortal(
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
                 <div className="bg-slate-900 border border-purple-500/30 w-full max-w-sm md:max-w-md lg:max-w-lg rounded-3xl shadow-2xl relative overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-5 duration-300 max-h-[85vh] flex flex-col ring-1 ring-white/10">
