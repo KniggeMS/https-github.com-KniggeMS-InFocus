@@ -169,6 +169,7 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
                             dataKey="value"
                             onMouseEnter={(_, index) => setActiveIndex(index)}
                             onMouseLeave={() => setActiveIndex(null)}
+                            // @ts-ignore: activeIndex type definition issue in Recharts/React 19
                             activeIndex={activeIndex ?? -1}
                             activeShape={renderActiveShape}
                             stroke="none"
