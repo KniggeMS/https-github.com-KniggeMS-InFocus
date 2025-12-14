@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MediaItem, WatchStatus, MediaType, SearchResult, SortOption, CustomList, UserRole, User } from './types';
@@ -23,6 +24,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { getMediaDetails } from './services/tmdb';
 import { getOmdbRatings } from './services/omdb';
 import { testGeminiConnection } from './services/gemini';
+import { supabase } from './services/supabase'; // Import Supabase Client directly
 import * as db from './services/db';
 import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing, BookOpen, Shield, Zap, ExternalLink } from 'lucide-react';
 
@@ -150,49 +152,29 @@ const AppContent: React.FC = () => {
   };
 
   const loadData = async () => {
-      setIsDataLoading(true);
+      // Note: We don't set global isDataLoading true here every time to avoid flickering on realtime updates
       try {
           const dbItems = await db.fetchMediaItems();
           setItems(dbItems);
           
           const dbLists = await db.fetchCustomLists();
           setCustomLists(dbLists);
-          return dbLists; // Return for notification check
       } catch (e) {
           console.error(e);
-          return [];
-      } finally {
-          setIsDataLoading(false);
       }
   };
 
-  // Initial Load & Notifications
+  // Initial Load
   useEffect(() => {
     if (isAuthenticated && !isAuthLoading && !isRecoveryMode) {
+        setIsDataLoading(true);
         // Load seen lists from local storage
         const storedSeen = JSON.parse(localStorage.getItem(SEEN_LISTS_STORAGE_KEY) || '[]');
         setSeenListIds(storedSeen);
 
-        loadData().then((fetchedLists) => {
+        loadData().then(() => {
             checkAndMigrateData();
-            
-            // Check for new shared lists
-            if (fetchedLists && user) {
-                const sharedWithMe = fetchedLists.filter(l => l.sharedWith.includes(user.id) && l.ownerId !== user.id);
-                const newLists = sharedWithMe.filter(l => !storedSeen.includes(l.id));
-                
-                if (newLists.length > 0) {
-                    // Trigger Notification
-                    const listNames = newLists.map(l => l.name).join(', ');
-                    setNotificationMsg({
-                        title: "Neue geteilte Liste!",
-                        subtitle: `${newLists.length} neue Liste(n): ${listNames}`
-                    });
-                    
-                    // Auto-hide notification
-                    setTimeout(() => setNotificationMsg(null), 8000);
-                }
-            }
+            setIsDataLoading(false);
         });
         
         // Load API Keys from Local (Non-sync settings)
@@ -206,6 +188,51 @@ const AppContent: React.FC = () => {
         if (savedGeminiKey) { setGeminiApiKey(savedGeminiKey); setTempGeminiKey(savedGeminiKey); }
     }
   }, [isAuthenticated, isAuthLoading, isRecoveryMode]);
+
+  // REALTIME SUBSCRIPTION (Lists & Items)
+  useEffect(() => {
+      if (!user) return;
+
+      // Listen for changes in custom_lists (Sharing)
+      const listChannel = supabase.channel('public:custom_lists')
+          .on('postgres_changes', 
+              { event: '*', schema: 'public', table: 'custom_lists' }, 
+              (payload) => {
+                  console.log('List Update Received:', payload);
+                  loadData(); // Reload data to show new list immediately
+              }
+          )
+          .subscribe();
+
+      return () => {
+          supabase.removeChannel(listChannel);
+      };
+  }, [user]);
+
+  // REACTIVE NOTIFICATION LOGIC
+  useEffect(() => {
+      if (!user || customLists.length === 0) return;
+
+      const sharedWithMe = customLists.filter(l => l.sharedWith.includes(user.id) && l.ownerId !== user.id);
+      const newLists = sharedWithMe.filter(l => !seenListIds.includes(l.id));
+      
+      if (newLists.length > 0) {
+          // Trigger Notification
+          const listNames = newLists.map(l => l.name).join(', ');
+          
+          // Only trigger if message is different (avoid loop)
+          setNotificationMsg(prev => {
+              if (prev?.subtitle.includes(listNames)) return prev;
+              return {
+                  title: t('share_with_friends') + "!", // "Mit Freunden teilen!" reused as "Shared!"
+                  subtitle: `${newLists.length} neue Liste(n): ${listNames}`
+              };
+          });
+          
+          // Auto-hide notification
+          setTimeout(() => setNotificationMsg(null), 8000);
+      }
+  }, [customLists, user, seenListIds, t]);
 
   // Mark list as seen when visiting
   useEffect(() => {
@@ -386,6 +413,8 @@ const AppContent: React.FC = () => {
 
   const shareListWithUsers = async (listId: string, userIds: string[]) => {
       await db.shareCustomList(listId, userIds);
+      // State updated via realtime subscription automatically, 
+      // but we update locally for instant sender feedback
       setCustomLists(prev => prev.map(list => {
           if (list.id === listId) return { ...list, sharedWith: userIds };
           return list;
@@ -912,11 +941,11 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <Router>
-      <LanguageProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <LanguageProvider>
           <AppContent />
-        </AuthProvider>
-      </LanguageProvider>
+        </LanguageProvider>
+      </AuthProvider>
     </Router>
   );
 };

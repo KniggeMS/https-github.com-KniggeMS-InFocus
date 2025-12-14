@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.5
+**Version:** 1.9.7
 
 ---
 
@@ -107,23 +107,37 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-018** | Feature | **Help** | **In-App Guide:** Implementierung der `GuidePage` als interaktives Handbuch. Integration eines Links in den Einstellungen. | ✅ Done |
 | **RFC-019** | Major | **Security** | **Security Hardening:** Erhöhung der minimalen Passwortlänge von 6 auf 8 Zeichen. Implementierung eines visuellen "Strength Meter" bei der Registrierung für bessere UX bei erhöhter Sicherheit. | ✅ Done |
 | **RFC-020** | Minor | **UX / Help** | **Guide Access:** Handbuch nun auch auf dem Login-Screen verfügbar (Overlay), um neuen Nutzern Features & Sicherheitskonzepte vorab zu erklären. | ✅ Done |
+| **RFC-021** | Minor | **UX / Mobile** | **Mobile Polish:** Optimierung der Dropdown-Menüs (Breite/Überlagerung), Anpassung der ChatBot-Position, Z-Index Korrekturen für Modals und explizite Implementierung des AI-Recommendation Buttons für Mobile. | ✅ Done |
+| **RFC-022** | Critical | **Social / DB** | **Realtime & Sharing Fix:** Implementierung einer Supabase Realtime-Subscription in `App.tsx` für sofortige Listen-Updates. Überarbeitung der Benachrichtigungslogik. Bereitstellung der **zwingend notwendigen SQL-Policy** für geteilte Listen. | ✅ Done |
 
 ---
 
 ## 4. Service Operation (Betrieb)
 
-### 4.1 Incident Management (Fehlerbehandlung)
+### 4.1 SQL Migration für Sharing (WICHTIG!)
+Standardmäßig erlaubt Supabase nur den Zugriff auf eigene Daten. Damit das Teilen von Listen funktioniert, muss folgende SQL-Policy im Supabase SQL Editor ausgeführt werden:
+
+```sql
+create policy "Allow shared lists" on custom_lists
+  for select using (
+    auth.uid() = owner_id or 
+    shared_with ? auth.uid()::text
+  );
+```
+*Ohne diesen Schritt werden geteilte Listen nicht geladen.*
+
+### 4.2 Incident Management (Fehlerbehandlung)
 *   **API Ausfälle (Gemini):** Das System fällt auf einen deterministischen Algorithmus zurück (`generateOfflineAnalysis`), der Metadaten analysiert, ohne die AI zu rufen.
 *   **API Ausfälle (TMDB/OMDb):** Fehlermeldungen werden dem User angezeigt. Bestehende Daten kommen aus der Supabase DB (Fallback bei fehlenden Ratings).
 *   **Auth Issues:** Token-Refresh wird automatisch durch das Supabase SDK gehandhabt.
 
-### 4.2 Access Management (Rollenkonzept)
+### 4.3 Access Management (Rollenkonzept)
 Das System unterscheidet drei Rollen, gesteuert über die `profiles` Tabelle:
 1.  **USER:** Standardrechte. Kann eigene Listen erstellen, Profil bearbeiten.
 2.  **MANAGER:** Kann andere User sehen und moderieren (außer Admins).
 3.  **ADMIN:** Voller Zugriff. Kann Rollen zuweisen, API-Keys verwalten (via UI).
 
-### 4.3 Request Fulfillment (User Anfragen)
+### 4.4 Request Fulfillment (User Anfragen)
 *   **Passwort Reset:** Self-Service via E-Mail Link (implementiert in `AuthContext` & `RecoveryPage`).
 *   **Datenexport:** Aktuell nicht implementiert (Feature Request).
 
@@ -139,4 +153,4 @@ Geplante Verbesserungen für kommende Sprints:
 
 ---
 
-*Dokumentation aktualisiert: Jetzt (Version 1.9.5) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.7) durch Senior Lead Engineer*
