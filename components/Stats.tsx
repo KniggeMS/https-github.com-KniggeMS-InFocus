@@ -38,29 +38,45 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
     let libRuntime = 0;
 
     items.forEach(item => {
-      // Calculate item runtime
+      // Calculate item runtime with valid fallbacks
       let itemRuntime = 0;
       if (item.type === MediaType.MOVIE) {
           itemRuntime = item.runtime || 120;
       } else {
-          // Estimate series runtime if total minutes not explicitly stored
+          // Estimate series runtime
           const epRuntime = item.runtime || 45;
           const seasons = item.seasons || 1;
-          // Simple heuristic: if episodes count exists use it, else guess per season (10 eps)
-          const totalEps = item.episodes ? item.episodes : (seasons * 10);
+          const eps = item.episodes || 10; // Better fallback
+          
+          // Logic: If episodes is huge (total eps), use it. If small (per season?), multiply by season.
+          // But TMDB usually returns total episodes for the show.
+          // Fallback: If no episode count, assume 10 eps per season.
+          const totalEps = item.episodes && item.episodes > 0 ? item.episodes : (seasons * 10);
           itemRuntime = (epRuntime * totalEps); 
       }
+      
+      // Accumulate total unique runtime
       libRuntime += itemRuntime;
 
-      item.genre.forEach(g => {
-        const genre = g.trim();
-        if (!stats[genre]) stats[genre] = { count: 0, runtime: 0 };
-        stats[genre].count += 1;
-        stats[genre].runtime += itemRuntime;
-      });
+      // Distribute to genres
+      if (item.genre && item.genre.length > 0) {
+          item.genre.forEach(g => {
+            const genre = g.trim();
+            if (!stats[genre]) stats[genre] = { count: 0, runtime: 0 };
+            stats[genre].count += 1;
+            stats[genre].runtime += itemRuntime;
+          });
+      } else {
+          // Handle items without genre
+          const genre = "Unbekannt";
+          if (!stats[genre]) stats[genre] = { count: 0, runtime: 0 };
+          stats[genre].count += 1;
+          stats[genre].runtime += itemRuntime;
+      }
     });
 
-    const mapped = Object.entries(stats)
+    // Convert to Array
+    let mapped = Object.entries(stats)
       .map(([name, val]) => ({
         name,
         // Raw value for chart sizing
@@ -68,16 +84,32 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
         // Formatted value for display
         displayValue: metric === 'count' ? val.count : Math.round(val.runtime / 60)
       }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6); // Top 6
+      .sort((a, b) => b.value - a.value);
 
-    const currentTotal = mapped.reduce((acc, cur) => acc + cur.value, 0);
+    // LOGIC FIX: "Others" Category
+    // If we have many genres, the pie chart is misleading if we just cut off the rest.
+    // We take Top 5, and sum the rest into "Others".
+    if (mapped.length > 5) {
+        const top5 = mapped.slice(0, 5);
+        const others = mapped.slice(5);
+        
+        const otherValue = others.reduce((acc, cur) => acc + cur.value, 0);
+        const otherDisplay = others.reduce((acc, cur) => acc + cur.displayValue, 0);
+        
+        mapped = [
+            ...top5,
+            { name: "Sonstige", value: otherValue, displayValue: otherDisplay }
+        ];
+    }
+
+    // Sum of the chart segments (may be > totalLibraryRuntime due to genre overlap)
+    const currentChartTotal = mapped.reduce((acc, cur) => acc + cur.value, 0);
 
     return { 
         data: mapped, 
-        totalMetricValue: currentTotal, // Total of the TOP 6 displayed
-        totalLibraryRuntime: Math.round(libRuntime / 60), // Real Total Hours
-        totalLibraryCount: items.length // Real Total Count
+        totalMetricValue: currentChartTotal, // Used for % calculation relative to the Pie
+        totalLibraryRuntime: Math.round(libRuntime / 60), // Real Total Hours (Unique)
+        totalLibraryCount: items.length // Real Total Count (Unique)
     };
   }, [items, metric]);
 
@@ -204,7 +236,7 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
                 <div className="grid grid-cols-2 sm:grid-cols-1 gap-x-4 gap-y-1.5">
                     {data.map((entry, index) => {
                         const isActive = activeIndex === index;
-                        // Calculate percentage relative to displayed data
+                        // Calculate percentage relative to displayed data (Total Chart Value)
                         const percent = Math.round((entry.value / totalMetricValue) * 100) || 0;
                         
                         return (

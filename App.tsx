@@ -24,7 +24,7 @@ import {
   fetchCustomLists, createCustomList, updateCustomListItems, deleteCustomList, shareCustomList
 } from './services/db';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole } from './types';
-import { LogOut, Search, Settings, User as UserIcon, List, Heart, MonitorPlay, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X } from 'lucide-react';
+import { LogOut, Search, Settings, User as UserIcon, List, Heart, MonitorPlay, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown } from 'lucide-react';
 
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
     const { id } = useParams();
@@ -57,6 +57,7 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // NEW: Mobile Menu State
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [viewingProfile, setViewingProfile] = useState<User | null>(null);
@@ -250,6 +251,119 @@ export default function App() {
       );
   };
 
+  // --- MOBILE MENU CONTENT RENDERER ---
+  const MobileMenuOverlay = () => {
+    if (!isMobileMenuOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[60] flex flex-col justify-end md:hidden">
+            {/* Backdrop */}
+            <div 
+                className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+            ></div>
+            
+            {/* Sheet */}
+            <div className="relative bg-slate-900 border-t border-slate-700 rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-300 max-h-[85vh] overflow-y-auto custom-scrollbar pb-safe">
+                <div className="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-6"></div>
+                
+                <div className="space-y-6">
+                    {/* User Profile Section */}
+                    <div className="flex items-center gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50" onClick={() => { navigate('/profile'); setIsMobileMenuOpen(false); }}>
+                        <div className="w-12 h-12 rounded-full bg-slate-700 overflow-hidden border border-slate-600">
+                            {user?.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon className="p-2 text-slate-400 w-full h-full"/>}
+                        </div>
+                        <div className="flex-grow">
+                            <h3 className="text-white font-bold text-lg">{user?.username}</h3>
+                            <p className="text-slate-400 text-sm">{user?.email}</p>
+                        </div>
+                        <Settings size={20} className="text-slate-500" />
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <button onClick={() => { setIsImportOpen(true); setIsMobileMenuOpen(false); }} className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-800 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors">
+                            <Download size={24} className="text-cyan-400" />
+                            <span className="text-xs font-bold">Import</span>
+                        </button>
+                        <button onClick={() => { 
+                             const tKey = prompt("TMDB API Key:", tmdbKey);
+                             const oKey = prompt("OMDb API Key:", omdbKey);
+                             if (tKey !== null && oKey !== null) saveKeys(tKey, oKey);
+                        }} className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-800 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors">
+                             <Settings size={24} className="text-purple-400" />
+                             <span className="text-xs font-bold">API Keys</span>
+                        </button>
+                    </div>
+
+                    {/* Lists Section */}
+                    <div>
+                        <div className="flex justify-between items-center mb-3">
+                            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">{t('my_lists')}</h4>
+                            <button onClick={() => { setIsCreateListOpen(true); setIsMobileMenuOpen(false); }} className="bg-slate-800 p-1.5 rounded-lg text-slate-400 hover:text-white"><Plus size={16}/></button>
+                        </div>
+                        <div className="space-y-2">
+                            {myLists.length === 0 ? (
+                                <div className="text-center py-4 text-slate-600 text-sm italic border border-dashed border-slate-800 rounded-xl">Keine Listen vorhanden</div>
+                            ) : (
+                                myLists.map(list => (
+                                    <div key={list.id} className="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700" onClick={() => { navigate(`/list/${list.id}`); setIsMobileMenuOpen(false); }}>
+                                        <span className="text-slate-200 font-medium">{list.name}</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs text-slate-500 bg-slate-900 px-2 py-0.5 rounded-full">{list.items.length}</span>
+                                            <Settings size={16} className="text-slate-500" onClick={(e) => { e.stopPropagation(); setSharingList(list); setIsMobileMenuOpen(false); }} />
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                    
+                    {/* Shared Lists */}
+                    {sharedLists.length > 0 && (
+                        <div>
+                             <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">{t('shared_with')}</h4>
+                             <div className="space-y-2">
+                                {sharedLists.map(list => (
+                                    <div key={list.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl border border-slate-700/50" onClick={() => { navigate(`/list/${list.id}`); setIsMobileMenuOpen(false); }}>
+                                        <div className="flex items-center gap-2">
+                                            <UserIcon size={14} className="text-cyan-400"/>
+                                            <span className="text-slate-300 font-medium">{list.name}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                             </div>
+                        </div>
+                    )}
+
+                    {/* Admin Links */}
+                    {(user?.role === UserRole.ADMIN || user?.role === UserRole.MANAGER) && (
+                         <button 
+                            onClick={() => { navigate('/users'); setIsMobileMenuOpen(false); }}
+                            className="w-full flex items-center gap-3 p-4 bg-indigo-900/20 border border-indigo-500/30 rounded-xl text-indigo-300"
+                        >
+                            <UserIcon size={20} />
+                            <span className="font-bold">{t('manage_users')}</span>
+                         </button>
+                    )}
+
+                    {/* Theme & Logout */}
+                    <div className="flex items-center gap-4 pt-4 border-t border-slate-800">
+                        <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex-1 py-3 bg-slate-800 rounded-xl text-slate-300 flex items-center justify-center gap-2">
+                            {theme === 'dark' ? <Moon size={18}/> : <Sun size={18}/>}
+                            <span>{theme === 'dark' ? 'Dark' : 'Light'}</span>
+                        </button>
+                        <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="flex-1 py-3 bg-red-900/20 text-red-400 rounded-xl flex items-center justify-center gap-2 border border-red-900/30">
+                            <LogOut size={18}/>
+                            <span>{t('logout')}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+  };
+
   if (isRecoveryMode) {
       return <RecoveryPage />;
   }
@@ -395,8 +509,11 @@ export default function App() {
 
       <MobileNav 
         onSearchClick={() => setIsSearchOpen(true)} 
-        onListsClick={() => {/* Show mobile lists drawer */}}
+        onListsClick={() => setIsMobileMenuOpen(true)} // --- FIXED: Open Mobile Menu ---
       />
+      
+      {/* --- FIXED: Mobile Menu Component --- */}
+      <MobileMenuOverlay />
       
       <ChatBot items={items.filter(i => i.userId === user.id)} />
       
