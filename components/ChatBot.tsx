@@ -69,14 +69,14 @@ export const ChatBot: React.FC<ChatBotProps> = ({ items }) => {
   };
 
   return (
-    <div className={`fixed bottom-20 md:bottom-8 right-4 z-50 flex flex-col items-end pointer-events-none ${isOpen ? 'z-[60]' : ''}`}>
+    <div className={`fixed bottom-24 md:bottom-8 right-4 z-50 flex flex-col items-end pointer-events-none ${isOpen ? 'z-[60]' : ''}`}>
       
       {/* Chat Window */}
       {isOpen && (
-        <div className="pointer-events-auto bg-slate-900 border border-slate-700 w-[90vw] md:w-96 h-[60vh] md:h-[500px] rounded-2xl shadow-2xl mb-4 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
+        <div className="pointer-events-auto bg-slate-900/95 backdrop-blur-md border border-slate-700 w-[90vw] md:w-96 h-[60vh] md:h-[500px] rounded-2xl shadow-2xl mb-4 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
           
           {/* Header */}
-          <div className="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center">
+          <div className="bg-slate-800/80 p-4 border-b border-slate-700 flex justify-between items-center">
             <div className="flex items-center gap-2 text-cyan-400 font-bold">
               <Sparkles size={18} />
               <span>{t('chat_title')}</span>
@@ -126,7 +126,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ items }) => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={t('chat_placeholder')}
-                className="w-full bg-slate-900 text-white pl-4 pr-12 py-3 rounded-xl border border-slate-600 focus:border-cyan-500 focus:outline-none text-sm"
+                className="w-full bg-slate-900/80 text-white pl-4 pr-12 py-3 rounded-xl border border-slate-600 focus:border-cyan-500 focus:outline-none text-sm placeholder:text-slate-500"
               />
               <button 
                 type="submit"

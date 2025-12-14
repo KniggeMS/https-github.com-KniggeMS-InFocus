@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.4
+**Version:** 1.9.5
 
 ---
 
@@ -106,6 +106,7 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-017** | Bugfix | **UX / Layout** | **Modal Portal Fix:** Refactoring des `AiRecommendationButton` zur Nutzung von `React.createPortal`. Behebt Clipping-Probleme (z-index Context) innerhalb der Sidebar auf Mobile & Desktop. | ✅ Done |
 | **RFC-018** | Feature | **Help** | **In-App Guide:** Implementierung der `GuidePage` als interaktives Handbuch. Integration eines Links in den Einstellungen. | ✅ Done |
 | **RFC-019** | Major | **Security** | **Security Hardening:** Erhöhung der minimalen Passwortlänge von 6 auf 8 Zeichen. Implementierung eines visuellen "Strength Meter" bei der Registrierung für bessere UX bei erhöhter Sicherheit. | ✅ Done |
+| **RFC-020** | Minor | **UX / Help** | **Guide Access:** Handbuch nun auch auf dem Login-Screen verfügbar (Overlay), um neuen Nutzern Features & Sicherheitskonzepte vorab zu erklären. | ✅ Done |
 
 ---
 
@@ -138,4 +139,4 @@ Geplante Verbesserungen für kommende Sprints:
 
 ---
 
-*Dokumentation aktualisiert: Jetzt (Version 1.9.4) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.5) durch Senior Lead Engineer*

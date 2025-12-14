@@ -11,7 +11,7 @@ interface MobileNavProps {
 
 export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick, onListsClick, hasNotification }) => {
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xl border-t border-slate-800 pb-safe z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.5)]">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 pb-safe z-40 shadow-[0_-10px_30px_-5px_rgba(0,0,0,0.5)]">
       <div className="flex justify-around items-center h-16 px-2">
         <NavLink 
           to="/" 
@@ -35,7 +35,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick, onListsClic
         <div className="relative -top-6">
             <button 
                 onClick={onSearchClick}
-                className="w-14 h-14 bg-cyan-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-cyan-900/40 border-4 border-slate-900 active:scale-95 transition-transform"
+                className="w-14 h-14 bg-gradient-to-b from-cyan-500 to-cyan-700 rounded-full flex items-center justify-center text-white shadow-lg shadow-cyan-900/60 border-4 border-slate-900 active:scale-95 transition-transform"
             >
                 <Search size={24} />
             </button>
