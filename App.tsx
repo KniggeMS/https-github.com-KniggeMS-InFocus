@@ -25,7 +25,7 @@ import { getMediaDetails } from './services/tmdb';
 import { getOmdbRatings } from './services/omdb';
 import { testGeminiConnection } from './services/gemini';
 import * as db from './services/db';
-import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing, BookOpen, Shield, Zap } from 'lucide-react';
+import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing, BookOpen, Shield, Zap, ExternalLink } from 'lucide-react';
 
 const API_KEY_STORAGE_KEY = 'cinelog_tmdb_key';
 const OMDB_KEY_STORAGE_KEY = 'cinelog_omdb_key';
@@ -238,16 +238,36 @@ const AppContent: React.FC = () => {
   };
 
   const handleTestKey = async () => {
-      if (!tempGeminiKey.trim()) return;
+      // Auto-sanitize locally before sending
+      let keyToTest = tempGeminiKey.trim();
+      if (keyToTest.startsWith('API_KEY=')) keyToTest = keyToTest.replace('API_KEY=', '');
+      if ((keyToTest.startsWith('"') && keyToTest.endsWith('"')) || (keyToTest.startsWith("'") && keyToTest.endsWith("'"))) {
+          keyToTest = keyToTest.substring(1, keyToTest.length - 1);
+      }
+      
+      if (!keyToTest) return;
+      
       setKeyTestStatus({ loading: true });
-      const result = await testGeminiConnection(tempGeminiKey.trim());
+      const result = await testGeminiConnection(keyToTest);
       setKeyTestStatus({ loading: false, success: result.success, msg: result.message });
+      
+      // Update UI with sanitized key if successful
+      if (result.success && keyToTest !== tempGeminiKey) {
+          setTempGeminiKey(keyToTest);
+      }
   };
 
   const saveSettings = () => {
     // Gemini Key is always editable by user to solve their Quota/Demo issues
     // TRIM THE KEYS to avoid whitespace errors
-    const cleanedGeminiKey = tempGeminiKey.trim();
+    
+    // Logic duplicated for safety
+    let cleanedGeminiKey = tempGeminiKey.trim();
+    if (cleanedGeminiKey.startsWith('API_KEY=')) cleanedGeminiKey = cleanedGeminiKey.replace('API_KEY=', '');
+    if ((cleanedGeminiKey.startsWith('"') && cleanedGeminiKey.endsWith('"')) || (cleanedGeminiKey.startsWith("'") && cleanedGeminiKey.endsWith("'"))) {
+        cleanedGeminiKey = cleanedGeminiKey.substring(1, cleanedGeminiKey.length - 1);
+    }
+
     localStorage.setItem(GEMINI_KEY_STORAGE_KEY, cleanedGeminiKey);
     setGeminiApiKey(cleanedGeminiKey);
     setTempGeminiKey(cleanedGeminiKey); // Update input field too to show trimmed
@@ -549,7 +569,12 @@ const AppContent: React.FC = () => {
         </div>
 
         {/* Gemini Key Input (Always available) */}
-        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2 text-purple-400"><Sparkles size={12} /> Google Gemini Key</h4>
+        <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2 text-purple-400"><Sparkles size={12} /> Google Gemini Key</h4>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-0.5 rounded text-white flex items-center gap-1 transition-colors">
+                Key erstellen <ExternalLink size={8}/>
+            </a>
+        </div>
         <div className="flex gap-2 mb-2">
             <input 
                 type="password" 

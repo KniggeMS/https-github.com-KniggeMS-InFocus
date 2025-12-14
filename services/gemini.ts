@@ -15,11 +15,28 @@ const cleanJsonString = (text: string): string => {
     return cleaned;
 };
 
+const sanitizeKey = (key: string | null | undefined): string => {
+    if (!key) return '';
+    let cleaned = key.trim();
+    
+    // Remove potential "API_KEY=" prefix from .env copy-pastes
+    if (cleaned.startsWith('API_KEY=')) {
+        cleaned = cleaned.replace('API_KEY=', '');
+    }
+    
+    // Remove quotes if user copied JSON string
+    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+        cleaned = cleaned.substring(1, cleaned.length - 1);
+    }
+    
+    return cleaned.trim();
+};
+
 // --- CLIENT FACTORY ---
 const getAiClient = () => {
     // Priority: 1. LocalStorage (User Input), 2. Env Var (Deployment)
-    let apiKey = localStorage.getItem(GEMINI_KEY_STORAGE_KEY) || process.env.API_KEY || '';
-    apiKey = apiKey.trim(); // IMPORTANT: Remove whitespace
+    const rawKey = localStorage.getItem(GEMINI_KEY_STORAGE_KEY) || process.env.API_KEY || '';
+    const apiKey = sanitizeKey(rawKey);
     
     if (!apiKey) {
         console.warn("Gemini Client initialized without API Key.");
@@ -82,10 +99,11 @@ const generateOfflineAnalysis = (item: MediaItem, userNotes?: string): string =>
  * Validates the API key by making a minimal request.
  */
 export const testGeminiConnection = async (apiKey: string): Promise<{success: boolean, message: string}> => {
-    if (!apiKey || apiKey.trim() === '') return { success: false, message: "Key ist leer." };
+    const cleanKey = sanitizeKey(apiKey);
+    if (!cleanKey) return { success: false, message: "Key ist leer." };
     
     try {
-        const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
+        const ai = new GoogleGenAI({ apiKey: cleanKey });
         // Minimal request to test auth
         await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -96,7 +114,7 @@ export const testGeminiConnection = async (apiKey: string): Promise<{success: bo
         console.error("Test Connection Failed:", error);
         let msg = "Unbekannter Fehler";
         if (error.message) {
-            if (error.message.includes("API key")) msg = "API Key ungültig (Code 400).";
+            if (error.message.includes("API key") || error.message.includes("400")) msg = "Ungültiger Key (Prüfe Copy-Paste).";
             else if (error.message.includes("403")) msg = "Zugriff verweigert (Code 403). Prüfe Billing.";
             else if (error.message.includes("429")) msg = "Quota Limit erreicht (Code 429).";
             else msg = error.message;
