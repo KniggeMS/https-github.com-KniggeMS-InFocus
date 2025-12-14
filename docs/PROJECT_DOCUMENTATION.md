@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.9
+**Version:** 1.9.10
 
 ---
 
@@ -111,6 +111,7 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-022** | Critical | **Social / DB** | **Realtime & Sharing Fix:** Implementierung einer Supabase Realtime-Subscription in `App.tsx` für sofortige Listen-Updates. Überarbeitung der Benachrichtigungslogik. Bereitstellung der **zwingend notwendigen SQL-Policy** für geteilte Listen. | ✅ Done |
 | **RFC-023** | Bugfix | **DB / SQL** | **Postgres Array Syntax Fix:** Korrektur des SQL-Statements für die Sharing-Policy. Nutzung von `ANY (array)` statt des JSON-Operators `?`, um Fehler `42883` zu beheben. | ✅ Done |
 | **RFC-024** | Feature | **Social / DB** | **Shared Item Visibility:** Einführung einer SQL-Policy, die das Lesen von `media_items` erlaubt, wenn diese Teil einer geteilten Liste sind. Anpassung des Frontends, um geteilte Items in der Hauptansicht auszublenden. | ✅ Done |
+| **RFC-025** | Bugfix | **DB / SQL** | **UUID Casting Fix:** Korrektur der `media_items` Policy. Die `id` Spalte (UUID) muss explizit zu `text` gecastet werden (`::text`), um sie mit dem `items` Array (Text[]) in `custom_lists` zu vergleichen. Behebt Fehler `42883: operator does not exist: uuid = text`. | ✅ Done |
 
 ---
 
@@ -141,7 +142,7 @@ create policy "Allow viewing shared list items" on media_items
     auth.uid() = user_id -- Eigene Items
     or exists (
       select 1 from custom_lists
-      where media_items.id = any(custom_lists.items) -- Item ist in Liste
+      where media_items.id::text = any(custom_lists.items) -- Item ist in Liste (Cast zu Text wichtig!)
       and (
          auth.uid()::text = any(custom_lists.shared_with) -- Liste ist mit mir geteilt
          or custom_lists.owner_id = auth.uid()
@@ -177,4 +178,4 @@ Geplante Verbesserungen für kommende Sprints:
 
 ---
 
-*Dokumentation aktualisiert: Jetzt (Version 1.9.9) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.10) durch Senior Lead Engineer*

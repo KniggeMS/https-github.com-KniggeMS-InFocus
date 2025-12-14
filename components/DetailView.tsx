@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Film, Clock, MonitorPlay, Heart, Bookmark, Play, ChevronLeft, Layers, Check, PlayCircle, User, ExternalLink, Clapperboard, ImageOff, MessageSquare, BrainCircuit, Loader2, Star, Users, PenTool } from 'lucide-react';
+import { X, Film, Clock, MonitorPlay, Heart, Bookmark, Play, ChevronLeft, Layers, Check, PlayCircle, User, ExternalLink, Clapperboard, ImageOff, MessageSquare, BrainCircuit, Loader2, Star, Users, PenTool, Share2, Copy } from 'lucide-react';
 import { MediaItem, SearchResult, MediaType, WatchStatus, PublicReview } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, BACKDROP_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 import { analyzeMovieContext } from '../services/gemini';
@@ -98,6 +98,9 @@ export const DetailView: React.FC<DetailViewProps> = ({
   const [communityReviews, setCommunityReviews] = useState<PublicReview[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
+  // Share state
+  const [copied, setCopied] = useState(false);
+
   const existingItem = isExisting ? (initialItem as MediaItem) : null;
 
   useEffect(() => {
@@ -170,6 +173,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
     setBackgroundVideoReady(false);
     setImgError(false);
     setAiInsight(null);
+    setCopied(false);
     if(existingItem) {
         setNotes(existingItem.userNotes || '');
     }
@@ -234,6 +238,28 @@ export const DetailView: React.FC<DetailViewProps> = ({
     } else {
       handleAdd(WatchStatus.TO_WATCH, false);
     }
+  };
+
+  const handleShare = async () => {
+      const shareData = {
+          title: displayItem.title,
+          text: `Check out ${displayItem.title} (${displayItem.year}) on InFocus CineLog!`,
+          url: window.location.href // This usually points to the app root in PWA, but works
+      };
+
+      if (navigator.share) {
+          try {
+              await navigator.share(shareData);
+          } catch (e) {
+              console.log("Share cancelled");
+          }
+      } else {
+          // Fallback: Copy to clipboard
+          const textToCopy = `${displayItem.title} (${displayItem.year})\n\n${displayItem.plot || ''}`;
+          navigator.clipboard.writeText(textToCopy);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+      }
   };
 
   const currentStatus = existingItem?.status;
@@ -467,11 +493,14 @@ export const DetailView: React.FC<DetailViewProps> = ({
                               </div>
                           </div>
 
-                          <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-2 backdrop-blur-sm border border-white/5 shadow-lg hidden sm:flex hover:bg-white/10 transition-colors cursor-help" title={t('your_vibe')}>
-                              <span className="text-lg grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">😍</span>
-                              <span className="text-lg grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">🤯</span>
-                              <span className="text-lg grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">😢</span>
-                          </div>
+                          {/* REPLACED SMILEYS WITH SHARE BUTTON */}
+                          <button
+                              onClick={handleShare}
+                              className="hidden sm:flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-full px-4 py-2 backdrop-blur-sm border border-white/5 shadow-lg transition-colors text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wide cursor-pointer"
+                          >
+                              {copied ? <Check size={16} className="text-green-400" /> : <Share2 size={16} className="text-cyan-400" />}
+                              {copied ? 'Kopiert' : t('share')}
+                          </button>
                       </div>
 
                       {/* Action Buttons */}
