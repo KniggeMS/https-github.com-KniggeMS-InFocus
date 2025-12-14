@@ -1,4 +1,3 @@
-
 {
   "name": "cinelog-infocus",
   "version": "1.0.0",
@@ -6,7 +5,7 @@
   "main": "index.tsx",
   "scripts": {
     "start": "vite",
-    "build": "vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "keywords": [
