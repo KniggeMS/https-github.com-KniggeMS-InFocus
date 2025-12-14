@@ -692,9 +692,14 @@ const AppContent: React.FC = () => {
 
         <nav className="flex-grow px-4 space-y-1 overflow-y-auto pb-4 custom-scrollbar">
           <NavItem to="/" icon={LayoutDashboard} label={t('overview')} />
-          {/* Admin / Manager Link */}
+          {/* Admin / Manager Link with Section Header */}
           {canManageUsers && (
-              <NavItem to="/admin" icon={Shield} label={t('user_management')} />
+              <>
+                 <div className="pt-4 pb-2 px-4 text-xs font-semibold text-cyan-600 uppercase tracking-wider flex items-center gap-1.5">
+                    <Shield size={10} /> Administration
+                 </div>
+                 <NavItem to="/admin" icon={Shield} label={t('user_management')} />
+              </>
           )}
 
           <div className="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('my_lists')}</div>
