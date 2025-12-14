@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.7
+**Version:** 1.9.9
 
 ---
 
@@ -109,6 +109,8 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-020** | Minor | **UX / Help** | **Guide Access:** Handbuch nun auch auf dem Login-Screen verfügbar (Overlay), um neuen Nutzern Features & Sicherheitskonzepte vorab zu erklären. | ✅ Done |
 | **RFC-021** | Minor | **UX / Mobile** | **Mobile Polish:** Optimierung der Dropdown-Menüs (Breite/Überlagerung), Anpassung der ChatBot-Position, Z-Index Korrekturen für Modals und explizite Implementierung des AI-Recommendation Buttons für Mobile. | ✅ Done |
 | **RFC-022** | Critical | **Social / DB** | **Realtime & Sharing Fix:** Implementierung einer Supabase Realtime-Subscription in `App.tsx` für sofortige Listen-Updates. Überarbeitung der Benachrichtigungslogik. Bereitstellung der **zwingend notwendigen SQL-Policy** für geteilte Listen. | ✅ Done |
+| **RFC-023** | Bugfix | **DB / SQL** | **Postgres Array Syntax Fix:** Korrektur des SQL-Statements für die Sharing-Policy. Nutzung von `ANY (array)` statt des JSON-Operators `?`, um Fehler `42883` zu beheben. | ✅ Done |
+| **RFC-024** | Feature | **Social / DB** | **Shared Item Visibility:** Einführung einer SQL-Policy, die das Lesen von `media_items` erlaubt, wenn diese Teil einer geteilten Liste sind. Anpassung des Frontends, um geteilte Items in der Hauptansicht auszublenden. | ✅ Done |
 
 ---
 
@@ -117,14 +119,36 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 ### 4.1 SQL Migration für Sharing (WICHTIG!)
 Standardmäßig erlaubt Supabase nur den Zugriff auf eigene Daten. Damit das Teilen von Listen funktioniert, muss folgende SQL-Policy im Supabase SQL Editor ausgeführt werden:
 
+#### Schritt 1: Zugriff auf Listen erlauben (Custom Lists)
 ```sql
+drop policy if exists "Allow shared lists" on custom_lists;
+
 create policy "Allow shared lists" on custom_lists
   for select using (
     auth.uid() = owner_id or 
-    shared_with ? auth.uid()::text
+    auth.uid()::text = ANY (shared_with)
   );
 ```
-*Ohne diesen Schritt werden geteilte Listen nicht geladen.*
+
+#### Schritt 2: Zugriff auf die Inhalte der Listen erlauben (Media Items) - **NEU!**
+*Dieser Schritt ist notwendig, damit Benutzer die Filme in einer geteilten Liste sehen können, auch wenn sie ihnen nicht gehören.*
+
+```sql
+drop policy if exists "Allow viewing shared list items" on media_items;
+
+create policy "Allow viewing shared list items" on media_items
+  for select using (
+    auth.uid() = user_id -- Eigene Items
+    or exists (
+      select 1 from custom_lists
+      where media_items.id = any(custom_lists.items) -- Item ist in Liste
+      and (
+         auth.uid()::text = any(custom_lists.shared_with) -- Liste ist mit mir geteilt
+         or custom_lists.owner_id = auth.uid()
+      )
+    )
+  );
+```
 
 ### 4.2 Incident Management (Fehlerbehandlung)
 *   **API Ausfälle (Gemini):** Das System fällt auf einen deterministischen Algorithmus zurück (`generateOfflineAnalysis`), der Metadaten analysiert, ohne die AI zu rufen.
@@ -153,4 +177,4 @@ Geplante Verbesserungen für kommende Sprints:
 
 ---
 
-*Dokumentation aktualisiert: Jetzt (Version 1.9.7) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.9) durch Senior Lead Engineer*

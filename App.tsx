@@ -457,7 +457,10 @@ const AppContent: React.FC = () => {
   };
 
   const getFilteredItems = (status?: WatchStatus) => {
-    let filtered = items;
+    // IMPORTANT: Filter by userId to show only OWN items in main dashboard.
+    // The 'items' state now contains shared items too (for CustomListView).
+    let filtered = items.filter(i => i.userId === user?.id); 
+    
     if (status) {
       filtered = filtered.filter(item => item.status === status);
     } else if (location.pathname === '/favorites') {
@@ -483,6 +486,7 @@ const AppContent: React.FC = () => {
 
       if (!list) return <div className="p-8 text-slate-400">Liste nicht gefunden.</div>;
       
+      // HERE we use the global items array which includes shared items (thanks to new RLS policy)
       const listItems = items.filter(item => list.items.includes(item.id));
       const owner = allUsers.find(u => u.id === list.ownerId);
 

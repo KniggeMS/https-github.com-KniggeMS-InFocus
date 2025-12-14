@@ -18,6 +18,7 @@ export const fetchMediaItems = async (): Promise<MediaItem[]> => {
   // Map DB snake_case to TS camelCase
   return data.map((item: any) => ({
     id: item.id,
+    userId: item.user_id, // MAPPED HERE
     tmdbId: item.tmdb_id,
     imdbId: item.imdb_id,
     title: item.title,
@@ -120,7 +121,7 @@ export const addMediaItem = async (item: MediaItem, userId: string): Promise<Med
     console.error('Error adding item:', error);
     return null;
   }
-  return { ...item, id: data.id }; // Return with new UUID
+  return { ...item, id: data.id, userId: data.user_id }; // Return with new UUID
 };
 
 export const updateMediaItemStatus = async (id: string, status: WatchStatus) => {

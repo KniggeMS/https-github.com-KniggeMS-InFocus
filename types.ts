@@ -52,6 +52,7 @@ export interface CastMember {
 
 export interface MediaItem {
   id: string;
+  userId?: string; // New: Owner ID for separation
   tmdbId?: number;
   imdbId?: string; // New: Link to IMDb
   title: string;
