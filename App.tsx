@@ -380,6 +380,7 @@ export default function App() {
             </div>
         </div>
 
+        {/* --- FIXED: Filter to show only current user's items in Stats --- */}
         {location.pathname === '/' && <Stats items={items.filter(i => i.userId === user?.id)} />}
 
         <Routes>

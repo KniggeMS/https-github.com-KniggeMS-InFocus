@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Default Dark (Base Slate 900) */
+  --bg-main: #0f172a;
+  --bg-sidebar: #0f172a;
+  --bg-card: #1e293b;
+  --bg-card-hover: #334155;
+  --bg-input: #0f172a;
+  --bg-input-border: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-color: #1e293b;
+  --border-color-light: #334155;
+  --accent-cyan: #0891b2; /* Cyan 600 */
+  --glass-bg: none;
+  --glass-filter: none;
+  --shadow-color: rgba(0,0,0,0.3);
+}
+
+/* THEME: LIGHT */
+html.theme-light {
+  --bg-main: #f1f5f9; /* Slate 100 */
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-input: #ffffff;
+  --bg-input-border: #cbd5e1;
+  --text-primary: #0f172a; /* Slate 900 */
+  --text-secondary: #64748b; /* Slate 500 */
+  --border-color: #e2e8f0; /* Slate 200 */
+  --border-color-light: #cbd5e1;
+  --accent-cyan: #06b6d4; /* Cyan 500 */
+  --glass-bg: none;
+  --glass-filter: none;
+  --shadow-color: rgba(0,0,0,0.05);
+}
+
+/* THEME: iOS GLASS (Dark Glass) */
+html.theme-glass {
+  --bg-main: transparent; /* Handled by fixed background */
+  --bg-sidebar: rgba(15, 23, 42, 0.65);
+  --bg-card: rgba(30, 41, 59, 0.4);
+  --bg-card-hover: rgba(51, 65, 85, 0.5);
+  --bg-input: rgba(15, 23, 42, 0.6);
+  --bg-input-border: rgba(255, 255, 255, 0.1);
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-light: rgba(255, 255, 255, 0.15);
+  --glass-bg: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop'); /* Abstract Dark Gradient */
+  --glass-filter: blur(20px);
+  --shadow-color: rgba(0,0,0,0.25);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* GLASS BACKGROUND ELEMENT */
+html.theme-glass body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: var(--glass-bg);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  z-index: -1;
+}
+
+/* === SMART OVERRIDES FOR TAILWIND UTILITIES === */
+
+/* Backgrounds */
+.bg-slate-950, .bg-slate-900 { background-color: var(--bg-main) !important; }
+.bg-slate-800 { 
+  background-color: var(--bg-card) !important; 
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+}
+.bg-slate-700 { background-color: var(--bg-card-hover) !important; }
+
+/* Specific Input fields override */
+input.bg-slate-900, textarea.bg-slate-900 { 
+  background-color: var(--bg-input) !important; 
+  border-color: var(--bg-input-border) !important;
+}
+
+/* Sidebar specific */
+aside.bg-slate-900 { 
+  background-color: var(--bg-sidebar) !important; 
+  border-right-color: var(--border-color) !important;
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+}
+.md\:hidden.fixed.bottom-0 { /* Mobile Nav */
+   background-color: var(--bg-sidebar) !important;
+   border-top-color: var(--border-color) !important;
+   backdrop-filter: blur(20px) !important; /* Always blur mobile nav */
+}
+
+/* Text Colors */
+.text-white, .text-slate-50 { color: var(--text-primary) !important; }
+.text-slate-200, .text-slate-300, .text-slate-400 { color: var(--text-secondary) !important; }
+.text-slate-500 { opacity: 0.8; } /* Keep 500 somewhat native but handle contrast */
+
+/* Borders */
+.border-slate-700, .border-slate-800 { border-color: var(--border-color) !important; }
+.border-slate-600 { border-color: var(--border-color-light) !important; }
+
+/* Shadows */
+.shadow-xl, .shadow-2xl, .shadow-lg { box-shadow: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -2px var(--shadow-color) !important; }
+
+/* Modals */
+.bg-slate-900\/90, .bg-slate-900\/80, .bg-slate-950 {
+  background-color: var(--bg-sidebar) !important; /* Fallback for modals */
+}
+/* Ensure text readability on Light Mode Buttons */
+html.theme-light .bg-cyan-600.text-white { color: #ffffff !important; } 
+html.theme-light .bg-red-500.text-white { color: #ffffff !important; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main); 
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-card-hover); 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary); 
+}
+
+/* iOS Safe Area Utilities */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 20px);
+}
+.h-safe-screen {
+  height: 100vh;
+  height: 100dvh;
+}
