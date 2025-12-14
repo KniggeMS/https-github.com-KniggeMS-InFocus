@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.2
+**Version:** 1.9.3
 
 ---
 
@@ -102,6 +102,8 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-014** | Major | **Social** | **Community Reviews:** Umwandlung von privaten Notizen in öffentliche Rezensionen. Integration eines Feeds in der Detailansicht, der Rezensionen anderer Nutzer anzeigt. | ✅ Done |
 | **RFC-015** | Bugfix | **Settings / AI** | **Key Persistence Fix:** Automatisches Speichern des Gemini Keys nach erfolgreichem Verbindungstest (Auto-Save). Erweitertes Error-Handling im Chat für Quota (429) und Auth (403) Fehler. | ✅ Done |
 | **RFC-016** | Minor | **UX / Admin** | **RBAC Visibility Check:** Implementierung einer visuellen Trennung (Header) für den Admin-Bereich in der Sidebar, um die Zugriffskontrolle transparent zu machen. | ✅ Done |
+| **RFC-017** | Bugfix | **UX / Layout** | **Modal Portal Fix:** Refactoring des `AiRecommendationButton` zur Nutzung von `React.createPortal`. Behebt Clipping-Probleme (z-index Context) innerhalb der Sidebar auf Mobile & Desktop. | ✅ Done |
+| **RFC-018** | Feature | **Help** | **In-App Guide:** Implementierung der `GuidePage` als interaktives Handbuch. Integration eines Links in den Einstellungen. | ✅ Done |
 
 ---
 
@@ -134,4 +136,4 @@ Geplante Verbesserungen für kommende Sprints:
 
 ---
 
-*Dokumentation aktualisiert: Jetzt (Version 1.9.2) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.3) durch Senior Lead Engineer*
