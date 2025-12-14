@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     base: './', // WICHTIG für GitHub Pages (relative Pfade)
     build: {
-      outDir: 'dist', // Force output directory
+      outDir: 'dist',
       emptyOutDir: true,
     },
     server: {
@@ -20,9 +20,11 @@ export default defineConfig(({ mode }) => {
       }
     },
     define: {
+      // INJECTION: We explicitly inject these keys into the client bundle.
+      // This allows the app to work out-of-the-box for testers on Vercel without manual entry.
       'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
-      // REVERT: Keys removed from build config for security.
-      // Users must enter keys in the UI (stored in LocalStorage).
+      'process.env.VITE_TMDB_API_KEY': JSON.stringify(env.VITE_TMDB_API_KEY || ''),
+      'process.env.VITE_OMDB_API_KEY': JSON.stringify(env.VITE_OMDB_API_KEY || ''),
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ''),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || '')
     }

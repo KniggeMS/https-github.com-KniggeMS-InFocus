@@ -18,6 +18,7 @@ import { CreateListModal } from './components/CreateListModal';
 import { ImportModal } from './components/ImportModal';
 import { RecoveryPage } from './components/RecoveryPage';
 import { PublicProfileModal } from './components/PublicProfileModal';
+import { SettingsModal } from './components/SettingsModal'; // IMPORT SETTINGS MODAL
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes, updateMediaItemRtScore,
@@ -58,6 +59,7 @@ export default function App() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false); // NEW STATE FOR SETTINGS
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [viewingProfile, setViewingProfile] = useState<User | null>(null);
@@ -66,9 +68,12 @@ export default function App() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Keys - Strictly from LocalStorage
-  const [tmdbKey, setTmdbKey] = useState(localStorage.getItem('tmdb_api_key') || '');
-  const [omdbKey, setOmdbKey] = useState(localStorage.getItem('omdb_api_key') || '');
+  // KEY MANAGEMENT: 
+  // Priority: 1. LocalStorage (User Override), 2. Environment (Vercel Default)
+  // We read from LS for state, but pass fallback to components
+  const [tmdbKey, setTmdbKey] = useState(localStorage.getItem('tmdb_api_key') || process.env.VITE_TMDB_API_KEY || '');
+  const [omdbKey, setOmdbKey] = useState(localStorage.getItem('omdb_api_key') || process.env.VITE_OMDB_API_KEY || '');
+  const [geminiKey, setGeminiKey] = useState(localStorage.getItem('cinelog_gemini_key') || process.env.API_KEY || '');
 
   // SAFE DERIVED STATE (Moved to top level)
   const myLists = user ? customLists.filter(l => l.ownerId === user.id) : [];
@@ -214,18 +219,28 @@ export default function App() {
       setCustomLists(prev => prev.map(l => l.id === listId ? { ...l, sharedWith: userIds } : l));
   };
   
-  const saveKeys = (tmdb: string, omdb: string) => {
-      setTmdbKey(tmdb);
-      setOmdbKey(omdb);
-      localStorage.setItem('tmdb_api_key', tmdb);
-      localStorage.setItem('omdb_api_key', omdb);
+  // NEW: Centralized Key Save Handler
+  const handleSaveKeys = (keys: { tmdb: string, omdb: string, gemini: string }) => {
+      // Save to localStorage (empty string means delete/reset to env)
+      if (keys.tmdb) localStorage.setItem('tmdb_api_key', keys.tmdb);
+      else localStorage.removeItem('tmdb_api_key');
+
+      if (keys.omdb) localStorage.setItem('omdb_api_key', keys.omdb);
+      else localStorage.removeItem('omdb_api_key');
+
+      if (keys.gemini) localStorage.setItem('cinelog_gemini_key', keys.gemini);
+      else localStorage.removeItem('cinelog_gemini_key');
+
+      // Update State (Fallback to Env if local is empty)
+      setTmdbKey(keys.tmdb || process.env.VITE_TMDB_API_KEY || '');
+      setOmdbKey(keys.omdb || process.env.VITE_OMDB_API_KEY || '');
+      setGeminiKey(keys.gemini || process.env.API_KEY || '');
   };
 
-  // Update specific key from modal
-  const updateSingleKey = (keyName: 'tmdb_api_key' | 'omdb_api_key', value: string) => {
+  const updateSingleKey = (keyName: 'tmdb_api_key', value: string) => {
+      // Compatibility for SearchModal
       localStorage.setItem(keyName, value);
       if (keyName === 'tmdb_api_key') setTmdbKey(value);
-      if (keyName === 'omdb_api_key') setOmdbKey(value);
   };
 
   const renderGrid = (filterStatus?: WatchStatus, filterListId?: string) => {
@@ -413,10 +428,9 @@ export default function App() {
                             <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg">
                                 <UserIcon size={16} /> {t('profile')}
                             </button>
+                            {/* FIXED: Open Modal instead of prompt */}
                             <button onClick={() => { 
-                                 const tKey = prompt("TMDB API Key:", tmdbKey);
-                                 const oKey = prompt("OMDb API Key:", omdbKey);
-                                 if (tKey !== null && oKey !== null) saveKeys(tKey, oKey);
+                                 setIsSettingsOpen(true);
                                  setIsProfileMenuOpen(false);
                             }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg">
                                 <Settings size={16} /> API Keys
@@ -486,10 +500,10 @@ export default function App() {
                             <Download size={24} className="text-cyan-400" />
                             <span className="text-xs font-bold">Import</span>
                         </button>
+                        {/* FIXED: Open Modal here too */}
                         <button onClick={() => { 
-                             const tKey = prompt("TMDB API Key:", tmdbKey);
-                             const oKey = prompt("OMDb API Key:", omdbKey);
-                             if (tKey !== null && oKey !== null) saveKeys(tKey, oKey);
+                             setIsSettingsOpen(true);
+                             setIsMobileMenuOpen(false);
                         }} className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-800 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors">
                              <Settings size={24} className="text-purple-400" />
                              <span className="text-xs font-bold">API Keys</span>
@@ -578,7 +592,17 @@ export default function App() {
         onClose={() => setIsSearchOpen(false)}
         onAdd={handleAdd}
         apiKey={tmdbKey}
-        onUpdateApiKey={(key) => updateSingleKey('tmdb_api_key', key)} // PASS THE UPDATER
+        onUpdateApiKey={(key) => updateSingleKey('tmdb_api_key', key)} 
+      />
+      
+      {/* SETTINGS MODAL: Passed both local value and save handler */}
+      <SettingsModal 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        tmdbKey={localStorage.getItem('tmdb_api_key') || ''}
+        omdbKey={localStorage.getItem('omdb_api_key') || ''}
+        geminiKey={localStorage.getItem('cinelog_gemini_key') || ''}
+        onSave={handleSaveKeys}
       />
       
       <ImportModal 
