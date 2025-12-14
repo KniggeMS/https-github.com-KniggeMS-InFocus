@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.17
+**Version:** 1.9.18
 
 ---
 
@@ -75,8 +75,8 @@ Verwaltung der externen Schnittstellen-Konfigurationen (Configuration Items - CI
 
 | CI Name | Typ | Status | Verantwortlich | Beschreibung |
 |:---|:---|:---|:---|:---|
-| **CI-TMDB-KEY** | API Key | Active | Admin | Zugriff auf Metadaten. Default Key hinterlegt. |
-| **CI-OMDB-KEY** | API Key | Active | Admin | Zugriff auf RT Ratings. Key Endung: `...5dc9`. |
+| **CI-TMDB-KEY** | API Key | Active | Admin/User | Zugriff auf Metadaten. **Client-Side Storage (Browserabhängig).** |
+| **CI-OMDB-KEY** | API Key | Active | Admin/User | Zugriff auf RT Ratings. Key Endung: `...5dc9`. |
 | **CI-GEMINI-KEY** | API Key | Active | User/Env | AI Features. Wird via `.env` oder LocalStorage injiziert. |
 
 ---
@@ -118,12 +118,29 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-027** | Feature | **Analytics** | **Smart Stats Core:** Umbau des Donut-Charts. Einführung eines interaktiven Zentrums ("Informative Center") zur Anzeige von Gesamt- und Detailwerten sowie eines Switches zum Wechsel zwischen "Anzahl" und "Laufzeit". | ✅ Done |
 | **RFC-028** | Critical | **Build / Ops** | **Config Stabilization:** Erzwingung von CommonJS in Config-Dateien (`module.exports`) und Bereitstellung von `index.css`, um Vercel-Deployment Warnungen und Fehler zu beheben. | ✅ Done |
 | **RFC-029** | Critical | **Build / Ops** | **Sync Force (Fix v1.0.3):** Version-Bump aller Config-Dateien auf 1.0.3 / 1.9.17, um Git-Tracking zu erzwingen und Deployment-Fehler endgültig zu beheben. | ✅ Done |
+| **RFC-030** | Critical | **Mobile / UX** | **Mobile Key Isolation Incident:** Korrektur des Umgangs mit dem TMDB API Key. Problem: `localStorage` ist geräteabhängig. Fix: Ersetzen des blockierenden Browser-Prompts durch ein integriertes Eingabe-UI im `SearchModal` und Implementierung eines Live-State-Updates, um Reloads zu vermeiden. | ✅ Done |
 
 ---
 
 ## 4. Service Operation (Betrieb)
 
-### 4.1 SQL Migration für Sharing (WICHTIG!)
+### 4.1 Incident Report: Mobile Key Isolation (RFC-030)
+
+**Problembeschreibung:**
+Benutzer berichteten, dass die App auf dem Desktop funktionierte, aber auf dem Smartphone nach dem API Key fragte, obwohl dieser bereits am Desktop eingegeben wurde. Zusätzlich wurde ein störendes Browser-Popup (`window.prompt`) verwendet.
+
+**Root Cause Analyse (RCA):**
+1.  **Client-Side Storage Isolation:** Die Architektur speichert API Keys (`tmdb_api_key`) ausschließlich im `localStorage` des Browsers. Dies ist ein Sicherheitsfeature ("Zero Knowledge" auf dem Server), bedeutet aber, dass **jedes Gerät** (Desktop, Handy, Tablet) den Key einmalig separat eingegeben bekommen muss. Es findet keine Synchronisation der Keys über die Cloud statt.
+2.  **UX Fehlentscheidung:** Der Versuch, einen fehlenden Key mittels `window.prompt()` abzufangen, unterbricht den Flow der PWA und wirkt unprofessionell. Zudem führen manche mobilen Browser diesen Prompt nicht korrekt aus oder blockieren ihn.
+
+**Lösung:**
+1.  **UI Integration:** Das `SearchModal` erkennt nun automatisch, ob der Key fehlt, und rendert anstelle der Suchleiste ein freundliches Eingabeformular.
+2.  **State Management:** Die Eingabe des Keys aktualisiert nun direkt den React State in `App.tsx` (Lifting State Up), sodass die App sofort nutzbar ist, ohne die Seite neu laden zu müssen.
+
+**Präventivmaßnahmen:**
+Dokumentation aktualisiert (siehe 2.4), um klarzustellen, dass Keys geräteabhängig sind.
+
+### 4.2 SQL Migration für Sharing (WICHTIG!)
 Standardmäßig erlaubt Supabase nur den Zugriff auf eigene Daten. Damit das Teilen von Listen funktioniert, muss folgende SQL-Policy im Supabase SQL Editor ausgeführt werden:
 
 #### Schritt 1: Zugriff auf Listen erlauben (Custom Lists)
@@ -157,31 +174,11 @@ create policy "Allow viewing shared list items" on media_items
   );
 ```
 
-### 4.2 Incident Management (Fehlerbehandlung)
+### 4.3 Incident Management (Fehlerbehandlung)
 *   **API Ausfälle (Gemini):** Das System fällt auf einen deterministischen Algorithmus zurück (`generateOfflineAnalysis`), der Metadaten analysiert, ohne die AI zu rufen.
 *   **API Ausfälle (TMDB/OMDb):** Fehlermeldungen werden dem User angezeigt. Bestehende Daten kommen aus der Supabase DB (Fallback bei fehlenden Ratings).
 *   **Auth Issues:** Token-Refresh wird automatisch durch das Supabase SDK gehandhabt.
 
-### 4.3 Access Management (Rollenkonzept)
-Das System unterscheidet drei Rollen, gesteuert über die `profiles` Tabelle:
-1.  **USER:** Standardrechte. Kann eigene Listen erstellen, Profil bearbeiten.
-2.  **MANAGER:** Kann andere User sehen und moderieren (außer Admins).
-3.  **ADMIN:** Voller Zugriff. Kann Rollen zuweisen, API-Keys verwalten (via UI).
-
-### 4.4 Request Fulfillment (User Anfragen)
-*   **Passwort Reset:** Self-Service via E-Mail Link (implementiert in `AuthContext` & `RecoveryPage`).
-*   **Datenexport:** Aktuell nicht implementiert (Feature Request).
-
 ---
 
-## 5. Continual Service Improvement (CSI)
-
-Geplante Verbesserungen für kommende Sprints:
-
-1.  **Push Notifications:** Benachrichtigung bei neuen Filmen in geteilten Listen (via Service Worker).
-2.  **Advanced Analytics:** Dashboard für User mit Graphen zum Watch-Verhalten (Genre-Verlauf über Zeit).
-3.  **Native App Wrapper:** Verpacken der PWA mittels Capacitor für App Store Release.
-
----
-
-*Dokumentation aktualisiert: Jetzt (Version 1.9.17) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.18) durch Senior Lead Engineer*

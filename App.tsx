@@ -221,6 +221,13 @@ export default function App() {
       localStorage.setItem('omdb_api_key', omdb);
   };
 
+  // Update specific key from modal
+  const updateSingleKey = (keyName: 'tmdb_api_key' | 'omdb_api_key', value: string) => {
+      localStorage.setItem(keyName, value);
+      if (keyName === 'tmdb_api_key') setTmdbKey(value);
+      if (keyName === 'omdb_api_key') setOmdbKey(value);
+  };
+
   const renderGrid = (filterStatus?: WatchStatus, filterListId?: string) => {
       let filtered = items.filter(i => i.userId === user?.id);
       
@@ -572,6 +579,7 @@ export default function App() {
         onClose={() => setIsSearchOpen(false)}
         onAdd={handleAdd}
         apiKey={tmdbKey}
+        onUpdateApiKey={(key) => updateSingleKey('tmdb_api_key', key)} // PASS THE UPDATER
       />
       
       <ImportModal 
