@@ -78,6 +78,33 @@ const generateOfflineAnalysis = (item: MediaItem, userNotes?: string): string =>
 
 // --- API FUNCTIONS ---
 
+/**
+ * Validates the API key by making a minimal request.
+ */
+export const testGeminiConnection = async (apiKey: string): Promise<{success: boolean, message: string}> => {
+    if (!apiKey || apiKey.trim() === '') return { success: false, message: "Key ist leer." };
+    
+    try {
+        const ai = new GoogleGenAI({ apiKey: apiKey.trim() });
+        // Minimal request to test auth
+        await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: "Hi",
+        });
+        return { success: true, message: "Verbindung erfolgreich!" };
+    } catch (error: any) {
+        console.error("Test Connection Failed:", error);
+        let msg = "Unbekannter Fehler";
+        if (error.message) {
+            if (error.message.includes("API key")) msg = "API Key ungültig (Code 400).";
+            else if (error.message.includes("403")) msg = "Zugriff verweigert (Code 403). Prüfe Billing.";
+            else if (error.message.includes("429")) msg = "Quota Limit erreicht (Code 429).";
+            else msg = error.message;
+        }
+        return { success: false, message: msg };
+    }
+};
+
 export const getRecommendations = async (items: MediaItem[], forceRefresh = false): Promise<SearchResult[]> => {
   if (items.length === 0) return [];
 
@@ -256,6 +283,7 @@ export const chatWithAI = async (message: string, collection: MediaItem[], histo
         // Return clearer error messages to the UI
         if (error.message?.includes("API key")) return "Fehler: API Key ungültig oder fehlt.";
         if (error.message?.includes("429")) return "Fehler: Zu viele Anfragen (Quota Limit).";
+        if (error.message?.includes("403")) return "Fehler: Zugriff verweigert (Region/Billing).";
         return "Verbindungsproblem: " + (error.message || "Unbekannt");
     }
 };

@@ -23,8 +23,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { getMediaDetails } from './services/tmdb';
 import { getOmdbRatings } from './services/omdb';
+import { testGeminiConnection } from './services/gemini';
 import * as db from './services/db';
-import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing, BookOpen, Shield } from 'lucide-react';
+import { LayoutDashboard, Film, CheckCircle, Plus, Sparkles, Tv, Clapperboard, MonitorPlay, Settings, Key, Loader2, Heart, ArrowUpDown, ChevronDown, LogOut, Languages, List, PlusCircle, Share2, Trash2, ListPlus, X, User as UserIcon, Download, Upload, Save, FileText, Database, ShieldAlert, CloudUpload, Moon, Sun, Smartphone, BellRing, BookOpen, Shield, Zap } from 'lucide-react';
 
 const API_KEY_STORAGE_KEY = 'cinelog_tmdb_key';
 const OMDB_KEY_STORAGE_KEY = 'cinelog_omdb_key';
@@ -104,6 +105,9 @@ const AppContent: React.FC = () => {
   // Gemini AI Key State
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [tempGeminiKey, setTempGeminiKey] = useState('');
+  
+  // API Test Status
+  const [keyTestStatus, setKeyTestStatus] = useState<{loading: boolean, success?: boolean, msg?: string}>({ loading: false });
   
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
@@ -233,6 +237,13 @@ const AppContent: React.FC = () => {
     if (outcome === 'accepted') setDeferredPrompt(null);
   };
 
+  const handleTestKey = async () => {
+      if (!tempGeminiKey.trim()) return;
+      setKeyTestStatus({ loading: true });
+      const result = await testGeminiConnection(tempGeminiKey.trim());
+      setKeyTestStatus({ loading: false, success: result.success, msg: result.message });
+  };
+
   const saveSettings = () => {
     // Gemini Key is always editable by user to solve their Quota/Demo issues
     // TRIM THE KEYS to avoid whitespace errors
@@ -254,6 +265,7 @@ const AppContent: React.FC = () => {
         setTempOmdbKey(cleanedOmdb);
     }
     setIsSettingsOpen(false);
+    setKeyTestStatus({ loading: false }); // Reset test status on close
   };
 
   // Add item
@@ -515,6 +527,80 @@ const AppContent: React.FC = () => {
   const sharedLists = customLists.filter(l => l.sharedWith.includes(user?.id || ''));
   const hasNewSharedLists = sharedLists.some(l => !seenListIds.includes(l.id));
 
+  // --- SETTINGS UI COMPONENT (Reused for Mobile/Desktop) ---
+  const SettingsContent = () => (
+      <>
+        <button onClick={() => { setIsSettingsOpen(false); navigate('/guide'); }} className="w-full mb-4 py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded text-xs font-bold transition-all shadow-lg">
+            <BookOpen size={14} /> Handbuch öffnen
+        </button>
+
+        {/* THEME SWITCHER */}
+        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">{t('appearance')}</h4>
+        <div className="flex gap-1 mb-4 bg-slate-900 rounded-lg p-1 border border-slate-700">
+            <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center py-1.5 rounded-md transition-all ${theme === 'dark' ? 'bg-slate-700 text-cyan-400 shadow-sm' : 'text-slate-500 hover:text-slate-300'}`} title={t('theme_dark')}>
+                <Moon size={14} />
+            </button>
+            <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center py-1.5 rounded-md transition-all ${theme === 'light' ? 'bg-slate-100 text-orange-500 shadow-sm' : 'text-slate-500 hover:text-slate-300'}`} title={t('theme_light')}>
+                <Sun size={14} />
+            </button>
+            <button onClick={() => setTheme('glass')} className={`flex-1 flex items-center justify-center py-1.5 rounded-md transition-all ${theme === 'glass' ? 'bg-white/10 text-purple-400 shadow-sm' : 'text-slate-500 hover:text-slate-300'}`} title={t('theme_glass')}>
+                <Smartphone size={14} />
+            </button>
+        </div>
+
+        {/* Gemini Key Input (Always available) */}
+        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2 text-purple-400"><Sparkles size={12} /> Google Gemini Key</h4>
+        <div className="flex gap-2 mb-2">
+            <input 
+                type="password" 
+                value={tempGeminiKey} 
+                onChange={(e) => setTempGeminiKey(e.target.value)} 
+                placeholder="Gemini API Key..." 
+                className="flex-grow bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white focus:border-purple-500 focus:outline-none" 
+            />
+            <button 
+                onClick={handleTestKey}
+                disabled={keyTestStatus.loading || !tempGeminiKey}
+                className={`px-3 rounded text-xs font-bold transition-colors ${keyTestStatus.success ? 'bg-green-600 text-white' : keyTestStatus.success === false ? 'bg-red-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                title="Verbindung testen"
+            >
+                {keyTestStatus.loading ? <Loader2 size={12} className="animate-spin"/> : keyTestStatus.success ? <CheckCircle size={14}/> : <Zap size={14}/>}
+            </button>
+        </div>
+        {/* Test Result Message */}
+        {keyTestStatus.msg && (
+            <div className={`text-[10px] mb-2 px-2 py-1 rounded border ${keyTestStatus.success ? 'bg-green-900/20 border-green-500/30 text-green-400' : 'bg-red-900/20 border-red-500/30 text-red-400'}`}>
+                {keyTestStatus.msg}
+            </div>
+        )}
+
+        {canEditKeys ? (
+        <>
+            <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2 mt-2"><Key size={12} /> TMDB API Key</h4>
+            <input type="password" value={tempApiKey} onChange={(e) => setTempApiKey(e.target.value)} placeholder="TMDB Key..." className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white mb-2 focus:border-cyan-500 focus:outline-none" />
+            <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2 mt-3"><Database size={12} /> OMDb API Key</h4>
+            <input type="password" value={tempOmdbKey} onChange={(e) => setTempOmdbKey(e.target.value)} placeholder="OMDb Key..." className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white mb-2 focus:border-cyan-500 focus:outline-none" />
+        </>
+        ) : (
+        <div className="mb-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-xs text-red-400 flex items-center gap-2"><ShieldAlert size={14} /><span>TMDB Keys verwaltet.</span></div>
+        )}
+        <button onClick={saveSettings} className="w-full py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs rounded font-medium transition-colors mb-4 mt-2">{t('remember')}</button>
+
+        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2"><Languages size={12} /> {t('language')}</h4>
+        <div className="flex gap-2 mb-4">
+                <button onClick={() => setLanguage('de')} className={`flex-1 py-1 text-xs rounded border ${language === 'de' ? 'bg-slate-600 border-slate-500 text-white' : 'border-slate-700 text-slate-400'}`}>DE</button>
+                <button onClick={() => setLanguage('en')} className={`flex-1 py-1 text-xs rounded border ${language === 'en' ? 'bg-slate-600 border-slate-500 text-white' : 'border-slate-700 text-slate-400'}`}>EN</button>
+        </div>
+        {canSmartImport && <button onClick={() => { setIsSettingsOpen(false); setIsImportOpen(true); }} className="w-full mt-2 py-1.5 flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-cyan-400 rounded text-xs transition-colors border border-slate-600"><FileText size={12} /> {t('smart_import')}</button>}
+        {canManageUsers && (
+            <button onClick={() => { setIsSettingsOpen(false); navigate('/admin'); }} className="w-full mt-2 py-1.5 flex items-center justify-center gap-2 bg-slate-700/50 text-cyan-400 border border-slate-600 rounded text-xs font-bold">
+                <Shield size={12} /> {t('user_management')}
+            </button>
+        )}
+        <button onClick={logout} className="w-full mt-4 py-1.5 flex items-center justify-center gap-2 text-red-400 hover:bg-red-400/10 rounded text-xs transition-colors"><LogOut size={12} /> {t('logout')}</button>
+      </>
+  );
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col md:flex-row relative">
       
@@ -571,47 +657,7 @@ const AppContent: React.FC = () => {
         {/* Desktop Settings Panel */}
         {isSettingsOpen && (
             <div className="mx-4 mb-4 p-4 bg-slate-800 rounded-xl border border-slate-700 animate-in slide-in-from-top-2">
-                 <button onClick={() => { setIsSettingsOpen(false); navigate('/guide'); }} className="w-full mb-4 py-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded text-xs font-bold transition-all shadow-lg">
-                     <BookOpen size={14} /> Handbuch öffnen
-                 </button>
-
-                 {/* THEME SWITCHER */}
-                 <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2">{t('appearance')}</h4>
-                 <div className="flex gap-1 mb-4 bg-slate-900 rounded-lg p-1 border border-slate-700">
-                     <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center py-1.5 rounded-md transition-all ${theme === 'dark' ? 'bg-slate-700 text-cyan-400 shadow-sm' : 'text-slate-500 hover:text-slate-300'}`} title={t('theme_dark')}>
-                         <Moon size={14} />
-                     </button>
-                     <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center py-1.5 rounded-md transition-all ${theme === 'light' ? 'bg-slate-100 text-orange-500 shadow-sm' : 'text-slate-500 hover:text-slate-300'}`} title={t('theme_light')}>
-                         <Sun size={14} />
-                     </button>
-                     <button onClick={() => setTheme('glass')} className={`flex-1 flex items-center justify-center py-1.5 rounded-md transition-all ${theme === 'glass' ? 'bg-white/10 text-purple-400 shadow-sm' : 'text-slate-500 hover:text-slate-300'}`} title={t('theme_glass')}>
-                         <Smartphone size={14} />
-                     </button>
-                 </div>
-
-                 {/* Gemini Key Input (Always available) */}
-                 <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2 text-purple-400"><Sparkles size={12} /> Google Gemini Key</h4>
-                 <input type="password" value={tempGeminiKey} onChange={(e) => setTempGeminiKey(e.target.value)} placeholder="Gemini API Key..." className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white mb-2 focus:border-purple-500 focus:outline-none" />
-
-                 {canEditKeys ? (
-                    <>
-                        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2 mt-2"><Key size={12} /> TMDB API Key</h4>
-                        <input type="password" value={tempApiKey} onChange={(e) => setTempApiKey(e.target.value)} placeholder="TMDB Key..." className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white mb-2 focus:border-cyan-500 focus:outline-none" />
-                        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2 mt-3"><Database size={12} /> OMDb API Key</h4>
-                        <input type="password" value={tempOmdbKey} onChange={(e) => setTempOmdbKey(e.target.value)} placeholder="OMDb Key..." className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-white mb-2 focus:border-cyan-500 focus:outline-none" />
-                    </>
-                 ) : (
-                    <div className="mb-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-xs text-red-400 flex items-center gap-2"><ShieldAlert size={14} /><span>TMDB Keys verwaltet.</span></div>
-                 )}
-                 <button onClick={saveSettings} className="w-full py-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs rounded font-medium transition-colors mb-4 mt-2">{t('remember')}</button>
-
-                <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-2"><Languages size={12} /> {t('language')}</h4>
-                <div className="flex gap-2 mb-4">
-                     <button onClick={() => setLanguage('de')} className={`flex-1 py-1 text-xs rounded border ${language === 'de' ? 'bg-slate-600 border-slate-500 text-white' : 'border-slate-700 text-slate-400'}`}>DE</button>
-                     <button onClick={() => setLanguage('en')} className={`flex-1 py-1 text-xs rounded border ${language === 'en' ? 'bg-slate-600 border-slate-500 text-white' : 'border-slate-700 text-slate-400'}`}>EN</button>
-                </div>
-                {canSmartImport && <button onClick={() => { setIsSettingsOpen(false); setIsImportOpen(true); }} className="w-full mt-2 py-1.5 flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-cyan-400 rounded text-xs transition-colors border border-slate-600"><FileText size={12} /> {t('smart_import')}</button>}
-                <button onClick={logout} className="w-full mt-4 py-1.5 flex items-center justify-center gap-2 text-red-400 hover:bg-red-400/10 rounded text-xs transition-colors"><LogOut size={12} /> {t('logout')}</button>
+                 <SettingsContent />
             </div>
         )}
 
@@ -743,7 +789,7 @@ const AppContent: React.FC = () => {
                                             );
                                         })}
                                     </div>
-                               </div>
+                                </div>
                            )}
 
                            <button 
@@ -767,58 +813,7 @@ const AppContent: React.FC = () => {
                         <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 bg-slate-900/50 p-2 rounded-full"><X size={20} /></button>
                       </div>
                       <div className="space-y-6">
-                            <button onClick={() => { setIsSettingsOpen(false); navigate('/guide'); }} className="w-full py-3 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg">
-                                <BookOpen size={16} /> Handbuch öffnen
-                            </button>
-
-                            {/* Mobile Theme Switcher */}
-                            <div>
-                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">{t('appearance')}</h4>
-                                <div className="flex gap-2 bg-slate-900/50 p-1 rounded-xl">
-                                    <button onClick={() => setTheme('dark')} className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 transition-all ${theme === 'dark' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}>
-                                        <Moon size={18} /> <span className="text-xs">{t('theme_dark')}</span>
-                                    </button>
-                                    <button onClick={() => setTheme('light')} className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 transition-all ${theme === 'light' ? 'bg-slate-100 text-slate-900 border border-slate-300' : 'text-slate-400'}`}>
-                                        <Sun size={18} /> <span className="text-xs">{t('theme_light')}</span>
-                                    </button>
-                                    <button onClick={() => setTheme('glass')} className={`flex-1 py-3 rounded-lg flex items-center justify-center gap-2 transition-all ${theme === 'glass' ? 'bg-white/10 text-white border border-white/20' : 'text-slate-400'}`}>
-                                        <Smartphone size={18} /> <span className="text-xs">Glass</span>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            {/* Mobile Gemini Key Input */}
-                            <div className="space-y-3">
-                                <div><h4 className="text-xs font-bold text-purple-400 uppercase mb-2">Google Gemini API Key</h4><input type="password" value={tempGeminiKey} onChange={(e) => setTempGeminiKey(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500" /></div>
-                            </div>
-
-                            {/* Mobile Admin Link */}
-                            {canManageUsers && (
-                                <button onClick={() => { setIsSettingsOpen(false); navigate('/admin'); }} className="w-full py-3 bg-slate-700/50 text-cyan-400 border border-slate-600 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
-                                    <Shield size={16} /> {t('user_management')}
-                                </button>
-                            )}
-
-                            {canEditKeys ? (
-                                <div className="space-y-3">
-                                    <div><h4 className="text-xs font-bold text-slate-400 uppercase mb-2">API Key (TMDB)</h4><input type="password" value={tempApiKey} onChange={(e) => setTempApiKey(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500" /></div>
-                                    <div><h4 className="text-xs font-bold text-slate-400 uppercase mb-2">API Key (OMDb)</h4><input type="password" value={tempOmdbKey} onChange={(e) => setTempOmdbKey(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500" /></div>
-                                </div>
-                            ) : (
-                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-center gap-2"><ShieldAlert size={16} /><span>TMDB Keys sind verwaltet.</span></div>
-                            )}
-                            <button onClick={saveSettings} className="w-full py-3 bg-cyan-600 rounded-xl text-white font-bold text-sm shadow-lg shadow-cyan-900/20">{t('remember')}</button>
-
-                            <div>
-                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">{t('language')}</h4>
-                                <div className="flex gap-2 bg-slate-900/50 p-1 rounded-xl">
-                                    <button onClick={() => setLanguage('de')} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${language === 'de' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400'}`}>DE</button>
-                                    <button onClick={() => setLanguage('en')} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${language === 'en' ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-400'}`}>EN</button>
-                                </div>
-                            </div>
-                            {canSmartImport && <button onClick={() => { setIsSettingsOpen(false); setIsImportOpen(true); }} className="w-full py-3 bg-slate-700 text-cyan-400 rounded-xl text-sm font-bold flex items-center justify-center gap-2 border border-slate-600"><FileText size={16} /> {t('smart_import')}</button>}
-                            {deferredPrompt && <button onClick={handleInstallClick} className="w-full py-3 bg-green-600 rounded-xl text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"><Download size={18} /> App installieren</button>}
-                            <button onClick={logout} className="w-full py-3 text-red-400 border border-red-900/50 bg-red-500/10 rounded-xl font-bold flex items-center justify-center gap-2"><LogOut size={16} /> {t('logout')}</button>
+                            <SettingsContent />
                       </div>
                   </div>
              </div>
