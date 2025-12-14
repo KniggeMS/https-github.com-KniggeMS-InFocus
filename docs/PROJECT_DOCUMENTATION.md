@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.12
+**Version:** 1.9.13
 
 ---
 
@@ -116,6 +116,7 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-025** | Bugfix | **DB / SQL** | **UUID Casting Fix:** Korrektur der `media_items` Policy. Die `id` Spalte (UUID) muss explizit zu `text` gecastet werden (`::text`), um sie mit dem `items` Array (Text[]) in `custom_lists` zu vergleichen. Behebt Fehler `42883: operator does not exist: uuid = text`. | ✅ Done |
 | **RFC-026** | Minor | **UX / DetailView** | **Smart Share Upgrade:** Entfernung der "Vibe"-Smilies. Ersatz durch einen kontextsensitiven "Share"-Button, der auf Mobile das native Teilen-Menü öffnet und auf Desktop in die Zwischenablage kopiert. | ✅ Done |
 | **RFC-027** | Feature | **Analytics** | **Smart Stats Core:** Umbau des Donut-Charts. Einführung eines interaktiven Zentrums ("Informative Center") zur Anzeige von Gesamt- und Detailwerten sowie eines Switches zum Wechsel zwischen "Anzahl" und "Laufzeit". | ✅ Done |
+| **RFC-028** | Critical | **Build / Ops** | **Config Stabilization:** Umstellung der Build-Konfigurationen (`package.json`, `tailwind`, `postcss`) auf CommonJS-Standards und Sicherstellung der `index.css`-Präsenz, um Vercel-Deployment-Fehler zu beheben. | ✅ Done |
 
 ---
 
@@ -182,4 +183,4 @@ Geplante Verbesserungen für kommende Sprints:
 
 ---
 
-*Dokumentation aktualisiert: Jetzt (Version 1.9.12) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Jetzt (Version 1.9.13) durch Senior Lead Engineer*
