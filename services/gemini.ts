@@ -297,12 +297,16 @@ export const chatWithAI = async (message: string, collection: MediaItem[], histo
         return response.text || "Ich bin sprachlos.";
 
     } catch (error: any) {
-        console.error("Chat Error:", error);
-        // Return clearer error messages to the UI
-        if (error.message?.includes("API key")) return "Fehler: API Key ungültig oder fehlt.";
-        if (error.message?.includes("429")) return "Fehler: Zu viele Anfragen (Quota Limit).";
-        if (error.message?.includes("403")) return "Fehler: Zugriff verweigert (Region/Billing).";
-        return "Verbindungsproblem: " + (error.message || "Unbekannt");
+        console.error("Chat Error Details:", error);
+        
+        const errMsg = error.message || error.toString();
+        
+        if (errMsg.includes("API key")) return "Fehler: API Key ungültig oder fehlt. Bitte in Einstellungen prüfen.";
+        if (errMsg.includes("429")) return "Fehler: Zu viele Anfragen (Quota Limit). Bitte warten.";
+        if (errMsg.includes("403")) return "Fehler: Zugriff verweigert (Region/Billing).";
+        if (errMsg.includes("503")) return "Fehler: AI Dienst kurzzeitig nicht verfügbar.";
+        
+        return `Verbindungsproblem: ${errMsg.substring(0, 50)}...`;
     }
 };
 

@@ -249,11 +249,15 @@ const AppContent: React.FC = () => {
       
       setKeyTestStatus({ loading: true });
       const result = await testGeminiConnection(keyToTest);
-      setKeyTestStatus({ loading: false, success: result.success, msg: result.message });
       
-      // Update UI with sanitized key if successful
-      if (result.success && keyToTest !== tempGeminiKey) {
+      if (result.success) {
+          // AUTO-SAVE on success to ensure the working key is used immediately
+          localStorage.setItem(GEMINI_KEY_STORAGE_KEY, keyToTest);
+          setGeminiApiKey(keyToTest);
           setTempGeminiKey(keyToTest);
+          setKeyTestStatus({ loading: false, success: true, msg: "Gespeichert & Verbunden!" });
+      } else {
+          setKeyTestStatus({ loading: false, success: false, msg: result.message });
       }
   };
 
