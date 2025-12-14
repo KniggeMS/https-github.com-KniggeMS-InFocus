@@ -4,27 +4,27 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Search, Camera, Sparkles, BrainCircuit, 
   Share2, Trophy, List, Key, Shield, Smartphone, 
-  MessageCircle, Layers, Star
+  MessageCircle, Layers, Star, Lock
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
 
-const MockCard = ({ title, icon: Icon, color }: any) => (
-  <div className="w-32 h-48 bg-slate-800 rounded-lg border border-slate-700 relative overflow-hidden flex flex-col shadow-lg">
-    <div className={`h-32 w-full bg-${color}-900/30 flex items-center justify-center`}>
-      <Icon className={`text-${color}-400 opacity-50`} size={32} />
-    </div>
-    <div className="p-2">
-      <div className="h-2 w-20 bg-slate-600 rounded mb-1"></div>
-      <div className="h-2 w-12 bg-slate-700 rounded"></div>
-    </div>
-  </div>
-);
+interface GuidePageProps {
+    onBack?: () => void; // Optional prop to override navigation behavior (for AuthPage overlay)
+}
 
-export const GuidePage: React.FC = () => {
+export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user?.role === UserRole.ADMIN;
+
+  const handleBack = () => {
+      if (onBack) {
+          onBack();
+      } else {
+          navigate(-1);
+      }
+  };
 
   const scrollTo = (id: string) => {
     const element = document.getElementById(id);
@@ -37,10 +37,11 @@ export const GuidePage: React.FC = () => {
     { id: 'ai', label: 'AI Power Features', icon: Sparkles },
     { id: 'lists', label: 'Listen & Social', icon: List },
     { id: 'gamification', label: 'Level & Trophäen', icon: Trophy },
+    { id: 'security', label: 'Sicherheit & Privacy', icon: Lock }, // New Section
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-20 relative overflow-x-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-20 relative overflow-x-hidden animate-in fade-in duration-300">
       {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none">
          <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2"></div>
@@ -51,7 +52,7 @@ export const GuidePage: React.FC = () => {
         
         {/* Header */}
         <header className="py-8 flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-slate-800/50 border border-slate-700 hover:bg-slate-700 transition-colors backdrop-blur-md">
+          <button onClick={handleBack} className="p-2 rounded-full bg-slate-800/50 border border-slate-700 hover:bg-slate-700 transition-colors backdrop-blur-md z-50">
             <ArrowLeft size={24} />
           </button>
           <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
@@ -293,6 +294,43 @@ export const GuidePage: React.FC = () => {
                     <div className="absolute inset-0 rounded-full border-4 border-cyan-500/30 border-t-cyan-500 animate-spin-slow"></div>
                     <span className="text-3xl font-bold text-white">Lvl 5</span>
                     <span className="text-xs text-cyan-400 uppercase tracking-widest mt-1">Drehbuchautor</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* SECTION 6: SICHERHEIT & PRIVACY (NEW) */}
+            <section id="security" className="scroll-mt-24">
+              <div className="bg-slate-900/60 backdrop-blur-md border border-red-500/10 rounded-3xl p-6 md:p-8 shadow-2xl">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Lock className="text-red-400" /> Sicherheit & Passwörter
+                </h2>
+
+                <div className="space-y-6">
+                  <div className="bg-slate-800/40 rounded-xl p-6 border border-slate-700/50">
+                      <h3 className="text-lg font-bold text-white mb-4">Warum "mindestens 8 Zeichen"?</h3>
+                      <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                          Wir nerven dich nicht mit dem Zwang zu Sonderzeichen (<code className="bg-slate-900 px-1 py-0.5 rounded text-red-300">!$§%</code>). 
+                          Moderne Sicherheitsexperten (NIST) wissen: <strong>Länge schlägt Komplexität.</strong>
+                      </p>
+                      
+                      <div className="grid md:grid-cols-2 gap-4 mt-4">
+                          <div className="bg-red-900/10 border border-red-900/30 p-4 rounded-lg">
+                              <span className="text-xs font-bold text-red-400 uppercase tracking-wide">Schlecht</span>
+                              <div className="text-lg font-mono text-white mt-1">Tr4!n$</div>
+                              <p className="text-xs text-slate-400 mt-2">Kurz, kryptisch, schwer am Handy zu tippen, aber für Computer leicht zu knacken.</p>
+                          </div>
+                          <div className="bg-green-900/10 border border-green-900/30 p-4 rounded-lg">
+                              <span className="text-xs font-bold text-green-400 uppercase tracking-wide">Super Sicher</span>
+                              <div className="text-lg font-mono text-white mt-1">KaffeeSonneRegen</div>
+                              <p className="text-xs text-slate-400 mt-2">Lang, einfach zu merken, extrem schwer zu knacken. Das nennt man "Passphrase".</p>
+                          </div>
+                      </div>
+                      
+                      <div className="mt-4 flex items-center gap-2 text-sm text-slate-400 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
+                          <BrainCircuit size={16} className="text-cyan-400" />
+                          <span><strong>Tipp:</strong> Denke dir einen kurzen Satz aus oder kombiniere 3 zufällige Wörter.</span>
+                      </div>
                   </div>
                 </div>
               </div>

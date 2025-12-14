@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { generateAvatar } from '../services/gemini';
-import { Clapperboard, Loader2, Upload, Sparkles, Languages, UserCheck, KeyRound, ArrowLeft, Info, Check, X as XIcon } from 'lucide-react';
+import { GuidePage } from './GuidePage';
+import { Clapperboard, Loader2, Upload, Sparkles, Languages, UserCheck, KeyRound, ArrowLeft, Info, Check, X as XIcon, BookOpen } from 'lucide-react';
 
 type AuthView = 'login' | 'register' | 'forgot';
 
@@ -15,6 +16,7 @@ export const AuthPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showGuide, setShowGuide] = useState(false); // NEW STATE for Guide Overlay
 
   // Form State
   const [username, setUsername] = useState('');
@@ -148,6 +150,15 @@ export const AuthPage: React.FC = () => {
       }
   };
 
+  // IF GUIDE IS ACTIVE, RENDER IT OVERLAYING EVERYTHING
+  if (showGuide) {
+      return (
+          <div className="fixed inset-0 z-50 bg-slate-950 overflow-y-auto">
+              <GuidePage onBack={() => setShowGuide(false)} />
+          </div>
+      );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden">
         {/* Cinematic Background */}
@@ -160,7 +171,18 @@ export const AuthPage: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-900/50"></div>
         </div>
 
-        {/* Language Switcher (Top Right) */}
+        {/* Top Header: Language & Guide */}
+        <div className="absolute top-6 left-6 z-50 flex items-center gap-3">
+             {/* Guide Button - Subtle but accessible */}
+             <button 
+                onClick={() => setShowGuide(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-full text-slate-400 hover:text-white text-xs font-medium transition-colors border border-white/5"
+            >
+                <BookOpen size={14} />
+                Handbuch
+            </button>
+        </div>
+
         <div className="absolute top-6 right-6 z-50">
             <button 
                 onClick={() => setLanguage(language === 'de' ? 'en' : 'de')}
