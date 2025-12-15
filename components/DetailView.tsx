@@ -1,755 +1,386 @@
-
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Film, Clock, MonitorPlay, Heart, Bookmark, Play, ChevronLeft, Layers, Check, PlayCircle, User, ExternalLink, Clapperboard, ImageOff, MessageSquare, BrainCircuit, Loader2, Star, Users, PenTool, Share2, Copy } from 'lucide-react';
-import { MediaItem, SearchResult, MediaType, WatchStatus, PublicReview } from '../types';
+import React, { useState, useEffect } from 'react';
+import { 
+  X, Heart, Star, Play, Clock, Check, Share2, AlertCircle, 
+  Loader2, Film
+} from 'lucide-react';
+import { MediaItem, SearchResult, WatchStatus, MediaType } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, BACKDROP_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 import { analyzeMovieContext } from '../services/gemini';
 import { getOmdbRatings } from '../services/omdb';
-import { fetchPublicReviews } from '../services/db';
 import { useTranslation } from '../contexts/LanguageContext';
-import { useAuth } from '../contexts/AuthContext';
 
 interface DetailViewProps {
   item: MediaItem | SearchResult;
-  onClose: () => void;
-  // Actions
-  onAdd?: (item: SearchResult, initialStatus?: WatchStatus, isFav?: boolean) => void;
-  onUpdateStatus?: (id: string, status: WatchStatus) => void;
-  onToggleFavorite?: (id: string) => void;
-  onUpdateNotes?: (id: string, notes: string) => void; 
-  onUpdateRtScore?: (id: string, score: string) => void; // New prop for persistence
-  // Context
   isExisting: boolean;
+  onClose: () => void;
   apiKey: string;
   omdbApiKey?: string;
+  
+  // For existing items
+  onUpdateStatus?: (id: string, status: WatchStatus) => void;
+  onToggleFavorite?: (id: string) => void;
+  onUpdateNotes?: (id: string, notes: string) => void;
+  onUpdateRtScore?: (id: string, score: string) => void;
+  
+  // For new items
+  onAdd?: (item: SearchResult, status: WatchStatus, isFav: boolean) => void;
 }
 
-// --- HELPER: Language Detection ---
-const detectReviewLanguage = (text: string): 'de' | 'en' | 'neutral' => {
-  if (!text || text.length < 5) return 'neutral'; // Too short to decide
-  
-  const lower = text.toLowerCase();
-  
-  // Common stop words unique to each language
-  const deWords = ['und', 'der', 'die', 'das', 'ist', 'nicht', 'ein', 'eine', 'film', 'serie', 'gut', 'schlecht', 'aber', 'auch', 'gesehen', 'handlung', 'schauspieler', 'langweilig', 'super'];
-  const enWords = ['and', 'the', 'is', 'not', 'a', 'an', 'movie', 'series', 'good', 'bad', 'but', 'also', 'watched', 'plot', 'story', 'actor', 'boring', 'awesome'];
-
-  let deCount = 0;
-  let enCount = 0;
-
-  deWords.forEach(w => { if (new RegExp(`\\b${w}\\b`).test(lower)) deCount++; });
-  enWords.forEach(w => { if (new RegExp(`\\b${w}\\b`).test(lower)) enCount++; });
-
-  if (deCount > enCount) return 'de';
-  if (enCount > deCount) return 'en';
-  
-  return 'neutral'; // Ambiguous or mostly names/emojis
-};
-
-// Refined Tomato Icon (Plumper)
-const TomatoIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M12 2C7.5 2 4 5.5 4 9C4 13.5 8 19 12 22C16 19 20 13.5 20 9C20 5.5 16.5 2 12 2ZM12 4C13.5 4 14.5 5 14.5 5S13 7 12 7C11 7 9.5 5 9.5 5S10.5 4 12 4Z" />
-    <path d="M8 2.5C8 2.5 9 5 12 5C15 5 16 2.5 16 2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
-
-const RottenIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M11.99 2C13.5 2.5 15 3 16 5C17.5 4 19 4 20 5.5C21.5 7.5 21 10 20 12C21 14 20.5 16 19 17.5C17 19.5 14 20 12 21C10 20 7 19.5 5 17.5C3.5 16 3 14 4 12C3 10 2.5 7.5 4 5.5C5 4 6.5 4 8 5C9 3 10.5 2.5 11.99 2Z" />
-    <circle cx="9" cy="10" r="1.5" className="text-slate-900" fill="currentColor"/>
-    <circle cx="15" cy="10" r="1.5" className="text-slate-900" fill="currentColor"/>
-    <path d="M9 15C9 15 10 16 12 16C14 16 15 15 15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-slate-900"/>
-  </svg>
-);
-
-const StarRatingIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-  </svg>
-);
-
 export const DetailView: React.FC<DetailViewProps> = ({ 
-  item: initialItem, 
-  onClose, 
-  onAdd, 
-  onUpdateStatus, 
-  onToggleFavorite, 
-  onUpdateNotes,
-  onUpdateRtScore,
-  isExisting, 
-  apiKey,
-  omdbApiKey 
+    item: initialItem, isExisting, onClose, apiKey, omdbApiKey, 
+    onUpdateStatus, onToggleFavorite, onUpdateNotes, onUpdateRtScore, onAdd 
 }) => {
-  const { t, language } = useTranslation();
-  const { user } = useAuth();
-  const [details, setDetails] = useState<Partial<MediaItem> | null>(null);
-  const [loadingDetails, setLoadingDetails] = useState(false);
-  const [playingTrailer, setPlayingTrailer] = useState(false);
-  const [backgroundVideoReady, setBackgroundVideoReady] = useState(false);
-  const [imgError, setImgError] = useState(false);
-  
-  // Notes/Reviews & AI Analysis State
-  const [notes, setNotes] = useState((initialItem as MediaItem).userNotes || '');
-  const [aiInsight, setAiInsight] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  
-  // Community Reviews
-  const [communityReviews, setCommunityReviews] = useState<PublicReview[]>([]);
-  const [loadingReviews, setLoadingReviews] = useState(false);
+    const { t } = useTranslation();
+    const [details, setDetails] = useState<Partial<MediaItem>>({});
+    const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+    const [loadingAi, setLoadingAi] = useState(false);
+    const [activeTab, setActiveTab] = useState<'info' | 'providers' | 'cast'>('info');
+    const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
+    
+    // User Interaction States
+    const [notes, setNotes] = useState(isExisting ? (initialItem as MediaItem).userNotes || '' : '');
+    const [isFav, setIsFav] = useState(isExisting ? (initialItem as MediaItem).isFavorite || false : false);
+    const [showTrailer, setShowTrailer] = useState(false);
+    const [copied, setCopied] = useState(false);
 
-  // Share state
-  const [copied, setCopied] = useState(false);
+    // Load extra details on mount
+    useEffect(() => {
+        const loadDetails = async () => {
+            try {
+                // 1. TMDB Details
+                const extended = await getMediaDetails(initialItem, apiKey);
+                setDetails(extended);
+                
+                if (extended.trailerKey) {
+                    setTrailerUrl(`https://www.youtube.com/embed/${extended.trailerKey}?autoplay=1`);
+                }
 
-  const existingItem = isExisting ? (initialItem as MediaItem) : null;
+                // 2. OMDb Ratings (if IMDb ID available)
+                const imdbId = initialItem.imdbId || extended.imdbId;
+                if (omdbApiKey && imdbId && isExisting && onUpdateRtScore) {
+                     getOmdbRatings(imdbId, omdbApiKey).then(score => {
+                         if (score && isExisting && onUpdateRtScore) {
+                             if ((initialItem as MediaItem).rtScore !== score) {
+                                 onUpdateRtScore((initialItem as MediaItem).id, score);
+                             }
+                         }
+                     });
+                }
 
-  useEffect(() => {
-    const loadDetails = async () => {
-      setLoadingDetails(true);
-      try {
-        const fetchedDetails = await getMediaDetails(initialItem, apiKey);
-        setDetails(fetchedDetails);
-      } catch (e) {
-        console.error("Failed to load details", e);
-      } finally {
-        setLoadingDetails(false);
-      }
+                // 3. AI Analysis
+                if (isExisting) {
+                    setLoadingAi(true);
+                    analyzeMovieContext(initialItem as MediaItem, (initialItem as MediaItem).userNotes)
+                        .then(text => setAiAnalysis(text))
+                        .catch(() => setAiAnalysis(null))
+                        .finally(() => setLoadingAi(false));
+                }
+
+            } catch (e) {
+                console.error("Detail load error", e);
+            }
+        };
+        loadDetails();
+    }, [initialItem, apiKey, omdbApiKey]);
+    
+    const handleShare = async () => {
+        const url = `https://www.themoviedb.org/${initialItem.type === MediaType.MOVIE ? 'movie' : 'tv'}/${initialItem.tmdbId}`;
+        const text = `Check out "${initialItem.title}" (${initialItem.year})! ${url}`;
+        
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: initialItem.title,
+                    text: text,
+                    url: url
+                });
+            } else {
+                await navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
+        } catch (err) {
+            console.error('Share failed:', err);
+        }
     };
 
-    loadDetails();
-  }, [initialItem, apiKey]);
+    const handleSaveNotes = () => {
+        if (isExisting && onUpdateNotes && (initialItem as MediaItem).id) {
+            onUpdateNotes((initialItem as MediaItem).id, notes);
+            // Also re-trigger AI analysis as context changed
+            setLoadingAi(true);
+            analyzeMovieContext({ ...initialItem, userNotes: notes } as MediaItem, notes)
+                .then(text => setAiAnalysis(text))
+                .catch(() => {})
+                .finally(() => setLoadingAi(false));
+        }
+    };
 
-  // Load Community Reviews
-  useEffect(() => {
-      const loadReviews = async () => {
-          if (initialItem.tmdbId && isExisting) {
-              setLoadingReviews(true);
-              const reviews = await fetchPublicReviews(initialItem.tmdbId);
-              // Filter out own review from the community list to avoid duplication
-              setCommunityReviews(reviews.filter(r => r.userId !== user?.id));
-              setLoadingReviews(false);
-          }
-      };
-      loadReviews();
-  }, [initialItem.tmdbId, isExisting, user]);
+    const handleAddClick = (status: WatchStatus) => {
+        if (onAdd) {
+            onAdd(initialItem as SearchResult, status, isFav);
+        }
+    };
 
-  // FILTER REVIEWS BY LANGUAGE
-  const visibleReviews = useMemo(() => {
-      return communityReviews.filter(review => {
-          const lang = detectReviewLanguage(review.content);
-          // Show if matches current language OR if it's neutral (mostly stars/emojis)
-          return lang === 'neutral' || lang === language;
-      });
-  }, [communityReviews, language]);
+    const displayItem = { ...initialItem, ...details };
+    const posterUrl = displayItem.posterPath ? `${IMAGE_BASE_URL}${displayItem.posterPath}` : null;
+    const backdropUrl = displayItem.backdropPath ? `${BACKDROP_BASE_URL}${displayItem.backdropPath}` : null;
 
-  // Retroactive RT Rating Fetching
-  useEffect(() => {
-      const fetchRetroactiveRating = async () => {
-          // If we have details (containing IMDb ID) but no RT score in the item, and an API key is present
-          if (details?.imdbId && !(initialItem as MediaItem).rtScore && omdbApiKey) {
-              // Check if we already fetched it locally in 'details' to avoid loops
-              if (details.rtScore) return;
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-0 md:p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-200">
+             <div className="bg-slate-900 w-full h-full md:h-auto md:max-h-[90vh] md:max-w-5xl md:rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative group">
+                
+                {/* Close Button */}
+                <button 
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-colors"
+                >
+                    <X size={24} />
+                </button>
 
-              const score = await getOmdbRatings(details.imdbId, omdbApiKey);
-              if (score) {
-                  console.log("Fetched retroactive Score:", score);
-                  setDetails(prev => ({ ...prev, rtScore: score }));
-                  
-                  // Persist to DB if item exists
-                  if (isExisting && existingItem && onUpdateRtScore) {
-                      onUpdateRtScore(existingItem.id, score);
-                  }
-              }
-          }
-      };
-      
-      if (details) {
-          fetchRetroactiveRating();
-      }
-  }, [details, initialItem, omdbApiKey, isExisting, existingItem, onUpdateRtScore]);
-
-  useEffect(() => {
-    setPlayingTrailer(false);
-    setBackgroundVideoReady(false);
-    setImgError(false);
-    setAiInsight(null);
-    setCopied(false);
-    if(existingItem) {
-        setNotes(existingItem.userNotes || '');
-    }
-  }, [initialItem.tmdbId]);
-
-  // Deep Content Analysis Trigger
-  useEffect(() => {
-     if (isExisting && existingItem && !aiInsight && !analyzing) {
-        setAnalyzing(true);
-        // Combine details for better context
-        const fullItem: MediaItem = { ...(initialItem as MediaItem), ...details };
-        
-        analyzeMovieContext(fullItem, notes)
-            .then(insight => setAiInsight(insight))
-            .finally(() => setAnalyzing(false));
-     }
-  }, [isExisting, existingItem, details, notes]);
-
-  // Auto-save notes logic
-  useEffect(() => {
-      if(isExisting && existingItem && onUpdateNotes) {
-          const timeoutId = setTimeout(() => {
-              if (notes !== existingItem.userNotes) {
-                  onUpdateNotes(existingItem.id, notes);
-              }
-          }, 1000); // Save after 1 second of inactivity
-          return () => clearTimeout(timeoutId);
-      }
-  }, [notes, isExisting, existingItem, onUpdateNotes]);
-
-  const displayItem = { ...initialItem, ...details };
-
-  const backdropUrl = displayItem.backdropPath 
-      ? `${BACKDROP_BASE_URL}${displayItem.backdropPath}` 
-      : null;
-  
-  const posterUrl = !imgError && displayItem.posterPath 
-      ? `${IMAGE_BASE_URL}${displayItem.posterPath}` 
-      : null;
-
-  const percentage = Math.round(displayItem.rating * 10);
-  const strokeDasharray = `${percentage}, 100`;
-
-  const handleAdd = (status: WatchStatus = WatchStatus.TO_WATCH, isFav: boolean = false) => {
-    if (onAdd && !isExisting) {
-       onAdd(initialItem, status, isFav);
-       onClose();
-    }
-  };
-
-  const handleFavoriteClick = () => {
-    if (isExisting && existingItem && onToggleFavorite) {
-      onToggleFavorite(existingItem.id);
-    } else {
-      handleAdd(WatchStatus.TO_WATCH, true);
-    }
-  };
-
-  const handleWatchlistClick = () => {
-    if (isExisting && existingItem && onUpdateStatus) {
-      onUpdateStatus(existingItem.id, WatchStatus.TO_WATCH);
-    } else {
-      handleAdd(WatchStatus.TO_WATCH, false);
-    }
-  };
-
-  const handleShare = async () => {
-      const shareData = {
-          title: displayItem.title,
-          text: `Check out ${displayItem.title} (${displayItem.year}) on InFocus CineLog!`,
-          url: window.location.href // This usually points to the app root in PWA, but works
-      };
-
-      if (navigator.share) {
-          try {
-              await navigator.share(shareData);
-          } catch (e) {
-              console.log("Share cancelled");
-          }
-      } else {
-          // Fallback: Copy to clipboard
-          const textToCopy = `${displayItem.title} (${displayItem.year})\n\n${displayItem.plot || ''}`;
-          navigator.clipboard.writeText(textToCopy);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-      }
-  };
-
-  const currentStatus = existingItem?.status;
-  const isFav = existingItem?.isFavorite;
-
-  // RT Score Handling
-  const rtScore = details?.rtScore || (initialItem as MediaItem).rtScore; 
-  const hasRtScore = rtScore && rtScore !== "N/A";
-  const isRT = hasRtScore && rtScore.includes('%');
-  
-  // Design Logic for RT
-  let rtIcon = null;
-  let rtColorClass = "text-slate-400";
-  if (isRT) {
-      const val = parseInt(rtScore);
-      if (!isNaN(val) && val >= 60) {
-          rtIcon = <TomatoIcon className="w-5 h-5 text-[#FA320A]" />;
-          rtColorClass = "text-white";
-      } else {
-          rtIcon = <RottenIcon className="w-5 h-5 text-[#5F9E3F]" />;
-          rtColorClass = "text-white";
-      }
-  } else if (hasRtScore) {
-      // IMDb Fallback via OMDB field
-      rtIcon = <StarRatingIcon className="w-5 h-5 text-[#F5C518]" />;
-      rtColorClass = "text-white";
-  }
-
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
-  
-  const backgroundTrailerUrl = displayItem?.trailerKey 
-    ? `https://www.youtube.com/embed/${displayItem.trailerKey}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${displayItem.trailerKey}&playsinline=1&enablejsapi=1&origin=${origin}&widgetid=1&iv_load_policy=3&modestbranding=1&fs=0`
-    : null;
-
-  const mainTrailerUrl = displayItem?.trailerKey
-    ? `https://www.youtube.com/embed/${displayItem.trailerKey}?autoplay=1&rel=0&playsinline=1&origin=${origin}`
-    : null;
-
-  const externalYoutubeUrl = displayItem?.trailerKey
-    ? `https://www.youtube.com/watch?v=${displayItem.trailerKey}`
-    : null;
-
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-0 md:p-4 bg-slate-900/95 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-slate-900 w-full max-w-5xl md:rounded-2xl shadow-2xl flex flex-col h-full md:h-auto md:max-h-[95vh] overflow-hidden relative border border-slate-800">
-          
-          {/* Navigation Bar for Mobile (Top) */}
-          <div className="absolute top-0 left-0 w-full z-50 p-4 flex justify-between items-start bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
-              <button 
-                onClick={onClose} 
-                className="pointer-events-auto p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md border border-white/10 transition-colors md:hidden"
-              >
-                <ChevronLeft size={24} />
-              </button>
-
-              <button 
-                onClick={onClose} 
-                className="pointer-events-auto p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md border border-white/10 transition-colors hidden md:block"
-              >
-                <X size={24} />
-              </button>
-          </div>
-
-          <div className="relative w-full h-[45vh] md:h-[500px] flex-shrink-0 bg-slate-950 overflow-hidden group">
-              {/* Background Trailer */}
-              {!playingTrailer && backgroundTrailerUrl && (
-                 <div className="absolute inset-0 z-0 opacity-40 scale-[1.35]">
-                    <iframe
-                        width="100%"
-                        height="100%"
-                        src={backgroundTrailerUrl}
-                        title="Background Trailer"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        className={`w-full h-full object-cover transition-opacity duration-1000 ${backgroundVideoReady ? 'opacity-100' : 'opacity-0'}`}
-                        onLoad={() => setBackgroundVideoReady(true)}
-                        tabIndex={-1}
-                    ></iframe>
-                 </div>
-              )}
-
-              {/* Static Backdrop Image */}
-              {backdropUrl ? (
-                  <img 
-                    src={backdropUrl} 
-                    alt="Backdrop" 
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 z-0 pointer-events-none ${backgroundVideoReady && !playingTrailer ? 'opacity-0' : 'opacity-60'}`} 
-                  />
-              ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-800 z-0"></div>
-              )}
-
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent z-10 pointer-events-none"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/70 to-transparent z-10 pointer-events-none"></div>
-
-              {/* Fullscreen Trailer Modal (Overlay) */}
-              {playingTrailer && mainTrailerUrl && (
-                  <div className="absolute inset-0 z-50 bg-black animate-in fade-in duration-300 flex flex-col">
-                    <iframe 
-                        width="100%" 
-                        height="100%" 
-                        src={mainTrailerUrl} 
-                        title="Trailer"
-                        frameBorder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowFullScreen
-                        className="flex-grow"
-                    ></iframe>
-                    
-                    <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent pointer-events-none pt-safe">
-                        <button 
-                            onClick={() => setPlayingTrailer(false)} 
-                            className="pointer-events-auto bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-2 rounded-full shadow-lg uppercase font-bold tracking-wide flex items-center gap-2 transition-colors"
-                        >
-                            <X size={14} /> {t('close_trailer') || 'Schließen'}
-                        </button>
-
-                        {externalYoutubeUrl && (
-                            <a 
-                                href={externalYoutubeUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="pointer-events-auto flex items-center gap-2 text-white/80 hover:text-white text-xs bg-black/50 hover:bg-black/70 px-3 py-2 rounded-full backdrop-blur-md transition-colors border border-white/20"
+                {/* LEFT: VISUALS (Backdrop/Trailer) */}
+                <div className="w-full md:w-2/5 relative bg-black flex-shrink-0 min-h-[300px] md:min-h-full">
+                    {showTrailer && trailerUrl ? (
+                         <div className="absolute inset-0 z-20 bg-black">
+                            <iframe 
+                                src={trailerUrl} 
+                                title="Trailer" 
+                                className="w-full h-full" 
+                                allow="autoplay; encrypted-media" 
+                                allowFullScreen 
+                            />
+                            <button 
+                                onClick={() => setShowTrailer(false)}
+                                className="absolute top-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-bold border border-white/20 backdrop-blur-md"
                             >
-                                <ExternalLink size={14} />
-                                YouTube
-                            </a>
-                        )}
-                    </div>
-                  </div>
-              )}
-
-              <div className="absolute bottom-0 left-0 w-full p-6 md:p-10 flex flex-col md:flex-row gap-8 md:items-end z-20">
-                  <div className="hidden md:block w-56 rounded-lg overflow-hidden shadow-2xl border-2 border-slate-700/50 flex-shrink-0 relative transform transition-transform group-hover:scale-[1.02] bg-slate-800 aspect-[2/3]">
-                    {posterUrl ? (
-                        <img 
-                            src={posterUrl} 
-                            alt={displayItem.title} 
-                            className="w-full h-full object-cover" 
-                            onError={() => setImgError(true)}
-                        />
+                                {t('close_trailer')}
+                            </button>
+                         </div>
                     ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800 text-slate-600 gap-2">
+                        <>
                             {backdropUrl ? (
-                                // If poster fails but backdrop works, show cropped backdrop
-                                <div 
-                                    className="absolute inset-0 bg-cover bg-center opacity-50"
-                                    style={{ backgroundImage: `url(${backdropUrl})` }}
-                                ></div>
-                            ) : null}
-                            <div className="relative z-10 flex flex-col items-center">
-                                <ImageOff size={48} className="opacity-40 mb-2" />
-                                <span className="text-xs font-medium uppercase tracking-wider opacity-60">No Poster</span>
-                            </div>
-                        </div>
-                    )}
-                  </div>
-
-                  <div className="flex-grow min-w-0 pb-2">
-                      <h1 className="text-2xl md:text-5xl font-extrabold text-white mb-2 leading-tight drop-shadow-lg text-balance">
-                          {displayItem.title} <span className="text-slate-400 font-light text-xl md:text-2xl">({displayItem.year})</span>
-                      </h1>
-                      
-                      <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm font-medium text-slate-300 mb-6">
-                          {displayItem?.certification && (
-                              <span className="px-2 py-0.5 border border-slate-500 rounded text-slate-300 text-[10px] md:text-xs font-bold bg-slate-900/40 backdrop-blur-sm">
-                                  {displayItem.certification}
-                              </span>
-                          )}
-                          <span>{displayItem.genre.slice(0,3).join(', ')}</span>
-                          {displayItem?.runtime && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-1 h-1 bg-slate-500 rounded-full"></span>
-                                <Clock size={12} /> 
-                                <span>{displayItem.runtime} Min</span>
-                              </div>
-                          )}
-                          {displayItem?.seasons && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-1 h-1 bg-slate-500 rounded-full"></span>
-                                <Layers size={12} />
-                                <span>{displayItem.seasons} {t('seasons')}</span>
-                              </div>
-                          )}
-                      </div>
-
-                      {/* UNIFIED RATINGS BAR (Glassmorphism) */}
-                      <div className="flex flex-wrap items-center gap-4 mb-8">
-                          
-                          <div className="flex items-center bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/10 p-2 pr-6 shadow-xl overflow-hidden">
-                              
-                              {/* TMDB Ring */}
-                              <div className="relative w-12 h-12 flex items-center justify-center mr-4">
-                                <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90 drop-shadow-md">
-                                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#334155" strokeWidth="3" />
-                                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={percentage > 70 ? '#22c55e' : percentage > 40 ? '#eab308' : '#ef4444'} strokeWidth="3" strokeDasharray={strokeDasharray} />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center flex-col">
-                                    <span className="text-[10px] font-black text-white leading-none">{percentage}</span>
-                                    <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tighter">TMDB</span>
+                                <div className="absolute inset-0">
+                                    <img src={backdropUrl} className="w-full h-full object-cover opacity-60" alt="" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-slate-900" />
                                 </div>
-                              </div>
-
-                              {/* Vertical Divider */}
-                              <div className="w-px h-8 bg-white/10 mr-4"></div>
-
-                              {/* External Ratings */}
-                              <div className="flex items-center gap-6">
-                                  {/* IMDb */}
-                                  <div className="flex flex-col">
-                                      <div className="flex items-center gap-1.5">
-                                          <StarRatingIcon className="w-4 h-4 text-[#F5C518]" />
-                                          <span className="text-base font-bold text-white leading-none">{displayItem.rating.toFixed(1)}</span>
-                                          <span className="text-[10px] text-slate-500 font-medium">/10</span>
-                                      </div>
-                                      <span className="text-[8px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">IMDb Rating</span>
-                                  </div>
-
-                                  {/* RT / Metacritic / etc */}
-                                  {hasRtScore && (
-                                      <>
-                                        <div className="w-px h-8 bg-white/10"></div>
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center gap-1.5">
-                                                {rtIcon}
-                                                <span className={`text-base font-bold leading-none ${rtColorClass}`}>{rtScore}</span>
-                                            </div>
-                                            <span className="text-[8px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">{isRT ? 'Tomatometer' : 'Score'}</span>
+                            ) : null}
+                            
+                            {/* Poster Overlay */}
+                            <div className="absolute inset-0 flex items-center justify-center p-8 z-10">
+                                <div className="relative w-48 shadow-2xl rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform duration-500">
+                                    {posterUrl ? (
+                                        <img src={posterUrl} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-64 bg-slate-800 flex items-center justify-center text-slate-500">
+                                            <Film size={48} />
                                         </div>
-                                      </>
-                                  )}
-                              </div>
-                          </div>
+                                    )}
+                                    {trailerUrl && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button 
+                                                onClick={() => setShowTrailer(true)}
+                                                className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-500 hover:scale-110 transition-all"
+                                            >
+                                                <Play size={20} fill="currentColor" className="ml-1" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
 
-                          {/* REPLACED SMILEYS WITH SMART SHARE BUTTON */}
-                          <button
+                {/* RIGHT: DETAILS */}
+                <div className="flex-grow flex flex-col bg-slate-900 overflow-y-auto custom-scrollbar relative z-10">
+                    
+                    {/* Header Info */}
+                    <div className="p-6 md:p-8 border-b border-slate-800">
+                        <div className="flex flex-wrap gap-2 mb-3">
+                             {displayItem.type === MediaType.MOVIE ? (
+                                 <span className="px-2 py-0.5 rounded-md bg-cyan-900/30 text-cyan-400 text-[10px] font-bold uppercase tracking-wider border border-cyan-900/50">Movie</span>
+                             ) : (
+                                 <span className="px-2 py-0.5 rounded-md bg-purple-900/30 text-purple-400 text-[10px] font-bold uppercase tracking-wider border border-purple-900/50">Series</span>
+                             )}
+                             {displayItem.status && (
+                                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                                     displayItem.status === WatchStatus.WATCHED ? 'bg-green-900/30 text-green-400 border-green-900/50' : 
+                                     displayItem.status === WatchStatus.WATCHING ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 
+                                     'bg-yellow-900/30 text-yellow-400 border-yellow-900/50'
+                                 }`}>
+                                     {t(displayItem.status === WatchStatus.TO_WATCH ? 'planned' : displayItem.status === WatchStatus.WATCHING ? 'watching' : 'seen')}
+                                 </span>
+                             )}
+                        </div>
+
+                        <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-2">
+                            {displayItem.title}
+                        </h2>
+                        
+                        <div className="flex items-center gap-4 text-slate-400 text-sm font-medium mb-4">
+                            <span>{displayItem.year}</span>
+                            {displayItem.runtime && (
+                                <span className="flex items-center gap-1">
+                                    <Clock size={14} /> 
+                                    {displayItem.runtime} min
+                                </span>
+                            )}
+                            {displayItem.rating > 0 && (
+                                <span className="flex items-center gap-1 text-yellow-500">
+                                    <Star size={14} fill="currentColor" />
+                                    {displayItem.rating.toFixed(1)}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Actions Row */}
+                        <div className="flex items-center gap-3">
+                            {isExisting ? (
+                                <>
+                                    <button 
+                                        onClick={() => {
+                                            if (onToggleFavorite && (initialItem as MediaItem).id) {
+                                                onToggleFavorite((initialItem as MediaItem).id);
+                                                setIsFav(!isFav);
+                                            }
+                                        }}
+                                        className={`p-2 rounded-full border transition-all ${isFav ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}
+                                    >
+                                        <Heart size={20} fill={isFav ? "currentColor" : "none"} />
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button 
+                                        onClick={() => handleAddClick(WatchStatus.TO_WATCH)}
+                                        className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-lg shadow-cyan-900/20 transition-all flex items-center gap-2"
+                                    >
+                                        <Clock size={16} /> {t('watchlist')}
+                                    </button>
+                                    <button 
+                                        onClick={() => handleAddClick(WatchStatus.WATCHED)}
+                                        className="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2"
+                                    >
+                                        <Check size={16} /> {t('seen')}
+                                    </button>
+                                </>
+                            )}
+                            
+                            <button
                               onClick={handleShare}
-                              className="hidden sm:flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-full px-4 py-2 backdrop-blur-sm border border-white/5 shadow-lg transition-colors text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wide cursor-pointer"
-                          >
+                              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-full px-3 py-2 sm:px-4 backdrop-blur-sm border border-white/5 shadow-lg transition-colors text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wide cursor-pointer"
+                            >
                               {copied ? <Check size={16} className="text-green-400" /> : <Share2 size={16} className="text-cyan-400" />}
                               {copied ? 'Kopiert' : t('share')}
-                          </button>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-wrap items-center gap-3">
-                          {displayItem?.trailerKey && (
-                              <button 
-                                onClick={() => setPlayingTrailer(true)}
-                                className="flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 bg-white hover:bg-slate-200 text-slate-900 rounded-full font-bold transition-all shadow-lg hover:scale-105 mr-2 text-sm md:text-base"
-                              >
-                                <Play size={18} className="fill-slate-900" />
-                                {t('play_trailer')}
-                              </button>
-                          )}
-
-                          {!isExisting ? (
-                            <button 
-                              onClick={() => handleAdd(WatchStatus.TO_WATCH)}
-                              className="p-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full transition-all shadow-lg hover:scale-105 border border-cyan-500" 
-                              title={t('to_list')}
-                            >
-                              <MonitorPlay size={20} />
                             </button>
-                          ) : (
-                            <div className="flex bg-slate-800/80 rounded-full p-1 border border-slate-700 backdrop-blur-md">
-                               <button 
-                                 onClick={() => onUpdateStatus?.(existingItem!.id, WatchStatus.TO_WATCH)}
-                                 className={`p-2.5 rounded-full transition-all ${currentStatus === WatchStatus.TO_WATCH ? 'bg-yellow-500 text-slate-900 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                                 title={t('planned')}
-                               >
-                                 <Clock size={18} />
-                               </button>
-                               <button 
-                                 onClick={() => onUpdateStatus?.(existingItem!.id, WatchStatus.WATCHING)}
-                                 className={`p-2.5 rounded-full transition-all ${currentStatus === WatchStatus.WATCHING ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                                 title={t('watching')}
-                               >
-                                 <PlayCircle size={18} />
-                               </button>
-                               <button 
-                                 onClick={() => onUpdateStatus?.(existingItem!.id, WatchStatus.WATCHED)}
-                                 className={`p-2.5 rounded-full transition-all ${currentStatus === WatchStatus.WATCHED ? 'bg-green-500 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                                 title={t('seen')}
-                               >
-                                 <Check size={18} />
-                               </button>
-                            </div>
-                          )}
-
-                          <button 
-                            onClick={handleFavoriteClick}
-                            className={`p-3 rounded-full transition-all border shadow-lg hover:scale-105 ${isFav ? 'bg-pink-600 border-pink-500 text-white' : 'bg-slate-800/80 hover:bg-pink-600 border-slate-700 hover:border-pink-500 text-slate-300 hover:text-white'}`} 
-                            title={t('favorite')}
-                          >
-                             <Heart size={20} className={isFav ? 'fill-white' : ''} />
-                          </button>
-
-                          <button 
-                            onClick={handleWatchlistClick}
-                            className={`p-3 rounded-full transition-all border shadow-lg hover:scale-105 ${currentStatus === WatchStatus.TO_WATCH ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-slate-800/80 hover:bg-cyan-600 border-slate-700 hover:border-cyan-500 text-slate-300 hover:text-white'}`} 
-                            title={t('watchlist')}
-                          >
-                             <Bookmark size={20} className={currentStatus === WatchStatus.TO_WATCH ? 'fill-white' : ''} />
-                          </button>
-                      </div>
-                  </div>
-              </div>
-          </div>
-
-          <div className="flex-grow bg-slate-900 p-6 md:p-10 overflow-y-auto custom-scrollbar z-20 pb-safe">
-              <div className="grid md:grid-cols-3 gap-10">
-                  <div className="md:col-span-2 space-y-8">
-                    
-                    {/* Deep Content Analysis (AI Insight) */}
-                    {isExisting && (
-                        <div className="bg-gradient-to-br from-purple-900/20 to-slate-800 p-6 rounded-xl border border-purple-500/20 shadow-lg relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                            
-                            <h4 className="text-sm font-bold text-purple-300 mb-3 flex items-center gap-2">
-                                <BrainCircuit size={16} /> {t('ai_insight')}
-                            </h4>
-                            
-                            <div className="text-slate-200 text-sm leading-relaxed italic">
-                                {analyzing ? (
-                                    <span className="flex items-center gap-2 opacity-70">
-                                        <Loader2 size={14} className="animate-spin" /> {t('analyzing_content')}
-                                    </span>
-                                ) : (
-                                    aiInsight || "Analyse wird gestartet..."
-                                )}
-                            </div>
                         </div>
-                    )}
-
-                    <div>
-                        <h3 className="text-xl font-bold text-white mb-2 italic text-opacity-90">Jedes Ende hat einen Anfang</h3>
-                        <h4 className="text-lg font-bold text-white mb-3">{t('plot')}</h4>
-                        <p className="text-slate-300 leading-relaxed text-lg">
-                            {displayItem.plot}
-                        </p>
                     </div>
-                    
-                    {/* Public Reviews Section (Replaced Private Notes) */}
-                    {isExisting && (
-                        <div className="space-y-6">
-                            {/* User's Review Input - Visual Overhaul */}
-                            <div className="bg-gradient-to-br from-slate-800 to-slate-800/80 p-6 rounded-xl border border-cyan-500/20 shadow-lg relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500"></div>
-                                <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                                    <PenTool size={16} className="text-cyan-400" /> {t('public_review')} 
-                                    <span className="ml-auto text-[10px] bg-cyan-900/30 px-2 py-0.5 rounded text-cyan-300 uppercase font-medium border border-cyan-500/20 flex items-center gap-1">
-                                        <Users size={10} /> {t('review_public_badge')}
-                                    </span>
-                                </h4>
-                                <textarea 
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    className="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 text-slate-200 text-sm focus:border-cyan-500 focus:bg-slate-900 focus:outline-none min-h-[100px] resize-y transition-all placeholder:text-slate-500"
-                                    placeholder={t('review_placeholder')}
-                                />
-                                <div className="flex justify-end mt-2">
-                                    <span className={`text-[10px] flex items-center gap-1 ${notes === existingItem?.userNotes ? 'text-green-400' : 'text-slate-500'}`}>
-                                        {notes === existingItem?.userNotes ? <Check size={10} /> : <Loader2 size={10} className="animate-spin" />}
-                                        {notes === existingItem?.userNotes ? t('review_saved') : t('review_saving')}
-                                    </span>
-                                </div>
-                            </div>
 
-                            {/* Community Reviews List */}
-                            {visibleReviews.length > 0 && (
-                                <div className="bg-slate-900/30 p-6 rounded-xl border border-slate-800">
-                                    <h4 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                                        <Users size={16} className="text-purple-400" /> {t('community_reviews')}
-                                    </h4>
-                                    <div className="space-y-4">
-                                        {visibleReviews.map((review, idx) => (
-                                            <div key={idx} className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden">
-                                                            {review.avatar ? (
-                                                                <img src={review.avatar} alt={review.username} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-slate-500"><User size={16} /></div>
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            <div className="text-xs font-bold text-white">{review.username}</div>
-                                                            <div className="text-[10px] text-slate-500">{new Date(review.date).toLocaleDateString()}</div>
-                                                        </div>
-                                                    </div>
-                                                    {review.rating > 0 && (
-                                                        <div className="flex items-center gap-1 text-yellow-500 text-xs font-bold">
-                                                            <Star size={12} fill="currentColor" /> {review.rating}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <p className="text-sm text-slate-300 italic">"{review.content}"</p>
+                    {/* Tabs / Navigation */}
+                    <div className="flex border-b border-slate-800 px-6 overflow-x-auto custom-scrollbar">
+                        {(['info', 'providers', 'cast'] as const).map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-4 py-3 text-sm font-bold uppercase tracking-wide transition-colors border-b-2 ${activeTab === tab ? 'border-cyan-500 text-cyan-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                            >
+                                {tab === 'info' ? t('overview') : tab === 'providers' ? "Stream" : t('cast')}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="p-6 md:p-8 space-y-8 flex-grow">
+                        {activeTab === 'info' && (
+                            <>
+                                {/* Plot */}
+                                <div>
+                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('plot')}</h3>
+                                    <p className="text-slate-300 leading-relaxed text-sm md:text-base">
+                                        {displayItem.plot}
+                                    </p>
+                                </div>
+
+                                {/* AI Insight */}
+                                <div className="bg-gradient-to-br from-purple-900/20 to-slate-800 rounded-xl p-4 border border-purple-500/20 relative overflow-hidden">
+                                     <div className="absolute -top-10 -right-10 w-24 h-24 bg-purple-500/10 rounded-full blur-xl"></div>
+                                     <h3 className="text-purple-400 text-xs font-bold uppercase mb-2 flex items-center gap-2">
+                                         <Loader2 size={12} className={loadingAi ? "animate-spin" : "hidden"} />
+                                         {t('ai_insight')}
+                                     </h3>
+                                     <p className="text-purple-100/80 text-sm italic relative z-10">
+                                         {aiAnalysis || "Analysiere Filminhalt und Rezensionen..."}
+                                     </p>
+                                </div>
+
+                                {/* User Notes (Only for Existing) */}
+                                {isExisting && (
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-end">
+                                             <label className="text-slate-500 text-xs font-bold uppercase">{t('public_review')}</label>
+                                             <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30">{t('review_public_badge')}</span>
+                                        </div>
+                                        <textarea 
+                                            value={notes} 
+                                            onChange={(e) => setNotes(e.target.value)}
+                                            onBlur={handleSaveNotes}
+                                            placeholder={t('review_placeholder')}
+                                            className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-sm text-white focus:border-cyan-500 focus:outline-none min-h-[100px] resize-none"
+                                        />
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {activeTab === 'providers' && (
+                            <div className="space-y-4">
+                                <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('stream_available')}</h3>
+                                {displayItem.providers && displayItem.providers.length > 0 ? (
+                                    <div className="flex flex-wrap gap-4">
+                                        {displayItem.providers.map(p => (
+                                            <div key={p.providerId} className="flex flex-col items-center gap-2 w-20">
+                                                <img 
+                                                    src={`${LOGO_BASE_URL}${p.logoPath}`} 
+                                                    alt={p.providerName}
+                                                    className="w-12 h-12 rounded-lg shadow-md" 
+                                                />
+                                                <span className="text-[10px] text-slate-400 text-center leading-tight">{p.providerName}</span>
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    
-                    {displayItem?.credits && displayItem.credits.length > 0 && (
-                         <div>
-                            <h4 className="text-lg font-bold text-white mb-4">{t('cast')}</h4>
-                            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
-                                {displayItem.credits.map((actor) => (
-                                    <div key={actor.id} className="snap-start flex-shrink-0 w-24 text-center group">
-                                        <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-slate-700 mb-2 shadow-md relative group-hover:border-cyan-500 transition-colors">
-                                            {actor.profilePath ? (
-                                                <img 
-                                                    src={`${IMAGE_BASE_URL}${actor.profilePath}`} 
-                                                    alt={actor.name} 
-                                                    className="w-full h-full object-cover"
-                                                    loading="lazy"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full bg-slate-800 flex items-center justify-center text-slate-600">
-                                                    <User size={32} />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="text-xs font-bold text-slate-200 truncate px-1">{actor.name}</div>
-                                        <div className="text-[10px] text-slate-500 truncate px-1">{actor.character}</div>
+                                ) : (
+                                    <div className="text-slate-500 text-sm italic flex items-center gap-2">
+                                        <AlertCircle size={16} /> {t('no_stream')}
                                     </div>
-                                ))}
+                                )}
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {(!displayItem.credits || displayItem.credits.length === 0) && displayItem?.creators && displayItem.creators.length > 0 && (
-                        <div className="grid grid-cols-2 gap-4 border-t border-slate-800 pt-6">
-                            {displayItem.creators.map(creator => (
-                                <div key={creator}>
-                                    <div className="font-bold text-white text-base">{creator}</div>
-                                    <div className="text-slate-500 text-xs uppercase tracking-wide">{t('creators')}</div>
+                        {activeTab === 'cast' && (
+                            <div className="space-y-4">
+                                <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('cast')}</h3>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {displayItem.credits?.slice(0, 9).map(actor => (
+                                        <div key={actor.id} className="flex items-center gap-3 bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
+                                            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden flex-shrink-0">
+                                                {actor.profilePath ? (
+                                                    <img src={`${IMAGE_BASE_URL}${actor.profilePath}`} className="w-full h-full object-cover" alt={actor.name} />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-500">?</div>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="text-sm font-bold text-white truncate" title={actor.name}>{actor.name}</div>
+                                                <div className="text-xs text-slate-500 truncate" title={actor.character}>{actor.character}</div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-8">
-                      {displayItem?.providers && displayItem.providers.length > 0 ? (
-                          <div className="bg-gradient-to-br from-slate-800 to-slate-800/50 p-5 rounded-xl border border-slate-700 shadow-xl">
-                              <div className="flex items-center gap-4 mb-4">
-                                  {displayItem.providers[0].logoPath && (
-                                      <img src={`${LOGO_BASE_URL}${displayItem.providers[0].logoPath}`} className="w-12 h-12 rounded-lg shadow-md" alt="" />
-                                  )}
-                                  <div>
-                                      <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-0.5">{t('stream_available')}</div>
-                                      <div className="text-white font-bold text-base">{t('watch_now')}</div>
-                                  </div>
-                              </div>
-                              {displayItem.providers.length > 1 && (
-                                  <div className="flex gap-2 mt-4 pt-4 border-t border-slate-700/50">
-                                      {displayItem.providers.slice(1).map(p => (
-                                          <img key={p.providerId} src={`${LOGO_BASE_URL}${p.logoPath}`} className="w-8 h-8 rounded-md opacity-70 hover:opacity-100 transition-opacity" title={p.providerName} alt={p.providerName} />
-                                      ))}
-                                  </div>
-                              )}
-                          </div>
-                      ) : (
-                          <div className="p-5 rounded-xl border border-dashed border-slate-700 text-slate-500 text-sm text-center">
-                              {t('no_stream')}
-                          </div>
-                      )}
-
-                      <div className="space-y-4 text-sm bg-slate-800/30 p-5 rounded-xl border border-slate-800">
-                          <div className="flex justify-between border-b border-slate-800 pb-3">
-                              <span className="text-slate-500 font-medium">{t('original_title')}</span>
-                              <span className="text-slate-300 text-right font-semibold">{displayItem.originalTitle || displayItem.title}</span>
-                          </div>
-                          <div className="flex justify-between border-b border-slate-800 pb-3">
-                              <span className="text-slate-500 font-medium">{t('status')}</span>
-                              <span className="text-slate-300 font-semibold">{displayItem.type === MediaType.MOVIE ? 'Veröffentlicht' : 'Laufend'}</span>
-                          </div>
-                          <div className="flex justify-between pb-1">
-                              <span className="text-slate-500 font-medium">{t('language')}</span>
-                              <span className="text-slate-300 font-semibold">Deutsch / Englisch</span>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      </div>
-    </div>
-  );
+                            </div>
+                        )}
+                    </div>
+                </div>
+             </div>
+        </div>
+    );
 };
