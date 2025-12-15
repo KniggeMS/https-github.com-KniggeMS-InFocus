@@ -1,5 +1,6 @@
+
 import React, { useMemo, useState } from 'react';
-import { MediaItem, MediaType } from '../types';
+import { MediaItem, MediaType, WatchStatus } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts';
 import { ChevronDown, ChevronUp, Activity, Clock, Hash, MousePointer2 } from 'lucide-react';
 
@@ -18,7 +19,7 @@ const renderActiveShape = (props: any) => {
         cx={cx}
         cy={cy}
         innerRadius={innerRadius}
-        outerRadius={outerRadius + 6}
+        outerRadius={outerRadius + 8}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
@@ -28,7 +29,7 @@ const renderActiveShape = (props: any) => {
 };
 
 export const Stats: React.FC<StatsProps> = ({ items }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true); // Default open for better visibility
   const [metric, setMetric] = useState<'count' | 'runtime'>('count');
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -50,26 +51,31 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
           itemRuntime = (epRuntime * totalEps); 
       }
       
-      // Accumulate total unique runtime
-      libRuntime += itemRuntime;
+      // LOGIC FIX: Runtime should only count WATCHED items (Watchtime), 
+      // while Count usually represents Collection Size (All items)
+      const isWatched = item.status === WatchStatus.WATCHED;
+
+      if (isWatched) {
+          libRuntime += itemRuntime;
+      }
 
       // Distribute to genres - SAFE ACCESS
-      if (Array.isArray(item.genre) && item.genre.length > 0) {
-          item.genre.forEach(g => {
-            if (typeof g === 'string') {
-                const genre = g.trim();
-                if (!stats[genre]) stats[genre] = { count: 0, runtime: 0 };
-                stats[genre].count += 1;
+      const genresToMap = (Array.isArray(item.genre) && item.genre.length > 0) ? item.genre : ["Unbekannt"];
+
+      genresToMap.forEach(g => {
+        if (typeof g === 'string') {
+            const genre = g.trim();
+            if (!stats[genre]) stats[genre] = { count: 0, runtime: 0 };
+            
+            // Count always increments (Collection size)
+            stats[genre].count += 1;
+            
+            // Runtime only increments if watched
+            if (isWatched) {
                 stats[genre].runtime += itemRuntime;
             }
-          });
-      } else {
-          // Handle items without genre
-          const genre = "Unbekannt";
-          if (!stats[genre]) stats[genre] = { count: 0, runtime: 0 };
-          stats[genre].count += 1;
-          stats[genre].runtime += itemRuntime;
-      }
+        }
+      });
     });
 
     // Convert to Array
@@ -81,11 +87,11 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
         // Formatted value for display
         displayValue: metric === 'count' ? val.count : Math.round(val.runtime / 60)
       }))
+      // Filter out genres with 0 value (e.g. genres that have items but none watched in runtime mode)
+      .filter(item => item.value > 0)
       .sort((a, b) => b.value - a.value);
 
-    // LOGIC FIX: "Others" Category
-    // If we have many genres, the pie chart is misleading if we just cut off the rest.
-    // We take Top 5, and sum the rest into "Others".
+    // "Others" Category Logic
     if (mapped.length > 5) {
         const top5 = mapped.slice(0, 5);
         const others = mapped.slice(5);
@@ -93,20 +99,24 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
         const otherValue = others.reduce((acc, cur) => acc + cur.value, 0);
         const otherDisplay = others.reduce((acc, cur) => acc + cur.displayValue, 0);
         
-        mapped = [
-            ...top5,
-            { name: "Sonstige", value: otherValue, displayValue: otherDisplay }
-        ];
+        if (otherValue > 0) {
+            mapped = [
+                ...top5,
+                { name: "Sonstige", value: otherValue, displayValue: otherDisplay }
+            ];
+        } else {
+            mapped = top5;
+        }
     }
 
-    // Sum of the chart segments (may be > totalLibraryRuntime due to genre overlap)
+    // Sum of the chart segments
     const currentChartTotal = mapped.reduce((acc, cur) => acc + cur.value, 0);
 
     return { 
         data: mapped, 
-        totalMetricValue: currentChartTotal, // Used for % calculation relative to the Pie
-        totalLibraryRuntime: Math.round(libRuntime / 60), // Real Total Hours (Unique)
-        totalLibraryCount: items.length // Real Total Count (Unique)
+        totalMetricValue: currentChartTotal, 
+        totalLibraryRuntime: Math.round(libRuntime / 60), // Real Total Hours (Watched only)
+        totalLibraryCount: items.length // Real Total Count (All)
     };
   }, [items, metric]);
 
@@ -130,7 +140,7 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
       if (metric === 'count') {
           centerValue = totalLibraryCount.toLocaleString();
           centerLabel = 'Titel';
-          centerContext = 'Gesamt';
+          centerContext = 'Sammlung';
       } else {
           centerValue = totalLibraryRuntime.toLocaleString();
           centerLabel = 'Stunden';
@@ -141,51 +151,53 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
   if (items.length === 0) return null;
 
   return (
-    <div className="bg-slate-800 rounded-xl p-4 md:p-6 border border-slate-700 shadow-lg mb-6 md:mb-8 transition-all hover:border-slate-600">
+    <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg mb-8 transition-all hover:border-slate-600">
       
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-3 text-white group w-full sm:w-auto"
+            className="flex items-center gap-4 text-white group w-full sm:w-auto"
           >
-            <div className={`p-2.5 rounded-xl transition-colors shadow-inner ${isExpanded ? 'bg-cyan-500/10 text-cyan-400' : 'bg-slate-700/50 text-slate-400 group-hover:bg-slate-700 group-hover:text-slate-200'}`}>
-                <Activity size={20} />
+            <div className={`p-3 rounded-xl transition-colors shadow-inner ${isExpanded ? 'bg-cyan-500/10 text-cyan-400' : 'bg-slate-700/50 text-slate-400 group-hover:bg-slate-700 group-hover:text-slate-200'}`}>
+                <Activity size={24} />
             </div>
             <div className="text-left flex-grow">
-                <h3 className="text-sm md:text-base font-bold group-hover:text-cyan-400 transition-colors">Statistik & Trends</h3>
-                <span className="text-xs text-slate-500 block">Genre-Verteilung (Deine Sammlung)</span>
+                <h3 className="text-lg font-bold group-hover:text-cyan-400 transition-colors">Statistik & Trends</h3>
+                <span className="text-sm text-slate-400 block">
+                    {metric === 'count' ? 'Genre-Verteilung (Gesamt)' : 'Deine Watchtime (Gesehen)'}
+                </span>
             </div>
-            <div className="sm:hidden">
-                {isExpanded ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+            <div className="sm:hidden ml-auto">
+                {isExpanded ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
             </div>
           </button>
 
           {/* METRIC SWITCH (Visible when expanded) */}
           {isExpanded && (
-              <div className="flex bg-slate-900/50 p-1 rounded-lg border border-slate-700 self-end sm:self-auto animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="flex bg-slate-900/50 p-1.5 rounded-lg border border-slate-700 self-end sm:self-auto animate-in fade-in slide-in-from-right-4 duration-300">
                   <button
                     onClick={() => setMetric('count')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${metric === 'count' ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${metric === 'count' ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
                   >
-                      <Hash size={12} /> Anzahl
+                      <Hash size={14} /> Anzahl
                   </button>
                   <button
                     onClick={() => setMetric('runtime')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${metric === 'runtime' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${metric === 'runtime' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
                   >
-                      <Clock size={12} /> Laufzeit
+                      <Clock size={14} /> Laufzeit
                   </button>
               </div>
           )}
       </div>
 
       {/* CHART BODY */}
-      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isExpanded ? 'h-72 sm:h-64 mt-6 opacity-100' : 'h-0 opacity-0'}`}>
-        <div className="flex flex-col sm:flex-row h-full items-center gap-4 md:gap-12 justify-center">
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isExpanded ? 'h-80 sm:h-72 mt-8 opacity-100' : 'h-0 opacity-0'}`}>
+        <div className="flex flex-col sm:flex-row h-full items-center gap-8 md:gap-16 justify-center">
             
             {/* CHART AREA with CENTER INFO */}
-            <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex-shrink-0">
+            <div className="relative w-56 h-56 sm:w-64 sm:h-64 flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
@@ -198,7 +210,7 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
                             dataKey="value"
                             onMouseEnter={(_, index) => setActiveIndex(index)}
                             onMouseLeave={() => setActiveIndex(null)}
-                            // @ts-ignore: activeIndex type definition issue in Recharts/React 19
+                            // @ts-ignore: activeIndex type definition issue
                             activeIndex={activeIndex ?? -1}
                             activeShape={renderActiveShape}
                             stroke="none"
@@ -216,43 +228,43 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
 
                 {/* THE INFORMATIVE CENTER (Absolute overlay) */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none flex-col animate-in fade-in duration-300 z-10">
-                    <span className={`text-3xl md:text-4xl font-black leading-none tracking-tight ${metric === 'count' ? 'text-white' : 'text-purple-100'}`}>
+                    <span className={`text-5xl font-black leading-none tracking-tight ${metric === 'count' ? 'text-white' : 'text-purple-100'}`}>
                         {centerValue}
                     </span>
-                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-widest mt-1">
+                    <span className="text-xs uppercase font-bold text-slate-400 tracking-widest mt-2">
                         {centerLabel}
                     </span>
-                    <div className={`mt-2 px-2 py-0.5 rounded text-[10px] font-bold border transition-colors max-w-[90%] truncate ${activeItem ? 'bg-slate-700/80 border-slate-600 text-cyan-400' : 'bg-transparent border-transparent text-slate-600'}`}>
+                    <div className={`mt-3 px-3 py-1 rounded-md text-xs font-bold border transition-colors max-w-[90%] truncate ${activeItem ? 'bg-slate-700/80 border-slate-600 text-cyan-400' : 'bg-transparent border-transparent text-slate-500'}`}>
                         {centerContext}
                     </div>
                 </div>
             </div>
 
             {/* CUSTOM LEGEND (Right Side) */}
-            <div className="flex flex-col justify-center w-full sm:w-48 sm:border-l sm:border-slate-700/50 sm:pl-8 h-auto sm:h-[80%] my-auto">
-                <div className="grid grid-cols-2 sm:grid-cols-1 gap-x-4 gap-y-1.5">
+            <div className="flex flex-col justify-center w-full sm:w-56 sm:border-l sm:border-slate-700/50 sm:pl-8 h-auto sm:h-[90%] my-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-1 gap-x-6 gap-y-2">
                     {data.map((entry, index) => {
                         const isActive = activeIndex === index;
                         // Calculate percentage relative to displayed data (Total Chart Value)
-                        const percent = Math.round((entry.value / totalMetricValue) * 100) || 0;
+                        const percent = totalMetricValue > 0 ? Math.round((entry.value / totalMetricValue) * 100) : 0;
                         
                         return (
                             <div 
                                 key={entry.name} 
-                                className="flex items-center justify-between text-xs group cursor-pointer py-1" 
+                                className="flex items-center justify-between text-sm group cursor-pointer py-1.5" 
                                 onMouseEnter={() => setActiveIndex(index)} 
                                 onMouseLeave={() => setActiveIndex(null)}
                             >
-                                <div className="flex items-center gap-2.5 overflow-hidden">
+                                <div className="flex items-center gap-3 overflow-hidden">
                                     <div 
-                                        className={`w-2 h-2 rounded-full transition-transform duration-200 ${isActive ? 'scale-125 shadow-[0_0_8px_currentColor]' : ''}`} 
+                                        className={`w-2.5 h-2.5 rounded-full transition-transform duration-200 ${isActive ? 'scale-125 shadow-[0_0_8px_currentColor]' : ''}`} 
                                         style={{ backgroundColor: COLORS[index % COLORS.length], color: COLORS[index % COLORS.length] }}
                                     ></div>
-                                    <span className={`truncate transition-colors font-medium max-w-[80px] sm:max-w-none ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-300'}`}>
+                                    <span className={`truncate transition-colors font-medium ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-slate-100'}`}>
                                         {entry.name}
                                     </span>
                                 </div>
-                                <span className={`font-mono text-[10px] transition-colors ${isActive ? 'text-cyan-400 font-bold' : 'text-slate-600'}`}>
+                                <span className={`font-mono text-xs transition-colors ${isActive ? 'text-cyan-400 font-bold' : 'text-slate-500'}`}>
                                     {percent}%
                                 </span>
                             </div>
@@ -260,8 +272,8 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
                     })}
                 </div>
                 {/* Instruction Hint (Desktop only) */}
-                <div className="hidden sm:flex mt-4 pt-4 border-t border-slate-700/50 text-[10px] text-slate-600 items-center gap-1.5">
-                    <MousePointer2 size={10} />
+                <div className="hidden sm:flex mt-6 pt-4 border-t border-slate-700/50 text-xs text-slate-500 items-center gap-2">
+                    <MousePointer2 size={12} />
                     <span>Hover für Details</span>
                 </div>
             </div>
