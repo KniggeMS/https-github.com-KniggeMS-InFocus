@@ -27,7 +27,7 @@ import {
   fetchCustomLists, createCustomList, updateCustomListItems, deleteCustomList, shareCustomList
 } from './services/db';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
-import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu, BookOpen } from 'lucide-react';
+import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu, BookOpen, ShieldAlert } from 'lucide-react';
 
 const FALLBACK_KEYS = {
     TMDB: "4115939bdc412c5f7b0c4598fcf29b77", 
@@ -53,7 +53,7 @@ const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], ren
 };
 
 export default function App() {
-  const { user, logout, isRecoveryMode } = useAuth();
+  const { user, logout, isRecoveryMode, adminNotification, dismissAdminNotification } = useAuth();
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const location = useLocation();
@@ -70,7 +70,7 @@ export default function App() {
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isGuideOpen, setIsGuideOpen] = useState(false); // NEW State for Guide
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [viewingProfile, setViewingProfile] = useState<User | null>(null);
@@ -215,9 +215,7 @@ export default function App() {
   if (!user) return <AuthPage />;
 
   const displayedItems = items.filter(i => {
-      // 1. Role Check (Only show own items, unless admin? No, personal collection only)
       if (i.userId !== user.id) return false;
-      // 2. Type Filter
       if (typeFilter !== 'ALL' && i.type !== typeFilter) return false;
       return true;
   });
@@ -236,12 +234,8 @@ export default function App() {
           filtered = filtered.filter(i => i.status === statusFilter);
       } else if (location.pathname === '/favorites') {
           filtered = filtered.filter(i => i.isFavorite);
-      } else if (location.pathname === '/') {
-          // Dashboard: Show everything (filtered by Pills)
-          // No additional filter needed
       }
 
-      // Default Sort (Date Added DESC)
       filtered.sort((a, b) => b.addedAt - a.addedAt);
 
       if (filtered.length === 0) {
@@ -275,11 +269,22 @@ export default function App() {
 
   return (
     <div className={`min-h-screen bg-[#0B0E14] text-slate-200 pb-20 md:pb-0 font-sans selection:bg-cyan-500/30 relative overflow-hidden`}>
-        {/* Subtle Ambient Background for Main App (Matches AuthPage vibe but darker) */}
+        {/* Subtle Ambient Background */}
         <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
              <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-900/5 rounded-full blur-[120px]"></div>
              <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-900/5 rounded-full blur-[120px]"></div>
         </div>
+
+        {/* ADMIN NOTIFICATION TOAST */}
+        {adminNotification && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-5 duration-300">
+                <div className="bg-slate-900/90 backdrop-blur-md border border-red-500/30 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
+                    <ShieldAlert size={20} className="text-red-500 animate-pulse" />
+                    <span className="font-mono text-sm font-bold tracking-tight">{adminNotification}</span>
+                    <button onClick={dismissAdminNotification} className="ml-2 text-slate-500 hover:text-white"><X size={14}/></button>
+                </div>
+            </div>
+        )}
 
         {/* HEADER */}
         <header className="sticky top-0 z-30 bg-[#0B0E14]/80 backdrop-blur-md border-b border-white/5 px-4 md:px-8 h-16 flex items-center justify-between">
@@ -288,13 +293,11 @@ export default function App() {
                     <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-900/40 group-hover:scale-105 transition-transform">
                         <Clapperboard size={18} className="text-white" />
                     </div>
-                    {/* Fixed Logo Branding: Always visible now */}
                     <span className="font-bold text-xl tracking-tight text-white block">
                         InFocus <span className="text-cyan-400">CineLog</span>
                     </span>
                 </div>
 
-                {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-1">
                     <button onClick={() => navigate('/')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${location.pathname === '/' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('overview')}</button>
                     <button onClick={() => navigate('/watchlist')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${location.pathname === '/watchlist' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('watchlist')}</button>
@@ -303,12 +306,10 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-3">
-                {/* Search Trigger */}
                 <button onClick={() => setIsSearchOpen(true)} className="p-2 rounded-full hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
                     <Search size={20} />
                 </button>
 
-                {/* Profile Menu */}
                 <div className="relative" ref={profileMenuRef}>
                     <button 
                         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
@@ -361,9 +362,8 @@ export default function App() {
 
         {/* MAIN LAYOUT */}
         <div className="flex max-w-[1600px] mx-auto relative z-10">
-            {/* Sidebar (Desktop) */}
+            {/* Sidebar */}
             <aside className="hidden md:flex w-64 flex-col fixed left-0 top-16 bottom-0 border-r border-white/5 bg-[#0B0E14]/50 backdrop-blur-sm overflow-y-auto custom-scrollbar">
-                
                 <div className="p-4">
                     <button onClick={() => setIsSearchOpen(true)} className="w-full flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-lg shadow-cyan-900/20 mb-6">
                         <Plus size={20} /> {t('add_button')}
@@ -410,17 +410,13 @@ export default function App() {
                         </div>
                     )}
                 </div>
-
-                {/* AI Button Sidebar Location */}
                 <AiRecommendationButton items={items} onAdd={handleAdd} apiKey={tmdbKey} />
             </aside>
 
             {/* Content Area */}
             <main className="flex-grow md:pl-64 p-4 md:p-8 min-h-[calc(100vh-64px)]">
-                {/* Stats Widget (Only on Home) */}
                 {location.pathname === '/' && <Stats items={displayedItems} />}
 
-                {/* Type Filters (Pills) */}
                 {(location.pathname === '/' || location.pathname === '/watchlist' || location.pathname === '/favorites' || location.pathname.startsWith('/list/')) && (
                      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
                         <button 
@@ -477,9 +473,8 @@ export default function App() {
             </main>
         </div>
 
-        {/* Floating Elements & Modals */}
+        {/* Modals & Helpers */}
         <ChatBot items={items.filter(i => i.userId === user.id)} />
-        {/* Mobile AI Fab */}
         <AiRecommendationButton items={items} onAdd={handleAdd} apiKey={tmdbKey} mobileFabOnly={true} />
         <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsCreateListOpen(true)} />
 

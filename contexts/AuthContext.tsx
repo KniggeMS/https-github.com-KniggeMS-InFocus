@@ -11,11 +11,14 @@ interface AuthContextType {
   updateProfile: (data: Partial<User>) => Promise<void>;
   changePassword: (oldPw: string, newPw: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  getAllUsers: () => User[]; // For Social Features
+  getAllUsers: () => User[];
   isAuthenticated: boolean;
   isLoading: boolean;
-  isRecoveryMode: boolean; // NEW: Detects if user clicked email link
-  completeRecovery: () => void; // NEW: Clears recovery mode
+  isRecoveryMode: boolean;
+  completeRecovery: () => void;
+  // Admin Notification State
+  adminNotification: string | null;
+  dismissAdminNotification: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,14 +28,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [adminNotification, setAdminNotification] = useState<string | null>(null);
 
   // Initialize Auth Listener
   useEffect(() => {
     let mounted = true;
 
-    // MANUAL CHECK: Check URL hash immediately for recovery flow markers.
-    // This is crucial because HashRouter might consume the hash or the event listener might attach too late.
-    // Supabase reset links look like: .../#access_token=...&type=recovery...
     if (window.location.hash && window.location.hash.includes('type=recovery')) {
         console.log("Recovery mode detected via Hash");
         setIsRecoveryMode(true);
@@ -92,9 +93,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         if (mounted) {
-            // Event driven check
             if (event === 'PASSWORD_RECOVERY') {
-                console.log("Recovery mode detected via Event");
                 setIsRecoveryMode(true);
             }
             fetchProfile(session?.user);
@@ -107,7 +106,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  // Fetch all users for social features (Only if authenticated)
+  // Admin Surveillance Listener
+  useEffect(() => {
+      if (user && user.role === UserRole.ADMIN) {
+          // Join the global system channel
+          const channel = supabase.channel('system_monitor')
+              .on('broadcast', { event: 'user_activity' }, (payload) => {
+                  if (payload.payload.type === 'LOGIN') {
+                      setAdminNotification(`Login erkannt: ${payload.payload.username}`);
+                      // Auto dismiss after 5 seconds
+                      setTimeout(() => setAdminNotification(null), 5000);
+                  }
+              })
+              .subscribe();
+
+          return () => {
+              supabase.removeChannel(channel);
+          };
+      }
+  }, [user]);
+
+  // Fetch all users for social features
   useEffect(() => {
       if (user) {
           const loadUsers = async () => {
@@ -130,14 +149,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (emailOrUsername: string, passwordAttempt: string) => {
     let finalEmail = emailOrUsername;
+    let displayUsername = emailOrUsername;
     
-    // Check if input looks like an email
+    // Username handling
     if (!emailOrUsername.includes('@')) {
-        // Assume it's a username and try to find the email
-        // Note: This requires the 'profiles' table to be readable (which it is per our policy)
         const { data, error } = await supabase
             .from('profiles')
-            .select('email')
+            .select('email, username')
             .eq('username', emailOrUsername)
             .single();
             
@@ -145,6 +163,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             throw new Error("Benutzername nicht gefunden. Bitte E-Mail verwenden.");
         }
         finalEmail = data.email;
+        displayUsername = data.username; // Ensure we broadcast the correct casing
+    } else {
+        // Even if email login, try to find username for nicer broadcast
+        const { data } = await supabase.from('profiles').select('username').eq('email', finalEmail).single();
+        if (data) displayUsername = data.username;
     }
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -153,10 +176,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     if (error) throw new Error(error.message);
+
+    // BROADCAST LOGIN EVENT (Fire and Forget)
+    supabase.channel('system_monitor').send({
+        type: 'broadcast',
+        event: 'user_activity',
+        payload: { type: 'LOGIN', username: displayUsername }
+    });
   };
 
   const register = async (newUser: Partial<User>, password: string) => {
-    // Check if username is taken
     const { data: existingUser } = await supabase
         .from('profiles')
         .select('username')
@@ -190,7 +219,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (data.firstName) updates.first_name = data.firstName;
     if (data.lastName) updates.last_name = data.lastName;
     if (data.isStatsPublic !== undefined) updates.is_stats_public = data.isStatsPublic;
-    if (data.role) updates.role = data.role; // Allow updating role (for Admin promotion)
+    if (data.role) updates.role = data.role;
 
     const { error } = await supabase
         .from('profiles')
@@ -198,21 +227,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .eq('id', user.id);
 
     if (error) throw new Error(error.message);
-    
-    // Local update
     setUser(prev => prev ? { ...prev, ...data } : null);
   };
 
   const changePassword = async (oldPw: string, newPw: string) => {
-     // For password change within app (verified session)
      const { error } = await supabase.auth.updateUser({ password: newPw });
      if (error) throw new Error(error.message);
   };
 
   const resetPassword = async (email: string) => {
-     // redirectTo ensures the user comes back to the app root.
-     // We use window.location.origin to point to the currently running domain/port.
-     // IMPORTANT: This origin (e.g. http://localhost:3000) must be whitelisted in Supabase Dashboard -> Auth -> URL Configuration.
      const { error } = await supabase.auth.resetPasswordForEmail(email, {
          redirectTo: window.location.origin, 
      });
@@ -227,9 +250,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const completeRecovery = () => {
       setIsRecoveryMode(false);
-      // Clean URL hash so we don't trigger recovery again on refresh
       window.history.replaceState(null, '', window.location.pathname);
   };
+
+  const dismissAdminNotification = () => setAdminNotification(null);
 
   return (
     <AuthContext.Provider value={{ 
@@ -244,7 +268,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isLoading: loading, 
         getAllUsers: () => allUsers,
         isRecoveryMode,
-        completeRecovery 
+        completeRecovery,
+        adminNotification,
+        dismissAdminNotification
     }}>
       {children}
     </AuthContext.Provider>

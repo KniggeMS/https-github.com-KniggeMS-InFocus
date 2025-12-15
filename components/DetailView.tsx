@@ -1,13 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   X, Heart, Star, Play, Clock, Check, Share2, AlertCircle, 
-  Loader2, Film
+  Loader2, Film, User
 } from 'lucide-react';
-import { MediaItem, SearchResult, WatchStatus, MediaType } from '../types';
+import { MediaItem, SearchResult, WatchStatus, MediaType, PublicReview } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, BACKDROP_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 import { analyzeMovieContext } from '../services/gemini';
+import { fetchPublicReviews } from '../services/db';
 import { getOmdbRatings } from '../services/omdb';
 import { useTranslation } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface DetailViewProps {
   item: MediaItem | SearchResult;
@@ -31,9 +34,11 @@ export const DetailView: React.FC<DetailViewProps> = ({
     onUpdateStatus, onToggleFavorite, onUpdateNotes, onUpdateRtScore, onAdd 
 }) => {
     const { t } = useTranslation();
+    const { user } = useAuth();
     const [details, setDetails] = useState<Partial<MediaItem>>({});
     const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
     const [loadingAi, setLoadingAi] = useState(false);
+    const [publicReviews, setPublicReviews] = useState<PublicReview[]>([]);
     const [activeTab, setActiveTab] = useState<'info' | 'providers' | 'cast'>('info');
     const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
     
@@ -74,6 +79,15 @@ export const DetailView: React.FC<DetailViewProps> = ({
                         .then(text => setAiAnalysis(text))
                         .catch(() => setAiAnalysis(null))
                         .finally(() => setLoadingAi(false));
+                }
+
+                // 4. Public Reviews (Community)
+                if (initialItem.tmdbId) {
+                    fetchPublicReviews(initialItem.tmdbId).then(reviews => {
+                        // Filter out own review to avoid duplication with input field
+                        const othersReviews = reviews.filter(r => r.userId !== user?.id);
+                        setPublicReviews(othersReviews);
+                    });
                 }
 
             } catch (e) {
@@ -329,6 +343,42 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                         />
                                     </div>
                                 )}
+
+                                {/* PUBLIC REVIEWS */}
+                                <div className="space-y-4 pt-6 border-t border-slate-800">
+                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('community_reviews')}</h3>
+                                    {publicReviews.length > 0 ? (
+                                        <div className="grid gap-4">
+                                            {publicReviews.map((rev, idx) => (
+                                                <div key={idx} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 flex gap-4">
+                                                    <div className="flex-shrink-0">
+                                                        <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
+                                                            {rev.avatar ? <img src={rev.avatar} alt={rev.username} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center"><User size={16} className="text-slate-500"/></div>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-grow min-w-0">
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <div>
+                                                                <span className="text-sm font-bold text-white block leading-tight">{rev.username}</span>
+                                                                <span className="text-[10px] text-slate-500">{new Date(rev.date).toLocaleDateString()}</span>
+                                                            </div>
+                                                            {rev.rating > 0 && (
+                                                                <div className="flex items-center gap-1 text-yellow-500 text-xs font-bold bg-yellow-500/10 px-2 py-0.5 rounded-full">
+                                                                    <Star size={10} fill="currentColor"/> {rev.rating}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-slate-300 leading-relaxed break-words">
+                                                            "{rev.content}"
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-slate-500 text-sm italic">Noch keine Bewertungen aus der Community.</p>
+                                    )}
+                                </div>
                             </>
                         )}
 
