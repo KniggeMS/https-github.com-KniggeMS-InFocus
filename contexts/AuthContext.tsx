@@ -152,12 +152,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user]);
 
   const login = async (emailInput: string, passwordAttempt: string) => {
-    // Force Email usage
-    if (!emailInput.includes('@')) {
-        throw new Error("Login nur mit E-Mail-Adresse möglich. Bitte gib deine E-Mail ein.");
-    }
-
-    // Perform Authentication
+    // Direct Auth Call - No DB Lookup beforehand to avoid RLS/Rate Limits
     const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: emailInput,
         password: passwordAttempt
@@ -168,10 +163,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error.message === "Invalid login credentials") {
             throw new Error("E-Mail oder Passwort falsch.");
         }
+        if (error.message.includes("rate limit")) {
+            throw new Error("Zu viele Versuche. Bitte warte einen Moment.");
+        }
         throw new Error(error.message);
     }
 
-    // Post-Login: Broadcast
+    // Post-Login: Broadcast (Only happens IF login was successful)
     if (authData.user) {
         (async () => {
              try {

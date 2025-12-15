@@ -20,8 +20,8 @@ export const AuthPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   // Form State
-  const [username, setUsername] = useState(''); // Used for Login Email input too
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState(''); 
+  const [email, setEmail] = useState(''); // Primary field for Login now
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -44,8 +44,9 @@ export const AuthPage: React.FC = () => {
 
     try {
       if (view === 'login') {
-        // username state holds the input value for login field
-        await login(username, password); 
+        // DIRECT EMAIL LOGIN - Using the 'email' state variable directly
+        if (!email) throw new Error("Bitte E-Mail eingeben.");
+        await login(email, password); 
       } else if (view === 'register') {
         if (!username || !email || !password) throw new Error("Fehlende Pflichtfelder");
         if (password !== confirmPassword) throw new Error("Passwörter stimmen nicht überein");
@@ -82,14 +83,6 @@ export const AuthPage: React.FC = () => {
     const imgData = await generateAvatar(username);
     if (imgData) setAvatar(imgData);
     setIsGeneratingImg(false);
-  };
-
-  const handleDemoLogin = async () => {
-      setIsLoading(true);
-      // Demo login tries to use an email now, or fails if account gone
-      try { await login('demo@example.com', 'password123'); } 
-      catch (e: any) { setError("Demo User nicht verfügbar: " + e.message); } 
-      finally { setIsLoading(false); }
   };
 
   if (showGuide) return <div className="fixed inset-0 z-50 bg-[#0B0E14] overflow-y-auto"><GuidePage onBack={() => setShowGuide(false)} /></div>;
@@ -146,8 +139,8 @@ export const AuthPage: React.FC = () => {
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                                 <input 
                                     type="email" 
-                                    value={username} 
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    value={email} 
+                                    onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-[#1c212c] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-cyan-500 transition-colors"
                                     placeholder="name@example.com"
                                     autoComplete="email"
