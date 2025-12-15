@@ -104,6 +104,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (event === 'PASSWORD_RECOVERY') {
                 setIsRecoveryMode(true);
             }
+            // In Vivaldi/Strict browsers, this might not fire consistently for login, 
+            // but we keep it for session refresh/logout sync.
             fetchProfile(session?.user);
         }
     });
@@ -189,6 +191,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
              await supabase.auth.signOut(); // Force logout to clean state
              throw new Error("Benutzerprofil konnte nicht geladen werden. Datenbankfehler oder Profil fehlt.");
          }
+
+        // 3. VIVALDI FIX: Manually update State
+        // Instead of waiting for the listener (which might be blocked by browser privacy settings),
+        // we set the user immediately. This guarantees the UI transition happens.
+        setUser({
+            id: profile.id,
+            email: profile.email,
+            username: profile.username,
+            avatar: profile.avatar,
+            firstName: profile.first_name,
+            lastName: profile.last_name,
+            role: profile.role as UserRole,
+            isStatsPublic: profile.is_stats_public,
+            createdAt: new Date(profile.created_at).getTime()
+        });
 
         // Post-Login: Broadcast (Only if profile exists)
         (async () => {
