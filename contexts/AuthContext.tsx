@@ -69,7 +69,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         createdAt: new Date(data.created_at).getTime()
                     });
                 } else {
-                    console.error("Profile fetch error", error);
+                    console.error("Profile fetch error (Listener)", error);
+                    // Do not setUser(null) here immediately to avoid flickering, 
+                    // but if profile is missing, user state remains null
                 }
                 setLoading(false);
             }
@@ -152,7 +154,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user]);
 
   const login = async (emailInput: string, passwordAttempt: string) => {
-    // Direct Auth Call - No DB Lookup beforehand to avoid RLS/Rate Limits
+    // 1. Direct Auth Call
     const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: emailInput,
         password: passwordAttempt
@@ -163,27 +165,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (error.message === "Invalid login credentials") {
             throw new Error("E-Mail oder Passwort falsch.");
         }
+        if (error.message.includes("Email not confirmed")) {
+             throw new Error("Bitte bestätige erst deine E-Mail Adresse.");
+        }
         if (error.message.includes("rate limit")) {
             throw new Error("Zu viele Versuche. Bitte warte einen Moment.");
         }
         throw new Error(error.message);
     }
 
-    // Post-Login: Broadcast (Only happens IF login was successful)
+    // 2. Explicit Profile Check
+    // This ensures we catch "Ghost Users" (Auth OK, but no Profile data) immediately
+    // and show an error in the UI instead of silently failing.
     if (authData.user) {
+         const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authData.user.id)
+            .single();
+         
+         if (profileError || !profile) {
+             console.error("Login Profile Error:", profileError);
+             await supabase.auth.signOut(); // Force logout to clean state
+             throw new Error("Benutzerprofil konnte nicht geladen werden. Datenbankfehler oder Profil fehlt.");
+         }
+
+        // Post-Login: Broadcast (Only if profile exists)
         (async () => {
              try {
-                 const { data } = await supabase.from('profiles').select('username').eq('id', authData.user!.id).single();
-                 if (data && data.username) {
+                 if (profile.username) {
                      await supabase.channel('system_monitor').send({
                         type: 'broadcast',
                         event: 'user_activity',
-                        payload: { type: 'LOGIN', username: data.username }
+                        payload: { type: 'LOGIN', username: profile.username }
                     });
                  }
-             } catch (e) {
-                 // Silent fail for broadcast is acceptable
-             }
+             } catch (e) { /* Silent fail */ }
         })();
     }
   };
