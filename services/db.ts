@@ -144,6 +144,18 @@ export const updateMediaItemRtScore = async (id: string, score: string) => {
   await supabase.from('media_items').update({ rt_score: score }).eq('id', id);
 };
 
+// NEW: Update full details (Metadata refresh)
+export const updateMediaItemDetails = async (id: string, details: Partial<MediaItem>) => {
+  const dbUpdates: any = {};
+  if (details.runtime) dbUpdates.runtime = details.runtime;
+  if (details.certification) dbUpdates.certification = details.certification;
+  if (details.providers) dbUpdates.providers = details.providers;
+  if (details.credits) dbUpdates.credits = details.credits;
+  if (details.trailerKey) dbUpdates.trailer_key = details.trailerKey;
+  
+  await supabase.from('media_items').update(dbUpdates).eq('id', id);
+};
+
 export const deleteMediaItem = async (id: string) => {
   await supabase.from('media_items').delete().eq('id', id);
 };

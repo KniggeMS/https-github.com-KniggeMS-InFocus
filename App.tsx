@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { useTranslation } from './contexts/LanguageContext';
@@ -23,7 +23,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { GuidePage } from './components/GuidePage';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
-  toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes, updateMediaItemRtScore,
+  toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes, updateMediaItemRtScore, updateMediaItemDetails,
   fetchCustomLists, createCustomList, updateCustomListItems, deleteCustomList, shareCustomList
 } from './services/db';
 import { getMediaDetails } from './services/tmdb';
@@ -112,6 +112,92 @@ export default function App() {
     setCustomLists(fetchedLists);
   };
   
+  // Handlers wrapped in useCallback for Performance (Vivaldi Fix)
+  const handleUpdateStatus = useCallback(async (id: string, status: WatchStatus) => {
+      await updateMediaItemStatus(id, status);
+      setItems(prev => prev.map(i => i.id === id ? { ...i, status } : i));
+  }, []);
+
+  const handleRate = useCallback(async (id: string, rating: number) => {
+      await updateMediaItemRating(id, rating);
+      setItems(prev => prev.map(i => i.id === id ? { ...i, userRating: rating } : i));
+  }, []);
+
+  const handleToggleFavorite = useCallback(async (id: string) => {
+      // Optimistic update difficult inside useCallback without item state, so we use functional setter logic
+      // But we need the current state to toggle. 
+      // Correct approach: Find item in setter, toggle DB.
+      setItems(prev => {
+          const item = prev.find(i => i.id === id);
+          if (item) {
+              toggleMediaItemFavorite(id, !item.isFavorite);
+              return prev.map(i => i.id === id ? { ...i, isFavorite: !i.isFavorite } : i);
+          }
+          return prev;
+      });
+  }, []);
+
+  const handleDelete = useCallback(async (id: string) => {
+      if (!confirm("Wirklich löschen?")) return;
+      await deleteMediaItem(id);
+      setItems(prev => prev.filter(i => i.id !== id));
+      setCustomLists(prev => prev.map(l => ({...l, items: l.items.filter(itemId => itemId !== id)})));
+  }, []);
+
+  const handleUpdateNotes = useCallback(async (id: string, notes: string) => {
+      await updateMediaItemNotes(id, notes);
+      setItems(prev => prev.map(i => i.id === id ? { ...i, userNotes: notes } : i));
+  }, []);
+
+  const handleUpdateRtScore = useCallback(async (id: string, score: string) => {
+      await updateMediaItemRtScore(id, score);
+      setItems(prev => prev.map(i => i.id === id ? { ...i, rtScore: score } : i));
+  }, []);
+
+  // NEW: Refresh Metadata Handler
+  const handleRefreshMetadata = useCallback(async (item: MediaItem) => {
+      if (!tmdbKey) {
+          alert("Kein TMDB Key gefunden. Bitte in Einstellungen prüfen.");
+          return;
+      }
+      
+      const searchRes: SearchResult = {
+          tmdbId: item.tmdbId,
+          title: item.title,
+          type: item.type,
+          year: item.year,
+          genre: item.genre,
+          plot: item.plot,
+          rating: item.rating
+      };
+      
+      try {
+          const details = await getMediaDetails(searchRes, tmdbKey);
+          await updateMediaItemDetails(item.id, details);
+          
+          setItems(prev => prev.map(i => i.id === item.id ? { ...i, ...details } : i));
+          alert("Metadaten erfolgreich aktualisiert!");
+      } catch (e) {
+          console.error("Refresh failed", e);
+          alert("Fehler beim Aktualisieren.");
+      }
+  }, [tmdbKey]);
+
+  const handleAddToList = useCallback(async (listId: string, itemId: string) => {
+      setCustomLists(prev => {
+          const list = prev.find(l => l.id === listId);
+          if (!list) return prev;
+          
+          let newItems = list.items || [];
+          if (newItems.includes(itemId)) newItems = newItems.filter(i => i !== itemId);
+          else newItems = [...newItems, itemId];
+          
+          updateCustomListItems(listId, newItems);
+          
+          return prev.map(l => l.id === listId ? { ...l, items: newItems } : l);
+      });
+  }, []);
+
   const handleAdd = async (result: SearchResult, status: WatchStatus = WatchStatus.TO_WATCH, isFav: boolean = false) => {
     if (!user) return;
     const existing = items.find(i => i.tmdbId === result.tmdbId && i.userId === user.id);
@@ -174,35 +260,6 @@ export default function App() {
     }
   };
 
-  const handleUpdateStatus = async (id: string, status: WatchStatus) => {
-      await updateMediaItemStatus(id, status);
-      setItems(prev => prev.map(i => i.id === id ? { ...i, status } : i));
-  };
-  const handleRate = async (id: string, rating: number) => {
-      await updateMediaItemRating(id, rating);
-      setItems(prev => prev.map(i => i.id === id ? { ...i, userRating: rating } : i));
-  };
-  const handleToggleFavorite = async (id: string) => {
-      const item = items.find(i => i.id === id);
-      if (item) {
-          await toggleMediaItemFavorite(id, !item.isFavorite);
-          setItems(prev => prev.map(i => i.id === id ? { ...i, isFavorite: !i.isFavorite } : i));
-      }
-  };
-  const handleDelete = async (id: string) => {
-      if (!confirm("Wirklich löschen?")) return;
-      await deleteMediaItem(id);
-      setItems(prev => prev.filter(i => i.id !== id));
-      setCustomLists(prev => prev.map(l => ({...l, items: l.items.filter(itemId => itemId !== id)})));
-  };
-  const handleUpdateNotes = async (id: string, notes: string) => {
-      await updateMediaItemNotes(id, notes);
-      setItems(prev => prev.map(i => i.id === id ? { ...i, userNotes: notes } : i));
-  };
-  const handleUpdateRtScore = async (id: string, score: string) => {
-      await updateMediaItemRtScore(id, score);
-      setItems(prev => prev.map(i => i.id === id ? { ...i, rtScore: score } : i));
-  };
   const handleCreateList = async (name: string) => {
       if (!user) return;
       const created = await createCustomList({id: '', ownerId: user.id, name, createdAt: Date.now(), items: [], sharedWith: []}, user.id);
@@ -212,15 +269,6 @@ export default function App() {
       if (!confirm(t('delete_list_confirm'))) return;
       await deleteCustomList(id);
       setCustomLists(prev => prev.filter(l => l.id !== id));
-  };
-  const handleAddToList = async (listId: string, itemId: string) => {
-      const list = customLists.find(l => l.id === listId);
-      if (!list) return;
-      let newItems = list.items || [];
-      if (newItems.includes(itemId)) newItems = newItems.filter(i => i !== itemId);
-      else newItems = [...newItems, itemId];
-      await updateCustomListItems(listId, newItems);
-      setCustomLists(prev => prev.map(l => l.id === listId ? { ...l, items: newItems } : l));
   };
   
   const handleShareList = async (listId: string, userIds: string[]) => {
@@ -290,6 +338,7 @@ export default function App() {
                       onToggleFavorite={handleToggleFavorite}
                       onRate={handleRate}
                       onClick={setSelectedItem}
+                      onRefreshMetadata={handleRefreshMetadata}
                       customLists={myLists}
                       onAddToList={handleAddToList}
                   />

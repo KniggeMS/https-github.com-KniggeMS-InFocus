@@ -1,7 +1,7 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { MediaItem, WatchStatus, MediaType, CustomList } from '../types';
-import { Trash2, Check, Clock, PlayCircle, Film, Tv, MoreHorizontal, Heart, Star, Users, Zap, Calendar } from 'lucide-react';
+import { Trash2, Check, Clock, PlayCircle, Film, Tv, MoreHorizontal, Heart, Star, Users, Zap, RefreshCw } from 'lucide-react';
 import { IMAGE_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 
 interface MediaCardProps {
@@ -11,11 +11,14 @@ interface MediaCardProps {
   onToggleFavorite: (id: string) => void;
   onRate: (id: string, rating: number) => void;
   onClick: (item: MediaItem) => void;
+  onRefreshMetadata?: (item: MediaItem) => void;
   customLists?: CustomList[];
   onAddToList?: (listId: string, itemId: string) => void;
 }
 
-export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDelete, onToggleFavorite, onRate, onClick, customLists = [], onAddToList }) => {
+export const MediaCard = memo<MediaCardProps>(({ 
+    item, onStatusChange, onDelete, onToggleFavorite, onRate, onClick, onRefreshMetadata, customLists = [], onAddToList 
+}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -103,7 +106,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
 
             {/* Dropdown Menu */}
             {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-52 glass-panel rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-200">
                     <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                         <Heart size={16} className={item.isFavorite ? "fill-red-500 text-red-500" : ""} /> Favorit
                     </button>
@@ -134,6 +137,15 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                             ))}
                         </>
                     )}
+
+                    {onRefreshMetadata && (
+                        <>
+                            <div className="h-px bg-white/5 my-1"></div>
+                            <button onClick={(e) => { e.stopPropagation(); onRefreshMetadata(item); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors">
+                                <RefreshCw size={16} /> Daten aktualisieren
+                            </button>
+                        </>
+                    )}
                     
                     <div className="h-px bg-white/5 my-1"></div>
                     <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
@@ -144,7 +156,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
         </div>
 
         {/* Info Section - RICH METADATA */}
-        <div className="px-1">
+        <div className="px-1 min-h-[90px] flex flex-col justify-end">
             <h3 onClick={() => onClick(item)} className="font-bold text-white text-lg leading-tight line-clamp-1 hover:text-blue-400 transition-colors cursor-pointer mb-1.5" title={item.title}>
                 {item.title}
             </h3>
@@ -184,11 +196,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                     </div>
                 ) : (
                     // Placeholder if no RT score yet
-                    <div className="h-5 w-12 rounded-md bg-white/5"></div>
+                    <div className="h-5 w-12 rounded-md bg-white/5 opacity-0"></div>
                 )}
             </div>
 
-             {/* Provider Logos - WIEDER DA! */}
+             {/* Provider Logos */}
              {item.providers && item.providers.length > 0 && (
                 <div className="flex items-center gap-1.5 mb-2 h-5">
                     {item.providers.slice(0, 5).map(p => (
@@ -204,7 +216,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                 </div>
             )}
 
-            {/* Cast Row - More Prominent */}
+            {/* Cast Row */}
             {item.credits && item.credits.length > 0 && (
                 <div className="flex items-center gap-1.5 text-xs bg-slate-800/50 p-1.5 rounded-md border border-white/5 mt-1">
                     <Users size={12} className="text-slate-400 flex-shrink-0"/>
@@ -217,4 +229,4 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
         </div>
     </div>
   );
-};
+});
