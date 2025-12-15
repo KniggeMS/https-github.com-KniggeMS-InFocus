@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { MediaItem, WatchStatus, MediaType, CustomList } from '../types';
-import { Trash2, Check, Clock, PlayCircle, Film, Tv, MoreHorizontal, Heart, Star, ListPlus, FolderPlus } from 'lucide-react';
+import { Trash2, Check, Clock, PlayCircle, Film, Tv, MoreHorizontal, Heart, Star, Users } from 'lucide-react';
 import { IMAGE_BASE_URL } from '../services/tmdb';
 
 interface MediaCardProps {
@@ -31,6 +31,24 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
 
   const posterUrl = item.posterPath ? `${IMAGE_BASE_URL}${item.posterPath}` : null;
   
+  // Helper to format runtime (e.g. 105 -> 1h 45m)
+  const formatRuntime = (mins?: number) => {
+      if (!mins) return null;
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return `${h}h ${m}m`;
+  };
+
+  // Helper for RT Color
+  const getRtState = (scoreStr?: string) => {
+      if (!scoreStr) return null;
+      const score = parseInt(scoreStr);
+      if (isNaN(score)) return null;
+      return score >= 60 ? 'fresh' : 'rotten';
+  };
+
+  const rtState = getRtState(item.rtScore);
+
   return (
     <div className="group relative flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300">
         {/* Card Image Container */}
@@ -52,9 +70,9 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
             )}
 
             {/* Gradient Overlay for Text Visibility (Bottom) */}
-            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none opacity-60" />
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none opacity-80" />
 
-            {/* Top Right: Context Menu Button (Stitch Style) */}
+            {/* Top Right: Context Menu Button */}
             <div className="absolute top-2 right-2 z-20" ref={menuRef}>
                 <button 
                     onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
@@ -105,12 +123,9 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                 )}
             </div>
 
-            {/* Type Badge (Top Left) */}
-            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-1.5">
+            {/* Type Badge */}
+            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-1.5 shadow-sm">
                 {item.type === MediaType.MOVIE ? <Film size={12} className="text-blue-400"/> : <Tv size={12} className="text-purple-400"/>}
-                <span className="text-[10px] font-bold text-white uppercase tracking-wider">
-                    {item.type === MediaType.MOVIE ? 'Film' : 'TV'}
-                </span>
             </div>
 
             {/* Status Indicator (Bottom Right) */}
@@ -120,31 +135,66 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                 </div>
             )}
             
-            {/* Rating Badge (Bottom Left - On Image) */}
-            {item.rating > 0 && (
-                 <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded border border-white/10">
-                    <Star size={12} className="fill-yellow-500 text-yellow-500" />
-                    <span className="font-bold text-white text-xs">{item.rating.toFixed(1)}</span>
+            {/* User Rating Badge (On Image) */}
+            {item.userRating && item.userRating > 0 && (
+                 <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-yellow-500 text-black px-2 py-0.5 rounded font-bold text-xs shadow-lg shadow-yellow-900/50">
+                    <Star size={10} fill="currentColor" /> {item.userRating}
                 </div>
             )}
         </div>
 
-        {/* Info Section (Clean Text Below) */}
-        <div>
-            <h3 onClick={() => onClick(item)} className="font-bold text-white text-lg md:text-xl leading-tight line-clamp-1 hover:text-blue-400 transition-colors cursor-pointer mb-1" title={item.title}>
+        {/* Info Section - RICH METADATA */}
+        <div className="px-1">
+            <h3 onClick={() => onClick(item)} className="font-bold text-white text-lg leading-tight line-clamp-1 hover:text-blue-400 transition-colors cursor-pointer mb-1.5" title={item.title}>
                 {item.title}
             </h3>
-            <div className="flex items-center gap-2 text-sm md:text-base text-slate-400 font-medium">
-                <span>{item.year}</span>
-                <span>•</span>
-                <span className="truncate max-w-[140px] text-slate-500">{item.genre[0] || 'Unknown'}</span>
-                {item.userRating && item.userRating > 0 && (
-                     <>
-                        <span>•</span>
-                        <span className="text-yellow-500 font-bold">★ {item.userRating}</span>
-                     </>
+            
+            {/* Meta Row: Year | Time | Genre */}
+            <div className="flex items-center flex-wrap gap-2 text-xs text-slate-400 font-medium mb-2">
+                <span className="text-slate-300">{item.year}</span>
+                {item.runtime && (
+                    <>
+                        <span className="text-slate-600">•</span>
+                        <span>{formatRuntime(item.runtime)}</span>
+                    </>
+                )}
+                <span className="text-slate-600">•</span>
+                <span className="truncate max-w-[100px] text-slate-500">{item.genre[0]}</span>
+            </div>
+
+            {/* Ratings Row with Logos */}
+            <div className="flex items-center gap-3 mb-2">
+                {/* TMDB */}
+                <div className="flex items-center gap-1.5 bg-[#0d253f] px-1.5 py-0.5 rounded border border-blue-900/50" title="TMDB Score">
+                    <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" className="w-3.5 h-3.5" alt="TMDB" />
+                    <span className="text-[10px] font-bold text-cyan-400">{item.rating.toFixed(1)}</span>
+                </div>
+
+                {/* Rotten Tomatoes */}
+                {rtState && (
+                    <div className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${rtState === 'fresh' ? 'bg-[#fa320a]/10 border-[#fa320a]/30' : 'bg-green-900/20 border-green-700/30'}`} title="Rotten Tomatoes">
+                        <img 
+                            src={rtState === 'fresh' 
+                                ? "https://www.rottentomatoes.com/assets/pizza-pie/images/icons/tomatometer/tomatometer-fresh.149b5e8adc3.svg" 
+                                : "https://www.rottentomatoes.com/assets/pizza-pie/images/icons/tomatometer/tomatometer-rotten.f1ef4f02ce3.svg"
+                            } 
+                            className="w-3.5 h-3.5" 
+                            alt="RT" 
+                        />
+                        <span className={`text-[10px] font-bold ${rtState === 'fresh' ? 'text-red-400' : 'text-green-400'}`}>{item.rtScore}</span>
+                    </div>
                 )}
             </div>
+
+            {/* Cast Row */}
+            {item.credits && item.credits.length > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <Users size={12} className="text-slate-600"/>
+                    <span className="truncate">
+                        {item.credits.slice(0, 2).map(c => c.name).join(', ')}
+                    </span>
+                </div>
+            )}
         </div>
     </div>
   );
