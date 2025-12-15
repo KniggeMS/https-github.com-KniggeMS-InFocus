@@ -27,12 +27,13 @@ import {
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole } from './types';
 import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu } from 'lucide-react';
 
-// --- KONFIGURATION: HARDCODED KEYS (MANUELL) ---
-// Trage deine Keys hier direkt ein, damit die App ohne Vercel-Vars funktioniert.
-// Das ist der "Client-Side Direct" Weg für einfaches Teilen.
+// --- KONFIGURATION ---
+// TMDB & OMDb bleiben hier für einfaches Teilen "hardcoded".
+// Gemini Key MUSS leer bleiben (GitHub Security Scan!) und kommt über Vercel Env Vars.
 const FALLBACK_KEYS = {
-    TMDB: "4115939bdc412c5f7b0c4598fcf29b77",   // HIER DEINEN TMDB KEY EINFÜGEN (z.B. "abc123...")
-    OMDB: "33df5dc9",   // HIER DEINEN OMDB KEY EINFÜGEN
+    TMDB: "4115939bdc412c5f7b0c4598fcf29b77", 
+    OMDB: "33df5dc9", 
+    GEMINI: "" // Zieht sich den Key aus process.env.API_KEY (Vercel)
 };
 
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
