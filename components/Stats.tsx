@@ -193,11 +193,11 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
       </div>
 
       {/* CHART BODY */}
-      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isExpanded ? 'h-80 sm:h-72 mt-8 opacity-100' : 'h-0 opacity-0'}`}>
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isExpanded ? 'h-80 sm:h-80 mt-8 opacity-100' : 'h-0 opacity-0'}`}>
         <div className="flex flex-col sm:flex-row h-full items-center gap-8 md:gap-16 justify-center">
             
             {/* CHART AREA with CENTER INFO */}
-            <div className="relative w-56 h-56 sm:w-64 sm:h-64 flex-shrink-0">
+            <div className="relative w-64 h-64 sm:w-72 sm:h-72 flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
@@ -228,21 +228,21 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
 
                 {/* THE INFORMATIVE CENTER (Absolute overlay) */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none flex-col animate-in fade-in duration-300 z-10">
-                    <span className={`text-5xl font-black leading-none tracking-tight ${metric === 'count' ? 'text-white' : 'text-purple-100'}`}>
+                    <span className={`text-6xl font-black leading-none tracking-tight ${metric === 'count' ? 'text-white' : 'text-purple-100'}`}>
                         {centerValue}
                     </span>
-                    <span className="text-xs uppercase font-bold text-slate-400 tracking-widest mt-2">
+                    <span className="text-sm uppercase font-bold text-slate-400 tracking-widest mt-2">
                         {centerLabel}
                     </span>
-                    <div className={`mt-3 px-3 py-1 rounded-md text-xs font-bold border transition-colors max-w-[90%] truncate ${activeItem ? 'bg-slate-700/80 border-slate-600 text-cyan-400' : 'bg-transparent border-transparent text-slate-500'}`}>
+                    <div className={`mt-3 px-3 py-1 rounded-md text-sm font-bold border transition-colors max-w-[90%] truncate ${activeItem ? 'bg-slate-700/80 border-slate-600 text-cyan-400' : 'bg-transparent border-transparent text-slate-500'}`}>
                         {centerContext}
                     </div>
                 </div>
             </div>
 
             {/* CUSTOM LEGEND (Right Side) */}
-            <div className="flex flex-col justify-center w-full sm:w-56 sm:border-l sm:border-slate-700/50 sm:pl-8 h-auto sm:h-[90%] my-auto">
-                <div className="grid grid-cols-2 sm:grid-cols-1 gap-x-6 gap-y-2">
+            <div className="flex flex-col justify-center w-full sm:w-64 sm:border-l sm:border-slate-700/50 sm:pl-8 h-auto sm:h-[90%] my-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-1 gap-x-6 gap-y-3">
                     {data.map((entry, index) => {
                         const isActive = activeIndex === index;
                         // Calculate percentage relative to displayed data (Total Chart Value)
@@ -251,20 +251,20 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
                         return (
                             <div 
                                 key={entry.name} 
-                                className="flex items-center justify-between text-sm group cursor-pointer py-1.5" 
+                                className="flex items-center justify-between text-base group cursor-pointer py-1.5" 
                                 onMouseEnter={() => setActiveIndex(index)} 
                                 onMouseLeave={() => setActiveIndex(null)}
                             >
                                 <div className="flex items-center gap-3 overflow-hidden">
                                     <div 
-                                        className={`w-2.5 h-2.5 rounded-full transition-transform duration-200 ${isActive ? 'scale-125 shadow-[0_0_8px_currentColor]' : ''}`} 
+                                        className={`w-3 h-3 rounded-full transition-transform duration-200 ${isActive ? 'scale-125 shadow-[0_0_8px_currentColor]' : ''}`} 
                                         style={{ backgroundColor: COLORS[index % COLORS.length], color: COLORS[index % COLORS.length] }}
                                     ></div>
                                     <span className={`truncate transition-colors font-medium ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-slate-100'}`}>
                                         {entry.name}
                                     </span>
                                 </div>
-                                <span className={`font-mono text-xs transition-colors ${isActive ? 'text-cyan-400 font-bold' : 'text-slate-500'}`}>
+                                <span className={`font-mono text-sm transition-colors ${isActive ? 'text-cyan-400 font-bold' : 'text-slate-500'}`}>
                                     {percent}%
                                 </span>
                             </div>
@@ -272,8 +272,8 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
                     })}
                 </div>
                 {/* Instruction Hint (Desktop only) */}
-                <div className="hidden sm:flex mt-6 pt-4 border-t border-slate-700/50 text-xs text-slate-500 items-center gap-2">
-                    <MousePointer2 size={12} />
+                <div className="hidden sm:flex mt-6 pt-4 border-t border-slate-700/50 text-sm text-slate-500 items-center gap-2">
+                    <MousePointer2 size={14} />
                     <span>Hover für Details</span>
                 </div>
             </div>

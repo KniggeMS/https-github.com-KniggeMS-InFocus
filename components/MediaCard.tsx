@@ -131,13 +131,13 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
 
         {/* Info Section (Clean Text Below) */}
         <div>
-            <h3 onClick={() => onClick(item)} className="font-bold text-white text-base leading-tight line-clamp-1 hover:text-blue-400 transition-colors cursor-pointer mb-1" title={item.title}>
+            <h3 onClick={() => onClick(item)} className="font-bold text-white text-lg leading-tight line-clamp-1 hover:text-blue-400 transition-colors cursor-pointer mb-1" title={item.title}>
                 {item.title}
             </h3>
-            <div className="flex items-center gap-2 text-sm text-slate-400 font-medium">
+            <div className="flex items-center gap-2 text-base text-slate-400 font-medium">
                 <span>{item.year}</span>
                 <span>•</span>
-                <span className="truncate max-w-[140px] text-slate-500">{item.genre[0] || 'Unknown'}</span>
+                <span className="truncate max-w-[160px] text-slate-500">{item.genre[0] || 'Unknown'}</span>
                 {item.userRating && item.userRating > 0 && (
                      <>
                         <span>•</span>

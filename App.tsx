@@ -253,7 +253,7 @@ export default function App() {
       }
 
       return (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 relative z-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 relative z-10">
               {filtered.map(item => (
                   <MediaCard 
                       key={item.id} 
@@ -287,7 +287,7 @@ export default function App() {
                         <Clapperboard size={18} className="text-white" />
                     </div>
                     <span className="font-bold text-xl tracking-tight text-white hidden md:block">
-                        Cine<span className="text-cyan-400">Log</span>
+                        InFocus <span className="text-cyan-400">CineLog</span>
                     </span>
                 </div>
 
