@@ -33,7 +33,6 @@ import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, 
 const FALLBACK_KEYS = {
     TMDB: "4115939bdc412c5f7b0c4598fcf29b77",   // HIER DEINEN TMDB KEY EINFÜGEN (z.B. "abc123...")
     OMDB: "33df5dc9",   // HIER DEINEN OMDB KEY EINFÜGEN
-    GEMINI: "AIzaSyAcHqT8PGqCQ2h0KE0dlGbPlVi-fPMaIA0"  // HIER DEINEN GEMINI KEY EINFÜGEN
 };
 
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
