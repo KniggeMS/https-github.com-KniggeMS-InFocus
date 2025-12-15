@@ -70,10 +70,10 @@ export default function App() {
 
   // KEY MANAGEMENT: 
   // Priority: 1. LocalStorage (User Override), 2. Environment (Vercel Default)
-  // We read from LS for state, but pass fallback to components
-  const [tmdbKey, setTmdbKey] = useState(localStorage.getItem('tmdb_api_key') || process.env.VITE_TMDB_API_KEY || '');
-  const [omdbKey, setOmdbKey] = useState(localStorage.getItem('omdb_api_key') || process.env.VITE_OMDB_API_KEY || '');
-  const [geminiKey, setGeminiKey] = useState(localStorage.getItem('cinelog_gemini_key') || process.env.API_KEY || '');
+  // We use lazy initialization () => ... to read localStorage only once on mount.
+  const [tmdbKey, setTmdbKey] = useState(() => localStorage.getItem('tmdb_api_key') || process.env.VITE_TMDB_API_KEY || '');
+  const [omdbKey, setOmdbKey] = useState(() => localStorage.getItem('omdb_api_key') || process.env.VITE_OMDB_API_KEY || '');
+  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('cinelog_gemini_key') || process.env.API_KEY || '');
 
   // SAFE DERIVED STATE (Moved to top level)
   const myLists = user ? customLists.filter(l => l.ownerId === user.id) : [];

@@ -36,8 +36,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
       setHasSearched(false);
       setError('');
       setSelectedItem(null);
-      // Auto-show key input if missing
-      if (!apiKey) setShowKeyInput(true);
+      
+      // Auto-show key input if missing, BUT HIDE IT if key exists (Fix for stuck state)
+      if (!apiKey) {
+          setShowKeyInput(true);
+      } else {
+          setShowKeyInput(false);
+      }
     }
   }, [isOpen, apiKey]);
 
@@ -143,7 +148,9 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">{t('api_key_missing')}</h3>
                 <p className="text-sm text-slate-400 text-center mb-6 max-w-xs">
-                    Um Filme zu suchen, benötigst du einen kostenlosen TMDB API Key. Dieser wird nur lokal auf deinem Gerät gespeichert.
+                    Um Filme zu suchen, benötigst du einen kostenlosen TMDB API Key. 
+                    <br/><br/>
+                    <span className="text-xs bg-slate-800 p-1 rounded border border-slate-700">Hinweis: Keys werden lokal auf diesem Gerät gespeichert.</span>
                 </p>
                 
                 <form onSubmit={handleSaveKey} className="w-full max-w-md space-y-3">
