@@ -43,8 +43,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
       onClose();
   };
 
-  // Helper to check if using System/Env defaults
-  const isUsingEnv = (keyName: string) => !localStorage.getItem(keyName);
+  // Helper to check if using System/Env defaults AND if they are actually set
+  const isEnvActive = (keyName: string, envValue: string | undefined) => {
+      return !localStorage.getItem(keyName) && envValue && envValue.length > 0;
+  };
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -71,7 +73,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
                         <Key size={12}/> TMDB API Key
                     </label>
-                    {isUsingEnv('tmdb_api_key') && !localTmdb && (
+                    {isEnvActive('tmdb_api_key', process.env.VITE_TMDB_API_KEY) && !localTmdb && (
                         <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30 flex items-center gap-1">
                             <Check size={10}/> System Default aktiv
                         </span>
@@ -92,7 +94,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
                         <Key size={12}/> OMDb API Key
                     </label>
-                    {isUsingEnv('omdb_api_key') && !localOmdb && (
+                    {isEnvActive('omdb_api_key', process.env.VITE_OMDB_API_KEY) && !localOmdb && (
                         <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30 flex items-center gap-1">
                             <Check size={10}/> System Default aktiv
                         </span>
@@ -113,7 +115,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
                         <Key size={12}/> Google Gemini API Key
                     </label>
-                    {isUsingEnv('cinelog_gemini_key') && !localGemini && (
+                    {isEnvActive('cinelog_gemini_key', process.env.API_KEY) && !localGemini && (
                         <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30 flex items-center gap-1">
                             <Check size={10}/> System Default aktiv
                         </span>

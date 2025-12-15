@@ -3,25 +3,20 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.20
+**Version:** 1.9.21
 
 ---
 
 ## 1. Service Strategy (Strategie)
 
 ### 1.1 Business Case & Vision
-Das Ziel des Services **"InFocus CineLog"** ist die Bereitstellung einer hochverfügbaren, intelligenten Web-Applikation zur Verwaltung von Medienkonsum (Filme & Serien). Im Gegensatz zu statischen Listen bietet dieser Service durch AI-Integration einen Mehrwert durch Kontextverständnis und personalisierte Empfehlungen.
+Das Ziel des Services **"InFocus CineLog"** ist die Bereitstellung einer hochverfügbaren, intelligenten Web-Applikation zur Verwaltung von Medienkonsum (Filme & Serien).
 
-### 1.2 Service Portfolio
-*   **Core Service:** Verwaltung von Watchlists (CRUD) und Status-Tracking.
-*   **Enhancing Service:** 
-    *   **Vision Search:** Bilderkennung von Filmplakaten via Google Gemini Vision.
-    *   **Deep Analysis:** Kontextbezogene Analyse von User-Notizen mittels LLM.
-    *   **Social Sync:** Echtzeit-Synchronisation von Listen zwischen Benutzern.
-    *   **Rating Aggregation:** Integration von Rotten Tomatoes Scores (via OMDb).
-    *   **Community Feed:** Öffentliche Rezensionen und Meinungsaustausch.
-    *   **Smart Analytics:** Interaktive Visualisierung von Sehgewohnheiten.
-*   **Gamification Service:** XP-System und Achievements zur Steigerung der User-Retention.
+### 1.2 Architektur-Entscheidung: Client-Side Direct
+Für die MVP-Phase und den privaten Gebrauch wurde bewusst die **"Client-Side Direct"** Architektur gewählt.
+*   **Konzept:** API Keys (TMDB, OMDb, Gemini) liegen entweder in Umgebungsvariablen (Build-Time Injection) oder im `localStorage` des Nutzers.
+*   **Vorteil:** Keine komplexen Proxy-Server nötig, kostenlos das Hosting (Vercel Static), maximale Privatsphäre (Keys verlassen nie das Gerät des Nutzers Richtung eigener Server).
+*   **Trade-off:** Keys sind im Client-Code theoretisch sichtbar (bei Injection). Dies ist für den Prototyp-Status akzeptiert ("Friends & Family" Risk Level).
 
 ---
 
@@ -50,34 +45,14 @@ Das Ziel des Services **"InFocus CineLog"** ist die Bereitstellung einer hochver
         *   `gemini-2.5-flash-image` (Vision Search, Avatar Gen)
     *   **Integration:** `@google/genai` SDK
 
-*   **External Data Sources:**
-    *   **Primary:** TMDB API (Metadaten, Bilder, Credits)
-    *   **Secondary:** OMDb API (Rotten Tomatoes Ratings & Import-Matching)
-
-### 2.2 Service Level Requirements (SLR)
-1.  **Verfügbarkeit:** 99.5% (abhängig von Vercel/Supabase Uptime).
-2.  **Performance:**
-    *   First Contentful Paint (FCP) < 1.5s.
-    *   AI Response Time < 3s (Caching Strategie implementiert).
-3.  **Datensicherheit:**
-    *   Keine Speicherung von Passwörtern im Klartext (Supabase Auth).
-    *   Trennung von User-Daten durch RLS.
-    *   **Neu (v1.9.4):** Erzwungene Passwort-Mindestlänge von 8 Zeichen mit visueller Stärke-Anzeige.
-
-### 2.3 Capacity Management & Caching
-Um API-Quotas (Google Gemini / TMDB / OMDb) zu schonen und die Latenz zu verringern, wurde eine **Smart Caching Strategie** implementiert:
-*   **LocalStorage:** Speicherung von AI-Analysen und Empfehlungen.
-*   **Hashing:** User-Notizen werden gehasht; ändert sich die Notiz nicht, wird der Cache verwendet (0 API Calls).
-*   **TTL (Time To Live):** Empfehlungen laufen nach 1 Stunde ab.
-
 ### 2.4 Configuration Management (CMS)
-Verwaltung der externen Schnittstellen-Konfigurationen (Configuration Items - CIs).
+Verwaltung der externen Schnittstellen-Konfigurationen.
 
-| CI Name | Typ | Status | Verantwortlich | Beschreibung |
-|:---|:---|:---|:---|:---|
-| **CI-TMDB-KEY** | API Key | Active | Admin/User | Zugriff auf Metadaten. **Client-Side Storage (Browserabhängig).** |
-| **CI-OMDB-KEY** | API Key | Active | Admin/User | Zugriff auf RT Ratings. Key Endung: `...5dc9`. |
-| **CI-GEMINI-KEY** | API Key | Active | User/Env | AI Features. Wird via `.env` oder LocalStorage injiziert. |
+| CI Name | Typ | Status | Speicherort |
+|:---|:---|:---|:---|
+| **CI-TMDB-KEY** | API Key | Active | Env Var (Vercel) ODER LocalStorage |
+| **CI-OMDB-KEY** | API Key | Active | Env Var (Vercel) ODER LocalStorage |
+| **CI-GEMINI-KEY** | API Key | Active | Env Var (Vercel) ODER LocalStorage |
 
 ---
 
@@ -118,66 +93,10 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-027** | Feature | **Analytics** | **Smart Stats Core:** Umbau des Donut-Charts. Einführung eines interaktiven Zentrums ("Informative Center") zur Anzeige von Gesamt- und Detailwerten sowie eines Switches zum Wechsel zwischen "Anzahl" und "Laufzeit". | ✅ Done |
 | **RFC-028** | Critical | **Build / Ops** | **Config Stabilization:** Erzwingung von CommonJS in Config-Dateien (`module.exports`) und Bereitstellung von `index.css`, um Vercel-Deployment Warnungen und Fehler zu beheben. | ✅ Done |
 | **RFC-029** | Critical | **Build / Ops** | **Sync Force (Fix v1.0.3):** Version-Bump aller Config-Dateien auf 1.0.3 / 1.9.17, um Git-Tracking zu erzwingen und Deployment-Fehler endgültig zu beheben. | ✅ Done |
-| **RFC-030** | Critical | **Mobile / UX** | **Mobile Key Isolation Incident:** Korrektur des Umgangs mit dem TMDB API Key. Problem: `localStorage` ist geräteabhängig. Fix: Ersetzen des blockierenden Browser-Prompts durch ein integriertes Eingabe-UI im `SearchModal` und Implementierung eines Live-State-Updates, um Reloads zu vermeiden. | ✅ Done |
-| **RFC-031** | Revert | **Security** | **Key Exposure Rollback:** Rücknahme der Änderung, API Keys via `vite.config.ts` zu injizieren. Keys verbleiben strikt Client-Side im `localStorage`, um die "Bring Your Own Key" Architektur zu wahren. | ✅ Done |
+| **RFC-030** | Critical | **Mobile / UX** | **Mobile Key Isolation Incident:** Korrektur des Umgangs mit dem TMDB API Key. Implementierung des `SearchModal` Eingabe-UIs, um Keys lokal speichern zu können, falls keine Env-Vars vorhanden sind. | ✅ Done |
+| **RFC-031** | Strategic | **Security** | **Client-Side Direct Architecture:** Bestätigung der Architektur-Entscheidung. Keys können via `vite.config.ts` injiziert werden (für Convenience) oder manuell eingegeben werden (für Flexibilität). Doku angepasst. | ✅ Done |
 | **RFC-032** | Minor | **UX / Cleanup** | **Avatar Modernization:** Entfernung der `js-md5` Abhängigkeit und des Gravatar-Fallbacks. Standardisierung auf die farbenfrohen DiceBear "Adventurer" Avatare für ein lebendigeres UI und schlankeren Code. | ✅ Done |
 
 ---
 
-## 4. Service Operation (Betrieb)
-
-### 4.1 Incident Report: Mobile Key Isolation (RFC-030/031)
-
-**Problembeschreibung:**
-Benutzer berichteten, dass die App auf dem Desktop funktionierte, aber auf dem Smartphone nach dem API Key fragte, obwohl dieser bereits am Desktop eingegeben wurde.
-
-**Root Cause Analyse (RCA):**
-1.  **Client-Side Storage Isolation:** Die Architektur speichert API Keys (`tmdb_api_key`) ausschließlich im `localStorage` des Browsers. Dies ist ein Sicherheitsfeature ("Zero Knowledge" auf dem Server), bedeutet aber, dass **jedes Gerät** (Desktop, Handy, Tablet) den Key einmalig separat eingegeben bekommen muss. Es findet keine Synchronisation der Keys über die Cloud statt.
-2.  **Failed Resolution Attempt:** Ein Versuch, die Keys über Vercel Environment Variables (`process.env`) global bereitzustellen, wurde als Sicherheitsrisiko identifiziert, da dies die Keys im Client-Bundle exponieren würde.
-
-**Lösung:**
-1.  **UI Integration:** Das `SearchModal` erkennt nun automatisch, ob der Key fehlt, und rendert anstelle der Suchleiste ein freundliches Eingabeformular.
-2.  **Sicherheits-Rollback:** Die Injektion der Keys via Build-Prozess wurde rückgängig gemacht. Benutzer müssen Keys manuell eingeben, um die Hoheit über ihre Zugangsdaten zu behalten.
-
-### 4.2 SQL Migration für Sharing (WICHTIG!)
-Standardmäßig erlaubt Supabase nur den Zugriff auf eigene Daten. Damit das Teilen von Listen funktioniert, muss folgende SQL-Policy im Supabase SQL Editor ausgeführt werden:
-
-#### Schritt 1: Zugriff auf Listen erlauben (Custom Lists)
-```sql
-drop policy if exists "Allow shared lists" on custom_lists;
-
-create policy "Allow shared lists" on custom_lists
-  for select using (
-    auth.uid() = owner_id or 
-    auth.uid()::text = ANY (shared_with)
-  );
-```
-
-#### Schritt 2: Zugriff auf die Inhalte der Listen erlauben (Media Items) - **NEU!**
-*Dieser Schritt ist notwendig, damit Benutzer die Filme in einer geteilten Liste sehen können, auch wenn sie ihnen nicht gehören.*
-
-```sql
-drop policy if exists "Allow viewing shared list items" on media_items;
-
-create policy "Allow viewing shared list items" on media_items
-  for select using (
-    auth.uid() = user_id -- Eigene Items
-    or exists (
-      select 1 from custom_lists
-      where media_items.id::text = any(custom_lists.items) -- Item ist in Liste (Cast zu Text wichtig!)
-      and (
-         auth.uid()::text = any(custom_lists.shared_with) -- Liste ist mit mir geteilt
-         or custom_lists.owner_id = auth.uid()
-      )
-    )
-  );
-```
-
-### 4.3 Incident Management (Fehlerbehandlung)
-*   **API Ausfälle (Gemini):** Das System fällt auf einen deterministischen Algorithmus zurück (`generateOfflineAnalysis`), der Metadaten analysiert, ohne die AI zu rufen.
-*   **API Ausfälle (TMDB/OMDb):** Fehlermeldungen werden dem User angezeigt. Bestehende Daten kommen aus der Supabase DB (Fallback bei fehlenden Ratings).
-*   **Auth Issues:** Token-Refresh wird automatisch durch das Supabase SDK gehandhabt.
-
----
-
-*Dokumentation aktualisiert: Version 1.9.20*
+*Dokumentation aktualisiert: Version 1.9.21*
