@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Search, Camera, Sparkles, BrainCircuit, 
   Share2, Trophy, List, Key, Shield, Smartphone, 
-  MessageCircle, Layers, Star, Lock
+  MessageCircle, Layers, Star, Lock, Download, Filter, FileText
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
@@ -33,11 +33,12 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
 
   const navItems = [
     ...(isAdmin ? [{ id: 'start', label: 'Erste Schritte', icon: Key }] : []),
-    { id: 'search', label: 'Suchen & Vision', icon: Search },
+    { id: 'search', label: 'Suchen & Filter', icon: Search },
+    { id: 'import', label: 'Smart Import', icon: Download }, // NEW
     { id: 'ai', label: 'AI Power Features', icon: Sparkles },
-    { id: 'lists', label: 'Listen & Social', icon: List },
+    { id: 'lists', label: 'Listen & Reviews', icon: List },
     { id: 'gamification', label: 'Level & Trophäen', icon: Trophy },
-    { id: 'security', label: 'Sicherheit & Privacy', icon: Lock }, // New Section
+    { id: 'security', label: 'Sicherheit', icon: Lock },
   ];
 
   return (
@@ -55,9 +56,12 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
           <button onClick={handleBack} className="p-2 rounded-full bg-slate-800/50 border border-slate-700 hover:bg-slate-700 transition-colors backdrop-blur-md z-50">
             <ArrowLeft size={24} />
           </button>
-          <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
-            Benutzerhandbuch
-          </h1>
+          <div>
+              <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
+                Benutzerhandbuch
+              </h1>
+              <p className="text-slate-400 text-sm mt-1">Version 1.9.24 • InFocus CineLog</p>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -122,19 +126,31 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
             <section id="search" className="scroll-mt-24">
               <div className="bg-slate-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl">
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                  <Search className="text-purple-400" /> Suchen & Hinzufügen
+                  <Search className="text-purple-400" /> Suchen, Filtern & Hinzufügen
                 </h2>
 
                 <div className="space-y-8">
                   {/* Text Search Mockup */}
                   <div className="flex flex-col md:flex-row gap-6 items-center">
                     <div className="w-full md:w-1/2">
-                      <h3 className="text-lg font-bold text-white mb-2">Klassische Suche</h3>
+                      <h3 className="text-lg font-bold text-white mb-2">Die "Pills" Filter</h3>
+                      <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                        Oben in der App findest du jetzt schnelle Filter-Buttons ("Pills"). Klicke auf <span className="text-cyan-400 font-bold">MOVIES</span> oder <span className="text-purple-400 font-bold">SERIES</span>, um deine Ansicht sofort zu sortieren. "ALL" zeigt dir alles.
+                      </p>
+                      
+                      <h3 className="text-lg font-bold text-white mb-2 mt-6">Klassische Suche</h3>
                       <p className="text-slate-400 text-sm leading-relaxed">
                         Klicke auf das große <strong className="text-white">+</strong> oder die Lupe. Gib einfach den Titel ein. Wir zeigen dir sofort Ergebnisse mit Cover, Jahr und Bewertung an.
                       </p>
                     </div>
+                    
                     <div className="w-full md:w-1/2 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
+                      {/* Pills Mockup */}
+                      <div className="flex gap-2 mb-4">
+                          <div className="px-3 py-1 rounded-full border border-white bg-white text-black text-xs font-bold">ALL</div>
+                          <div className="px-3 py-1 rounded-full border border-cyan-500/50 bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span> MOVIES</div>
+                      </div>
+                      
                       <div className="flex items-center gap-3 bg-slate-900 rounded-lg p-3 border border-slate-600 mb-3">
                         <Search size={18} className="text-slate-400"/>
                         <span className="text-slate-500 text-sm">Matrix...</span>
@@ -157,7 +173,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
                       </h3>
                       <p className="text-slate-400 text-sm leading-relaxed">
                         Du bist im Kino oder siehst eine DVD bei einem Freund? <br/>
-                        Fotografiere das Cover einfach ab! Unsere AI erkennt den Film automatisch und fügt ihn deiner Suche hinzu. Kein Tippen nötig.
+                        Öffne die Suche und klicke auf das <strong className="text-white">Kamera-Icon</strong>. Fotografiere das Cover ab – unsere AI erkennt den Film automatisch!
                       </p>
                     </div>
                     <div className="w-full md:w-1/2 relative group">
@@ -168,6 +184,57 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
                        </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </section>
+
+            {/* SECTION: SMART IMPORT (NEW) */}
+            <section id="import" className="scroll-mt-24">
+              <div className="bg-slate-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                  <Download className="text-green-400" /> Smart Import
+                </h2>
+
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <p className="text-slate-300 mb-4 leading-relaxed text-sm">
+                            Hast du eine alte Liste als Textdatei? Oder Excel? Kopiere sie einfach!
+                            Der Smart Import analysiert Textzeilen, extrahiert Titel und Jahreszahlen und sucht automatisch die passenden Filme.
+                        </p>
+                        <div className="space-y-4">
+                            <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                                <h4 className="font-bold text-white text-sm mb-2 flex items-center gap-2"><FileText size={16}/> Copy & Paste</h4>
+                                <code className="block bg-slate-950 p-3 rounded text-xs font-mono text-slate-400">
+                                    Inception (2010)<br/>
+                                    Breaking Bad; Serie; Top!<br/>
+                                    Der Pate
+                                </code>
+                            </div>
+                            <div className="bg-green-900/10 p-3 rounded-lg border border-green-500/20">
+                                <p className="text-xs text-green-300 flex items-center gap-2">
+                                    <Star size={14} /> 
+                                    <strong>Pro Tipp:</strong> Wenn ein OMDb Key hinterlegt ist, finden wir auch schwer auffindbare Titel via IMDb-Datenbank.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 relative">
+                        <div className="absolute -top-3 -right-3 bg-cyan-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">Neu</div>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-4 h-4 border-2 border-green-500 rounded flex items-center justify-center"><div className="w-2 h-2 bg-green-500"></div></div>
+                                <span className="text-sm text-white">Inception</span>
+                                <span className="text-xs text-slate-500 ml-auto">TMDB Match</span>
+                            </div>
+                            <div className="flex items-center gap-3 opacity-50">
+                                <div className="w-4 h-4 border-2 border-slate-600 rounded"></div>
+                                <span className="text-sm text-slate-400">Unbekannter Titel...</span>
+                            </div>
+                            <button className="w-full bg-cyan-600/20 text-cyan-400 text-xs font-bold py-2 rounded mt-2">
+                                Analysieren...
+                            </button>
+                        </div>
+                    </div>
                 </div>
               </div>
             </section>
@@ -235,7 +302,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
                         Neben "Gesehen" und "Watchlist" kannst du eigene Listen erstellen (z.B. "Halloween Marathon" oder "Marvel Phase 1").
                       </p>
                       <ul className="text-sm text-slate-300 space-y-2 list-disc list-inside">
-                        <li>Klicke auf das <span className="text-white bg-slate-700 px-1 rounded text-xs">+</span> neben "Eigene Listen".</li>
+                        <li>Klicke auf das <span className="text-white bg-slate-700 px-1 rounded text-xs">+</span> neben "Meine Listen".</li>
                         <li>Füge Filme über das Menü auf der Filmkarte hinzu.</li>
                       </ul>
                     </div>
@@ -244,7 +311,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
 
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                        <Share2 size={18} className="text-green-400"/> Community Feed
+                        <Share2 size={18} className="text-green-400"/> Öffentliche Rezensionen
                       </h3>
                       <p className="text-sm text-slate-400 mb-4">
                         InFocus CineLog ist mehr als eine Liste. Schreibe deine Meinung zu Filmen!
