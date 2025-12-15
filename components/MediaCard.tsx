@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MediaItem, WatchStatus, MediaType, CustomList } from '../types';
-import { Trash2, Check, Clock, PlayCircle, Film, Tv, Layers, ListVideo, Heart, Bookmark, Star, ListPlus, FolderPlus, ChevronRight } from 'lucide-react';
+import { Trash2, Check, Clock, PlayCircle, Film, Tv, Layers, ListVideo, Heart, Bookmark, Star, ListPlus, FolderPlus, ChevronDown } from 'lucide-react';
 import { IMAGE_BASE_URL } from '../services/tmdb';
 import { useTranslation } from '../contexts/LanguageContext';
 
@@ -110,7 +109,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
             </button>
             {/* Menu Dropdown Code */}
             {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-200 origin-top-right z-50">
+                <div className="absolute right-0 mt-2 w-56 bg-slate-800 rounded-lg shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-200 origin-top-right z-50">
                     <div className="bg-slate-900/80 px-3 py-2 border-b border-slate-700 rounded-t-lg">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                              <ListVideo size={12} className="text-cyan-400"/> {t('to_list')}
@@ -140,27 +139,29 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                             <span className={`text-xs sm:text-sm font-medium ${item.status === WatchStatus.TO_WATCH ? 'text-white' : 'text-slate-300'}`}>{t('watchlist')}</span>
                         </button>
 
-                         {/* Custom Lists Submenu */}
+                         {/* Custom Lists Submenu - ACCORDION STYLE FIX */}
                          {customLists.length > 0 && onAddToList && (
-                             <div 
-                                className="w-full text-left px-3 py-2.5 hover:bg-slate-700/50 flex items-center gap-2.5 transition-colors group/item relative cursor-pointer"
-                                onMouseEnter={() => setIsHoveringLists(true)}
-                                onMouseLeave={() => setIsHoveringLists(false)}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsHoveringLists(!isHoveringLists);
-                                }}
-                             >
-                                <FolderPlus 
-                                    size={16} 
-                                    className="text-slate-400 group-hover/item:text-slate-200"
-                                />
-                                <span className="text-xs sm:text-sm font-medium text-slate-300 flex-grow">{t('add_to_custom')}</span>
-                                <ChevronRight size={14} className="text-slate-500" />
+                             <div className="border-t border-slate-700/50 mt-1 pt-1">
+                                 <div 
+                                    className="w-full text-left px-3 py-2.5 hover:bg-slate-700/50 flex items-center justify-between transition-colors cursor-pointer group/item"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsHoveringLists(!isHoveringLists);
+                                    }}
+                                 >
+                                    <div className="flex items-center gap-2.5">
+                                        <FolderPlus 
+                                            size={16} 
+                                            className="text-slate-400 group-hover/item:text-slate-200"
+                                        />
+                                        <span className="text-xs sm:text-sm font-medium text-slate-300">{t('add_to_custom')}</span>
+                                    </div>
+                                    <ChevronDown size={14} className={`text-slate-500 transition-transform duration-200 ${isHoveringLists ? 'rotate-180' : ''}`} />
+                                 </div>
                                 
                                 {isHoveringLists && (
-                                    <div className="absolute right-full top-0 w-44 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden animate-in fade-in slide-in-from-right-2 duration-200 z-[60] -mr-1">
-                                        <div className="max-h-40 overflow-y-auto custom-scrollbar">
+                                    <div className="bg-slate-900/50 inset-x-0 border-y border-slate-700/50 animate-in slide-in-from-top-2 duration-200">
+                                        <div className="max-h-40 overflow-y-auto custom-scrollbar p-1">
                                             {customLists.map(list => {
                                                 const isInList = list.items.includes(item.id);
                                                 return (
@@ -171,9 +172,9 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                                                             onAddToList(list.id, item.id);
                                                             setIsMenuOpen(false);
                                                         }}
-                                                        className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-700 hover:text-white truncate flex items-center justify-between"
+                                                        className="w-full text-left px-3 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md flex items-center justify-between transition-colors"
                                                     >
-                                                        <span className="truncate">{list.name}</span>
+                                                        <span className="truncate pr-2">{list.name}</span>
                                                         {isInList && <Check size={12} className="text-cyan-400 flex-shrink-0" />}
                                                     </button>
                                                 );
@@ -185,7 +186,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                          )}
 
                          <div 
-                            className="w-full text-left px-3 py-2.5 hover:bg-slate-700/50 flex flex-col justify-center gap-1 transition-colors group/item relative"
+                            className="w-full text-left px-3 py-2.5 hover:bg-slate-700/50 flex flex-col justify-center gap-1 transition-colors group/item relative border-t border-slate-700/50 mt-1"
                             onMouseEnter={() => setIsHoveringRating(true)}
                             onMouseLeave={() => setIsHoveringRating(false)}
                             onClick={(e) => e.stopPropagation()}

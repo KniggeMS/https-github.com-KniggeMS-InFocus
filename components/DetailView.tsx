@@ -233,8 +233,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
                             )}
                         </div>
 
-                        {/* Actions Row */}
-                        <div className="flex items-center gap-3">
+                        {/* Actions Row - WRAPPED */}
+                        <div className="flex flex-wrap items-center gap-3">
                             {isExisting ? (
                                 <>
                                     <button 
@@ -268,7 +268,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                             
                             <button
                               onClick={handleShare}
-                              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-full px-3 py-2 sm:px-4 backdrop-blur-sm border border-white/5 shadow-lg transition-colors text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wide cursor-pointer"
+                              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-full px-3 py-2 sm:px-4 backdrop-blur-sm border border-white/5 shadow-lg transition-colors text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wide cursor-pointer flex-shrink-0"
                             >
                               {copied ? <Check size={16} className="text-green-400" /> : <Share2 size={16} className="text-cyan-400" />}
                               {copied ? 'Kopiert' : t('share')}
