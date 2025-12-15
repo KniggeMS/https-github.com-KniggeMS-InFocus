@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.24
+**Version:** 1.9.25
 
 ---
 
@@ -99,7 +99,8 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-033** | Feature | **Config / Ops** | **Hardcoded Key Fallback:** Implementierung eines `FALLBACK_KEYS` Objekts in `App.tsx`. Ermöglicht Entwicklern das direkte Eintragen von API Keys im Quellcode, um die App ohne Environment Variables (Vercel) oder manuelle Eingabe durch Endnutzer zu betreiben. | ✅ Done |
 | **RFC-034** | Standard | **UI / Design** | **Stitch Design Finalization:** Korrektur der `AuthPage.tsx` (Cut-off Fix), Synchronisierung der `manifest.json` Farben (#0B0E14) und globale CSS-Anpassungen (Selection Color) für konsistenten Look. | ✅ Done |
 | **RFC-035** | Standard | **UI / Branding** | **Web Typography & Branding Polish:** Erzwungene Sichtbarkeit des "InFocus"-Brandings im Header. Massive Vergrößerung der Schriftarten in `Stats.tsx` und `MediaCard.tsx` für bessere Lesbarkeit auf Desktop-Screens. Optimierung der Charts-Logik. | ✅ Done |
+| **RFC-036** | Standard | **UI / Data** | **MediaCard Metadata Restoration:** Wiedereinführung der Icons für TMDB und Rotten Tomatoes, Anzeige der Laufzeit und der Hauptdarsteller (Cast) in der Listenansicht (Grid), unter Beibehaltung des neuen "Stitch"-Designs. | ✅ Done |
 
 ---
 
-*Dokumentation aktualisiert: Version 1.9.24*
+*Dokumentation aktualisiert: Version 1.9.25*
