@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.19
+**Version:** 1.9.20
 
 ---
 
@@ -120,6 +120,7 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-029** | Critical | **Build / Ops** | **Sync Force (Fix v1.0.3):** Version-Bump aller Config-Dateien auf 1.0.3 / 1.9.17, um Git-Tracking zu erzwingen und Deployment-Fehler endgültig zu beheben. | ✅ Done |
 | **RFC-030** | Critical | **Mobile / UX** | **Mobile Key Isolation Incident:** Korrektur des Umgangs mit dem TMDB API Key. Problem: `localStorage` ist geräteabhängig. Fix: Ersetzen des blockierenden Browser-Prompts durch ein integriertes Eingabe-UI im `SearchModal` und Implementierung eines Live-State-Updates, um Reloads zu vermeiden. | ✅ Done |
 | **RFC-031** | Revert | **Security** | **Key Exposure Rollback:** Rücknahme der Änderung, API Keys via `vite.config.ts` zu injizieren. Keys verbleiben strikt Client-Side im `localStorage`, um die "Bring Your Own Key" Architektur zu wahren. | ✅ Done |
+| **RFC-032** | Minor | **UX / Cleanup** | **Avatar Modernization:** Entfernung der `js-md5` Abhängigkeit und des Gravatar-Fallbacks. Standardisierung auf die farbenfrohen DiceBear "Adventurer" Avatare für ein lebendigeres UI und schlankeren Code. | ✅ Done |
 
 ---
 
@@ -179,4 +180,4 @@ create policy "Allow viewing shared list items" on media_items
 
 ---
 
-*Dokumentation aktualisiert: Jetzt (Version 1.9.19) durch Senior Lead Engineer*
+*Dokumentation aktualisiert: Version 1.9.20*
