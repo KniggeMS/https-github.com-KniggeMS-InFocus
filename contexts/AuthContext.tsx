@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '../types';
 import { supabase } from '../services/supabase';
@@ -23,6 +22,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Cache TTL in Milliseconds (10 Minutes)
+const PROFILE_CACHE_TTL = 10 * 60 * 1000;
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,13 +41,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsRecoveryMode(true);
     }
 
-    const fetchProfile = async (sessionUser: any) => {
+    const fetchProfile = async (sessionUser: any, forceRefresh = false) => {
         if (!sessionUser) {
             if (mounted) {
                 setUser(null);
                 setLoading(false);
             }
             return;
+        }
+
+        // 1. CACHE CHECK
+        // Prevents database hammering on refresh (F5), avoiding Rate Limits/Blocking
+        const cacheKey = `cinelog_profile_${sessionUser.id}`;
+        if (!forceRefresh) {
+            try {
+                const cachedRaw = localStorage.getItem(cacheKey);
+                if (cachedRaw) {
+                    const cached = JSON.parse(cachedRaw);
+                    if (Date.now() - cached.timestamp < PROFILE_CACHE_TTL) {
+                        console.log("Serving Profile from Cache (Fast Load)");
+                        if (mounted) {
+                            setUser(cached.data);
+                            setLoading(false);
+                        }
+                        return; // Skip DB Call
+                    }
+                }
+            } catch (e) {
+                console.warn("Cache read failed", e);
+            }
         }
 
         try {
@@ -57,7 +81,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (mounted) {
                 if (data && !error) {
-                    setUser({
+                    const userProfile: User = {
                         id: data.id,
                         email: data.email,
                         username: data.username,
@@ -67,11 +91,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         role: data.role as UserRole,
                         isStatsPublic: data.is_stats_public,
                         createdAt: new Date(data.created_at).getTime()
-                    });
+                    };
+                    
+                    setUser(userProfile);
+
+                    // 2. WRITE CACHE
+                    try {
+                        localStorage.setItem(cacheKey, JSON.stringify({
+                            timestamp: Date.now(),
+                            data: userProfile
+                        }));
+                    } catch (e) {
+                         console.warn("Cache write failed (Storage blocked?)", e);
+                    }
+
                 } else {
                     console.error("Profile fetch error (Listener)", error);
-                    // Do not setUser(null) here immediately to avoid flickering, 
-                    // but if profile is missing, user state remains null
                 }
                 setLoading(false);
             }
@@ -104,8 +139,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (event === 'PASSWORD_RECOVERY') {
                 setIsRecoveryMode(true);
             }
-            // In Vivaldi/Strict browsers, this might not fire consistently for login, 
-            // but we keep it for session refresh/logout sync.
+            // For explicit events like SIGN_IN, we might want to force refresh, 
+            // but standard checks can use cache.
             fetchProfile(session?.user);
         }
     });
@@ -156,9 +191,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user]);
 
   const login = async (emailInput: string, passwordAttempt: string) => {
+    // Clean input to avoid copy-paste whitespace issues
+    const cleanEmail = emailInput.trim();
+
     // 1. Direct Auth Call
     const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: emailInput,
+        email: cleanEmail,
         password: passwordAttempt
     });
 
@@ -177,8 +215,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     // 2. Explicit Profile Check
-    // This ensures we catch "Ghost Users" (Auth OK, but no Profile data) immediately
-    // and show an error in the UI instead of silently failing.
     if (authData.user) {
          const { data: profile, error: profileError } = await supabase
             .from('profiles')
@@ -188,14 +224,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
          
          if (profileError || !profile) {
              console.error("Login Profile Error:", profileError);
-             await supabase.auth.signOut(); // Force logout to clean state
+             await supabase.auth.signOut(); 
              throw new Error("Benutzerprofil konnte nicht geladen werden. Datenbankfehler oder Profil fehlt.");
          }
 
-        // 3. VIVALDI FIX: Manually update State
-        // Instead of waiting for the listener (which might be blocked by browser privacy settings),
-        // we set the user immediately. This guarantees the UI transition happens.
-        setUser({
+        // 3. VIVALDI/STRICT FIX + CACHE WARMUP
+        // Manually set state immediately to bypass potentially blocked listeners
+        const userProfile: User = {
             id: profile.id,
             email: profile.email,
             username: profile.username,
@@ -205,9 +240,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             role: profile.role as UserRole,
             isStatsPublic: profile.is_stats_public,
             createdAt: new Date(profile.created_at).getTime()
-        });
+        };
+        setUser(userProfile);
 
-        // Post-Login: Broadcast (Only if profile exists)
+        // Populate Cache so next F5 is instant
+        // Try/Catch for Strict Mode browsers blocking Storage
+        try {
+            localStorage.setItem(`cinelog_profile_${profile.id}`, JSON.stringify({
+                timestamp: Date.now(),
+                data: userProfile
+            }));
+        } catch (e) {
+            console.warn("LocalStorage write failed (Privacy Settings?)", e);
+        }
+
+        // Post-Login: Broadcast
         (async () => {
              try {
                  if (profile.username) {
@@ -223,8 +270,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const register = async (newUser: Partial<User>, password: string) => {
-    // Check if username exists (Public read might be allowed on username, or this might fail if RLS is strict)
-    // We attempt it, but catch errors gracefully.
     try {
         const { data: existingUser } = await supabase
             .from('profiles')
@@ -236,12 +281,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             throw new Error("Dieser Benutzername ist bereits vergeben.");
         }
     } catch (e: any) {
-        // If error is "already taken", rethrow. If it's RLS/Permission (PGRST116 or 406), ignore and proceed to Auth try.
         if (e.message === "Dieser Benutzername ist bereits vergeben.") throw e;
     }
 
     const { error } = await supabase.auth.signUp({
-        email: newUser.email!,
+        email: newUser.email!.trim(),
         password: password,
         options: {
             data: {
@@ -271,7 +315,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .eq('id', user.id);
 
     if (error) throw new Error(error.message);
-    setUser(prev => prev ? { ...prev, ...data } : null);
+    
+    // Update State AND Cache
+    setUser(prev => {
+        const newUser = prev ? { ...prev, ...data } : null;
+        if (newUser) {
+             const cacheKey = `cinelog_profile_${newUser.id}`;
+             try {
+                localStorage.setItem(cacheKey, JSON.stringify({
+                    timestamp: Date.now(),
+                    data: newUser
+                }));
+             } catch (e) {
+                 console.warn("LocalStorage write failed (Privacy Settings?)", e);
+             }
+        }
+        return newUser;
+    });
   };
 
   const changePassword = async (oldPw: string, newPw: string) => {
@@ -280,7 +340,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const resetPassword = async (email: string) => {
-     const { error } = await supabase.auth.resetPasswordForEmail(email, {
+     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
          redirectTo: window.location.origin, 
      });
      if (error) throw new Error(error.message);
@@ -310,7 +370,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         resetPassword, 
         isAuthenticated: !!user, 
         isLoading: loading, 
-        getAllUsers: () => allUsers,
+        getAllUsers: () => allUsers, 
         isRecoveryMode,
         completeRecovery,
         adminNotification,
