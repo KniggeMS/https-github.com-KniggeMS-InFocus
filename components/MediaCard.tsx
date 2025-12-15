@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MediaItem, WatchStatus, MediaType, CustomList } from '../types';
-import { Trash2, Check, Clock, PlayCircle, Film, Tv, Layers, ListVideo, Heart, Bookmark, Star, ListPlus, FolderPlus, ChevronDown } from 'lucide-react';
+import { Trash2, Check, Clock, PlayCircle, Film, Tv, MoreHorizontal, Heart, Star, ListPlus, FolderPlus } from 'lucide-react';
 import { IMAGE_BASE_URL } from '../services/tmdb';
-import { useTranslation } from '../contexts/LanguageContext';
 
 interface MediaCardProps {
   item: MediaItem;
@@ -16,286 +15,136 @@ interface MediaCardProps {
 }
 
 export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDelete, onToggleFavorite, onRate, onClick, customLists = [], onAddToList }) => {
-  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isHoveringRating, setIsHoveringRating] = useState(false);
-  const [isHoveringLists, setIsHoveringLists] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
-        setIsHoveringRating(false);
-        setIsHoveringLists(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const statusColors = {
-    [WatchStatus.TO_WATCH]: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-    [WatchStatus.WATCHING]: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    [WatchStatus.WATCHED]: 'bg-green-500/20 text-green-400 border-green-500/30',
-  };
-
   const posterUrl = item.posterPath ? `${IMAGE_BASE_URL}${item.posterPath}` : null;
-
-  // Determine Badge Type (RT vs IMDb)
-  const isRT = item.rtScore && item.rtScore.includes('%');
-  let badgeLabel = isRT ? 'RT' : 'IMDb';
   
-  // Use specific text colors instead of full backgrounds
-  let textColorClass = isRT ? 'text-[#FA320A]' : 'text-[#F5C518]';
-  
-  if (isRT) {
-      const val = parseInt(item.rtScore || '0');
-      if (!isNaN(val) && val < 60) {
-          textColorClass = 'text-[#5F9E3F]'; // Rotten Green
-      }
-  }
-
   return (
-    <div 
-        onClick={() => onClick(item)}
-        className="group relative flex flex-col bg-slate-800 rounded-xl border border-slate-700 shadow-lg hover:border-slate-500 transition-all duration-300 hover:shadow-cyan-500/10 cursor-pointer h-full z-0 hover:z-10"
-    >
-      {/* Image Container - Responsive Height */}
-      <div 
-        className="aspect-[2/3] w-full relative overflow-hidden bg-slate-900 rounded-t-xl"
-      >
-        {posterUrl ? (
-          <img 
-            src={posterUrl} 
-            alt={item.title} 
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
-        ) : (
-          <div 
-            className="w-full h-full flex items-center justify-center"
-            style={{ backgroundColor: item.posterColor || '#334155' }}
-          >
-            <Film className="text-white/20" size={64} />
-          </div>
-        )}
-        
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent sm:via-slate-900/60"></div>
-
-        {/* Content Overlay on Image for Mobile */}
-        <div className="absolute bottom-3 left-3 right-3 z-10">
-           <h3 className="text-sm sm:text-xl font-bold text-white leading-tight drop-shadow-md line-clamp-2" title={item.title}>
-            {item.title}
-          </h3>
-          <div className="flex flex-wrap items-center gap-2 text-slate-200 text-[10px] sm:text-xs mt-1 sm:mt-2 font-medium">
-             {item.type === MediaType.MOVIE ? <Film size={12} className="text-cyan-400" /> : <Tv size={12} className="text-purple-400" />}
-             <span>{item.year}</span>
-             <span className="hidden sm:inline">•</span>
-             <span className="truncate max-w-[150px] hidden sm:block">{item.genre.slice(0, 2).join(', ')}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* OVERLAY ELEMENTS (Menu & Badges) */}
-      <div className="absolute top-2 right-2 z-40" ref={menuRef}>
-            <button 
-                onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
-                className={`p-1.5 sm:p-2 rounded-full backdrop-blur-md transition-colors shadow-sm ${isMenuOpen ? 'bg-cyan-600 text-white' : 'bg-slate-900/60 text-slate-300 hover:bg-slate-900 hover:text-white'}`}
-            >
-                <ListPlus size={16} className="sm:w-5 sm:h-5" />
-            </button>
-            {/* Menu Dropdown Code */}
-            {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-slate-800 rounded-lg shadow-2xl border border-slate-700 animate-in fade-in zoom-in-95 duration-200 origin-top-right z-50">
-                    <div className="bg-slate-900/80 px-3 py-2 border-b border-slate-700 rounded-t-lg">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                             <ListVideo size={12} className="text-cyan-400"/> {t('to_list')}
-                        </span>
-                    </div>
-                    
-                    <div className="py-1">
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); }}
-                            className="w-full text-left px-3 py-2.5 hover:bg-slate-700/50 flex items-center gap-2.5 transition-colors group/item"
-                        >
-                            <Heart 
-                                size={16} 
-                                className={`transition-colors ${item.isFavorite ? 'fill-red-500 text-red-500' : 'text-slate-400 group-hover/item:text-slate-200'}`} 
-                            />
-                            <span className={`text-xs sm:text-sm font-medium ${item.isFavorite ? 'text-white' : 'text-slate-300'}`}>{t('favorite')}</span>
-                        </button>
-
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.TO_WATCH); }}
-                            className="w-full text-left px-3 py-2.5 hover:bg-slate-700/50 flex items-center gap-2.5 transition-colors group/item"
-                        >
-                            <Bookmark 
-                                size={16} 
-                                className={`transition-colors ${item.status === WatchStatus.TO_WATCH ? 'fill-cyan-500 text-cyan-500' : 'text-slate-400 group-hover/item:text-slate-200'}`}
-                            />
-                            <span className={`text-xs sm:text-sm font-medium ${item.status === WatchStatus.TO_WATCH ? 'text-white' : 'text-slate-300'}`}>{t('watchlist')}</span>
-                        </button>
-
-                         {/* Custom Lists Submenu - ACCORDION STYLE FIX */}
-                         {customLists.length > 0 && onAddToList && (
-                             <div className="border-t border-slate-700/50 mt-1 pt-1">
-                                 <div 
-                                    className="w-full text-left px-3 py-2.5 hover:bg-slate-700/50 flex items-center justify-between transition-colors cursor-pointer group/item"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setIsHoveringLists(!isHoveringLists);
-                                    }}
-                                 >
-                                    <div className="flex items-center gap-2.5">
-                                        <FolderPlus 
-                                            size={16} 
-                                            className="text-slate-400 group-hover/item:text-slate-200"
-                                        />
-                                        <span className="text-xs sm:text-sm font-medium text-slate-300">{t('add_to_custom')}</span>
-                                    </div>
-                                    <ChevronDown size={14} className={`text-slate-500 transition-transform duration-200 ${isHoveringLists ? 'rotate-180' : ''}`} />
-                                 </div>
-                                
-                                {isHoveringLists && (
-                                    <div className="bg-slate-900/50 inset-x-0 border-y border-slate-700/50 animate-in slide-in-from-top-2 duration-200">
-                                        <div className="max-h-40 overflow-y-auto custom-scrollbar p-1">
-                                            {customLists.map(list => {
-                                                const isInList = list.items.includes(item.id);
-                                                return (
-                                                    <button
-                                                        key={list.id}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            onAddToList(list.id, item.id);
-                                                            setIsMenuOpen(false);
-                                                        }}
-                                                        className="w-full text-left px-3 py-2 text-xs text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md flex items-center justify-between transition-colors"
-                                                    >
-                                                        <span className="truncate pr-2">{list.name}</span>
-                                                        {isInList && <Check size={12} className="text-cyan-400 flex-shrink-0" />}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                             </div>
-                         )}
-
-                         <div 
-                            className="w-full text-left px-3 py-2.5 hover:bg-slate-700/50 flex flex-col justify-center gap-1 transition-colors group/item relative border-t border-slate-700/50 mt-1"
-                            onMouseEnter={() => setIsHoveringRating(true)}
-                            onMouseLeave={() => setIsHoveringRating(false)}
-                            onClick={(e) => e.stopPropagation()}
-                         >
-                            <div className="flex items-center gap-2.5">
-                                <Star 
-                                    size={16} 
-                                    className={`transition-colors ${item.userRating && item.userRating > 0 ? 'fill-yellow-500 text-yellow-500' : 'text-slate-400 group-hover/item:text-slate-200'}`}
-                                />
-                                <span className={`text-xs sm:text-sm font-medium ${item.userRating && item.userRating > 0 ? 'text-white' : 'text-slate-300'}`}>
-                                    {isHoveringRating ? `${t('rate')}:` : t('your_rating')}
-                                </span>
-                            </div>
-
-                            {isHoveringRating && (
-                                <div className="flex gap-1 pl-7 animate-in fade-in slide-in-from-left-2 duration-200 pt-1">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <button
-                                            key={star}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onRate(item.id, star);
-                                            }}
-                                            className="text-slate-400 hover:text-yellow-400 hover:scale-110 transition-transform"
-                                        >
-                                            <Star 
-                                                size={14} 
-                                                className={(item.userRating || 0) >= star ? 'fill-yellow-500 text-yellow-500' : ''}
-                                            />
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                         </div>
-                    </div>
+    <div className="group relative flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-300">
+        {/* Card Image Container */}
+        <div 
+            onClick={() => onClick(item)}
+            className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#1c212c] border border-white/5 shadow-lg cursor-pointer hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:scale-[1.02]"
+        >
+            {posterUrl ? (
+                <img 
+                    src={posterUrl} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                />
+            ) : (
+                <div className="w-full h-full flex items-center justify-center text-slate-600 bg-[#151a23]">
+                    <Film size={40} />
                 </div>
             )}
-      </div>
-      
-      {/* Badges Container - CLEAN GLASS STYLE */}
-      <div className="absolute top-2 left-2 z-30 flex flex-col gap-1.5 items-start pointer-events-none">
-          {(item.userRating || 0) > 0 && (
-                <div className="bg-black/60 backdrop-blur-md border border-yellow-500/30 text-yellow-400 px-1.5 py-0.5 rounded-md text-[10px] font-bold shadow-lg flex items-center gap-1">
-                    <Star size={10} className="fill-yellow-400" />
-                    {item.userRating}
-                </div>
-          )}
-          {item.rtScore && item.rtScore !== "N/A" && (
-              <div className={`bg-black/60 backdrop-blur-md border border-white/10 ${textColorClass} px-1.5 py-0.5 rounded-md text-[10px] font-bold shadow-lg flex items-center gap-1`}>
-                 <span className="text-[8px] uppercase tracking-wide text-slate-300 font-medium">{badgeLabel}</span>
-                 <span className="text-white font-black">{item.rtScore}</span>
-              </div>
-          )}
-      </div>
 
-      {/* Content Body */}
-      <div className="p-3 sm:p-4 flex-grow flex flex-col rounded-b-xl justify-between">
-        
-        {/* Hidden on mobile, visible on desktop */}
-        <div className="hidden sm:block">
-            <div className="mb-3 flex flex-wrap gap-2 text-xs text-slate-400">
-               {item.type === MediaType.SERIES && ((item.seasons || 0) > 0 || (item.episodes || 0) > 0) && (
-                  <div className="flex items-center gap-1.5 bg-slate-900/50 px-2 py-1 rounded border border-slate-700/50">
-                     <Layers size={12} className="text-purple-400" />
-                     <span>{item.seasons} {t('seasons')}</span>
-                  </div>
-               )}
+            {/* Gradient Overlay for Text Visibility (Bottom) */}
+            <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none opacity-60" />
+
+            {/* Top Right: Context Menu Button (Stitch Style) */}
+            <div className="absolute top-2 right-2 z-20" ref={menuRef}>
+                <button 
+                    onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
+                    className="w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md flex items-center justify-center text-white border border-white/10 transition-colors"
+                >
+                    <MoreHorizontal size={16} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {isMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 glass-panel rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-200">
+                        <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                            <Heart size={14} className={item.isFavorite ? "fill-red-500 text-red-500" : ""} /> Favorit
+                        </button>
+                        <div className="h-px bg-white/5 my-1"></div>
+                        <button onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.TO_WATCH); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                            <Clock size={14} /> Planen
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.WATCHING); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                            <PlayCircle size={14} /> Schaue gerade
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.WATCHED); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                            <Check size={14} /> Gesehen
+                        </button>
+                        
+                        {customLists.length > 0 && (
+                            <>
+                                <div className="h-px bg-white/5 my-1"></div>
+                                <div className="px-3 py-1 text-[10px] text-slate-500 font-bold uppercase">Listen</div>
+                                {customLists.map(l => (
+                                    <button 
+                                        key={l.id}
+                                        onClick={(e) => { e.stopPropagation(); onAddToList && onAddToList(l.id, item.id); setIsMenuOpen(false); }} 
+                                        className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                                    >
+                                        <span className="truncate">{l.name}</span>
+                                        {l.items.includes(item.id) && <Check size={12} className="text-blue-400"/>}
+                                    </button>
+                                ))}
+                            </>
+                        )}
+                        
+                        <div className="h-px bg-white/5 my-1"></div>
+                        <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="w-full flex items-center gap-3 px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                            <Trash2 size={14} /> Entfernen
+                        </button>
+                    </div>
+                )}
             </div>
 
-            <p className="text-slate-400 text-sm line-clamp-3 mb-4">
-              {item.plot}
-            </p>
+            {/* Type Badge (Top Left) */}
+            <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-1.5">
+                {item.type === MediaType.MOVIE ? <Film size={10} className="text-blue-400"/> : <Tv size={10} className="text-purple-400"/>}
+                <span className="text-[10px] font-bold text-white uppercase tracking-wider">
+                    {item.type === MediaType.MOVIE ? 'Film' : 'TV'}
+                </span>
+            </div>
+
+            {/* Status Indicator (Bottom Right) */}
+            {item.status !== WatchStatus.TO_WATCH && (
+                <div className={`absolute bottom-2 right-2 p-1.5 rounded-full backdrop-blur-md border border-white/10 shadow-lg ${item.status === WatchStatus.WATCHED ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                    {item.status === WatchStatus.WATCHED ? <Check size={12} /> : <PlayCircle size={12} />}
+                </div>
+            )}
+            
+            {/* Rating Badge (Bottom Left - On Image) */}
+            {item.rating > 0 && (
+                 <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded border border-white/10">
+                    <Star size={10} className="fill-yellow-500 text-yellow-500" />
+                    <span className="font-bold text-white text-[10px]">{item.rating.toFixed(1)}</span>
+                </div>
+            )}
         </div>
 
-        {/* Compact Footer for Mobile */}
-        <div className="flex items-center justify-between border-t border-slate-700 pt-2 sm:pt-3 mt-auto">
-           <div className="flex gap-1">
-              <button 
-                onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.TO_WATCH); }}
-                className={`p-1.5 sm:p-2 rounded-lg hover:bg-slate-700 transition-colors ${item.status === WatchStatus.TO_WATCH ? 'text-yellow-400' : 'text-slate-500'}`}
-                title={t('planned')}
-              >
-                <Clock size={16} className="sm:w-[18px] sm:h-[18px]" />
-              </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.WATCHING); }}
-                className={`p-1.5 sm:p-2 rounded-lg hover:bg-slate-700 transition-colors ${item.status === WatchStatus.WATCHING ? 'text-blue-400' : 'text-slate-500'}`}
-                title={t('watching')}
-              >
-                <PlayCircle size={16} className="sm:w-[18px] sm:h-[18px]" />
-              </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.WATCHED); }}
-                className={`p-1.5 sm:p-2 rounded-lg hover:bg-slate-700 transition-colors ${item.status === WatchStatus.WATCHED ? 'text-green-400' : 'text-slate-500'}`}
-                title={t('seen')}
-              >
-                <Check size={16} className="sm:w-[18px] sm:h-[18px]" />
-              </button>
-           </div>
-           
-           <button 
-             onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
-             className="p-1.5 sm:p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-             title={t('remove')}
-           >
-             <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
-           </button>
+        {/* Info Section (Clean Text Below) */}
+        <div>
+            <h3 onClick={() => onClick(item)} className="font-bold text-white text-sm leading-tight line-clamp-1 hover:text-blue-400 transition-colors cursor-pointer mb-1" title={item.title}>
+                {item.title}
+            </h3>
+            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                <span>{item.year}</span>
+                <span>•</span>
+                <span className="truncate max-w-[120px]">{item.genre[0] || 'Unknown'}</span>
+                {item.userRating && item.userRating > 0 && (
+                     <>
+                        <span>•</span>
+                        <span className="text-yellow-500 font-bold">★ {item.userRating}</span>
+                     </>
+                )}
+            </div>
         </div>
-      </div>
     </div>
   );
 };

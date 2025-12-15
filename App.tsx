@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
@@ -18,22 +19,19 @@ import { CreateListModal } from './components/CreateListModal';
 import { ImportModal } from './components/ImportModal';
 import { RecoveryPage } from './components/RecoveryPage';
 import { PublicProfileModal } from './components/PublicProfileModal';
-import { SettingsModal } from './components/SettingsModal'; // IMPORT SETTINGS MODAL
+import { SettingsModal } from './components/SettingsModal';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes, updateMediaItemRtScore,
   fetchCustomLists, createCustomList, updateCustomListItems, deleteCustomList, shareCustomList
 } from './services/db';
-import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole } from './types';
+import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
 import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu } from 'lucide-react';
 
-// --- KONFIGURATION ---
-// TMDB & OMDb bleiben hier für einfaches Teilen "hardcoded".
-// Gemini Key MUSS leer bleiben (GitHub Security Scan!) und kommt über Vercel Env Vars.
 const FALLBACK_KEYS = {
     TMDB: "4115939bdc412c5f7b0c4598fcf29b77", 
     OMDB: "33df5dc9", 
-    GEMINI: "" // Zieht sich den Key aus process.env.API_KEY (Vercel)
+    GEMINI: "" 
 };
 
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
@@ -63,38 +61,34 @@ export default function App() {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [customLists, setCustomLists] = useState<CustomList[]>([]);
   
-  // Modals
+  // Filter State for "Pills"
+  const [typeFilter, setTypeFilter] = useState<'ALL' | MediaType>('ALL');
+  
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false); // NEW STATE FOR SETTINGS
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [viewingProfile, setViewingProfile] = useState<User | null>(null);
   
-  // Desktop Header Menu
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  // KEY MANAGEMENT: 
-  // Priority: 1. LocalStorage (User Override), 2. Environment (Vercel Default), 3. Hardcoded Fallback
   const [tmdbKey, setTmdbKey] = useState(() => localStorage.getItem('tmdb_api_key') || process.env.VITE_TMDB_API_KEY || FALLBACK_KEYS.TMDB || '');
   const [omdbKey, setOmdbKey] = useState(() => localStorage.getItem('omdb_api_key') || process.env.VITE_OMDB_API_KEY || FALLBACK_KEYS.OMDB || '');
   const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('cinelog_gemini_key') || process.env.API_KEY || FALLBACK_KEYS.GEMINI || '');
 
-  // SAFE DERIVED STATE (Moved to top level)
   const myLists = user ? customLists.filter(l => l.ownerId === user.id) : [];
   const sharedLists = user ? customLists.filter(l => l.sharedWith.includes(user.id)) : [];
 
-  // Effects
   useEffect(() => {
     if (user) {
       loadData();
     }
   }, [user]);
 
-  // Close profile menu on click outside
   useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
           if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
@@ -116,19 +110,18 @@ export default function App() {
   
   const handleAdd = async (result: SearchResult, status: WatchStatus = WatchStatus.TO_WATCH, isFav: boolean = false) => {
     if (!user) return;
-
     const existing = items.find(i => i.tmdbId === result.tmdbId && i.userId === user.id);
     if (existing) {
         alert("Bereits in deiner Sammlung!");
         return;
     }
-
     const newItem: MediaItem = {
         id: crypto.randomUUID(),
         userId: user.id,
         tmdbId: result.tmdbId,
         imdbId: result.imdbId,
         title: result.title,
+        originalTitle: result.originalTitle,
         year: result.year,
         type: result.type,
         genre: result.genre,
@@ -142,7 +135,6 @@ export default function App() {
         userRating: 0,
         userNotes: result.customNotes || '',
     };
-
     const saved = await addMediaItem(newItem, user.id);
     if (saved) {
         setItems(prev => [saved, ...prev]);
@@ -153,12 +145,10 @@ export default function App() {
       await updateMediaItemStatus(id, status);
       setItems(prev => prev.map(i => i.id === id ? { ...i, status } : i));
   };
-
   const handleRate = async (id: string, rating: number) => {
       await updateMediaItemRating(id, rating);
       setItems(prev => prev.map(i => i.id === id ? { ...i, userRating: rating } : i));
   };
-
   const handleToggleFavorite = async (id: string) => {
       const item = items.find(i => i.id === id);
       if (item) {
@@ -166,123 +156,104 @@ export default function App() {
           setItems(prev => prev.map(i => i.id === id ? { ...i, isFavorite: !i.isFavorite } : i));
       }
   };
-
   const handleDelete = async (id: string) => {
       if (!confirm("Wirklich löschen?")) return;
       await deleteMediaItem(id);
       setItems(prev => prev.filter(i => i.id !== id));
-      setCustomLists(prev => prev.map(l => ({
-          ...l,
-          items: l.items.filter(itemId => itemId !== id)
-      })));
+      setCustomLists(prev => prev.map(l => ({...l, items: l.items.filter(itemId => itemId !== id)})));
   };
-
   const handleUpdateNotes = async (id: string, notes: string) => {
       await updateMediaItemNotes(id, notes);
       setItems(prev => prev.map(i => i.id === id ? { ...i, userNotes: notes } : i));
   };
-  
   const handleUpdateRtScore = async (id: string, score: string) => {
       await updateMediaItemRtScore(id, score);
       setItems(prev => prev.map(i => i.id === id ? { ...i, rtScore: score } : i));
   };
-
   const handleCreateList = async (name: string) => {
       if (!user) return;
-      const newList: CustomList = {
-          id: '',
-          ownerId: user.id,
-          name,
-          createdAt: Date.now(),
-          items: [],
-          sharedWith: []
-      };
-      const created = await createCustomList(newList, user.id);
+      const created = await createCustomList({id: '', ownerId: user.id, name, createdAt: Date.now(), items: [], sharedWith: []}, user.id);
       if (created) setCustomLists(prev => [...prev, created]);
   };
-
   const handleDeleteList = async (id: string) => {
       if (!confirm(t('delete_list_confirm'))) return;
       await deleteCustomList(id);
       setCustomLists(prev => prev.filter(l => l.id !== id));
   };
-
   const handleAddToList = async (listId: string, itemId: string) => {
       const list = customLists.find(l => l.id === listId);
       if (!list) return;
-      
       let newItems = list.items || [];
-      if (newItems.includes(itemId)) {
-          newItems = newItems.filter(i => i !== itemId);
-      } else {
-          newItems = [...newItems, itemId];
-      }
-      
+      if (newItems.includes(itemId)) newItems = newItems.filter(i => i !== itemId);
+      else newItems = [...newItems, itemId];
       await updateCustomListItems(listId, newItems);
       setCustomLists(prev => prev.map(l => l.id === listId ? { ...l, items: newItems } : l));
   };
-
+  
   const handleShareList = async (listId: string, userIds: string[]) => {
       await shareCustomList(listId, userIds);
       setCustomLists(prev => prev.map(l => l.id === listId ? { ...l, sharedWith: userIds } : l));
   };
-  
-  // NEW: Centralized Key Save Handler
-  const handleSaveKeys = (keys: { tmdb: string, omdb: string, gemini: string }) => {
-      // Save to localStorage (empty string means delete/reset to env/fallback)
-      if (keys.tmdb) localStorage.setItem('tmdb_api_key', keys.tmdb);
-      else localStorage.removeItem('tmdb_api_key');
 
-      if (keys.omdb) localStorage.setItem('omdb_api_key', keys.omdb);
-      else localStorage.removeItem('omdb_api_key');
-
-      if (keys.gemini) localStorage.setItem('cinelog_gemini_key', keys.gemini);
-      else localStorage.removeItem('cinelog_gemini_key');
-
-      // Update State (Fallback chain: Local -> Env -> Hardcoded)
-      setTmdbKey(keys.tmdb || process.env.VITE_TMDB_API_KEY || FALLBACK_KEYS.TMDB || '');
-      setOmdbKey(keys.omdb || process.env.VITE_OMDB_API_KEY || FALLBACK_KEYS.OMDB || '');
-      setGeminiKey(keys.gemini || process.env.API_KEY || FALLBACK_KEYS.GEMINI || '');
+  const handleImport = async (results: SearchResult[]) => {
+      for (const res of results) {
+          await handleAdd(res, WatchStatus.TO_WATCH, false);
+      }
+      setIsImportOpen(false);
   };
 
-  const updateSingleKey = (keyName: 'tmdb_api_key', value: string) => {
-      // Compatibility for SearchModal
-      localStorage.setItem(keyName, value);
-      if (keyName === 'tmdb_api_key') setTmdbKey(value);
+  const handleSettingsSave = (keys: { tmdb: string, omdb: string, gemini: string }) => {
+      if (keys.tmdb) { localStorage.setItem('tmdb_api_key', keys.tmdb); setTmdbKey(keys.tmdb); }
+      if (keys.omdb) { localStorage.setItem('omdb_api_key', keys.omdb); setOmdbKey(keys.omdb); }
+      if (keys.gemini) { localStorage.setItem('cinelog_gemini_key', keys.gemini); setGeminiKey(keys.gemini); }
+      setIsSettingsOpen(false);
   };
 
-  const renderGrid = (filterStatus?: WatchStatus, filterListId?: string) => {
-      let filtered = items.filter(i => i.userId === user?.id);
+  if (isRecoveryMode) return <RecoveryPage />;
+  if (!user) return <AuthPage />;
+
+  const displayedItems = items.filter(i => {
+      // 1. Role Check (Only show own items, unless admin? No, personal collection only)
+      if (i.userId !== user.id) return false;
+      // 2. Type Filter
+      if (typeFilter !== 'ALL' && i.type !== typeFilter) return false;
+      return true;
+  });
+
+  const renderGrid = (statusFilter?: WatchStatus, listId?: string) => {
+      let filtered = displayedItems;
       
-      if (filterStatus) {
-          filtered = filtered.filter(i => i.status === filterStatus);
-      }
-      if (filterListId) {
-          const list = customLists.find(l => l.id === filterListId);
+      if (listId) {
+          const list = customLists.find(l => l.id === listId);
           if (list) {
-              filtered = items.filter(i => list.items.includes(i.id));
+             filtered = items.filter(i => list.items.includes(i.id));
+          } else {
+             filtered = [];
           }
-      }
-      if (location.pathname === '/favorites') {
+      } else if (statusFilter) {
+          filtered = filtered.filter(i => i.status === statusFilter);
+      } else if (location.pathname === '/favorites') {
           filtered = filtered.filter(i => i.isFavorite);
+      } else if (location.pathname === '/') {
+          // Dashboard: Show everything (filtered by Pills)
+          // No additional filter needed
       }
 
+      // Default Sort (Date Added DESC)
       filtered.sort((a, b) => b.addedAt - a.addedAt);
 
       if (filtered.length === 0) {
           return (
-              <div className="flex flex-col items-center justify-center py-20 text-slate-500 opacity-60">
-                  <Ghost size={64} className="mb-4"/>
+              <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                  <Clapperboard size={48} className="mb-4 opacity-20" />
                   <p>{t('empty_state')}</p>
-                  <button onClick={() => setIsSearchOpen(true)} className="mt-4 text-cyan-400 hover:text-cyan-300 font-bold">
-                      {t('empty_action')}
-                  </button>
+                  <button onClick={() => setIsSearchOpen(true)} className="mt-4 text-cyan-500 hover:underline">{t('empty_action')}</button>
               </div>
           );
       }
 
       return (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 pb-20 md:pb-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 relative z-10">
               {filtered.map(item => (
                   <MediaCard 
                       key={item.id} 
@@ -292,7 +263,7 @@ export default function App() {
                       onToggleFavorite={handleToggleFavorite}
                       onRate={handleRate}
                       onClick={setSelectedItem}
-                      customLists={customLists.filter(l => l.ownerId === user?.id)}
+                      customLists={myLists}
                       onAddToList={handleAddToList}
                   />
               ))}
@@ -300,366 +271,276 @@ export default function App() {
       );
   };
 
-  if (isRecoveryMode) return <RecoveryPage />;
-  if (!user) return <AuthPage />;
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500/30">
-      
-      {/* DESKTOP SIDEBAR */}
-      <aside className="fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800 hidden md:flex flex-col z-30">
-        <div className="p-6">
-           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-2">
-              <Clapperboard className="text-cyan-400" /> InFocus CineLog
-           </h1>
+    <div className={`min-h-screen bg-[#0B0E14] text-slate-200 pb-20 md:pb-0 font-sans selection:bg-cyan-500/30 relative overflow-hidden`}>
+        {/* Subtle Ambient Background for Main App (Matches AuthPage vibe but darker) */}
+        <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+             <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-900/5 rounded-full blur-[120px]"></div>
+             <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-900/5 rounded-full blur-[120px]"></div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
-            <div onClick={() => navigate('/')} className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-colors ${location.pathname === '/' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`}>
-                <LayoutDashboard size={20} />
-                <span className="font-medium">{t('collection')}</span>
-            </div>
-            <div onClick={() => navigate('/watchlist')} className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-colors ${location.pathname === '/watchlist' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`}>
-                <List size={20} />
-                <span className="font-medium">{t('watchlist')}</span>
-            </div>
-            <div onClick={() => navigate('/favorites')} className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-colors ${location.pathname === '/favorites' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`}>
-                <Heart size={20} />
-                <span className="font-medium">{t('favorites')}</span>
-            </div>
-
-            <div className="pt-6 pb-2 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider flex justify-between items-center">
-                <span>{t('my_lists')}</span>
-                <button onClick={() => setIsCreateListOpen(true)} className="hover:text-white"><Plus size={14}/></button>
-            </div>
-            {myLists.map(list => (
-                <div key={list.id} className="group flex items-center justify-between px-4 py-2 rounded-xl text-slate-400 hover:bg-slate-800/50 cursor-pointer">
-                    <span onClick={() => navigate(`/list/${list.id}`)} className="truncate flex-grow">{list.name}</span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100">
-                        <Settings size={14} onClick={() => setSharingList(list)} className="hover:text-cyan-400" />
-                        <X size={14} onClick={() => handleDeleteList(list.id)} className="hover:text-red-400" />
+        {/* HEADER */}
+        <header className="sticky top-0 z-30 bg-[#0B0E14]/80 backdrop-blur-md border-b border-white/5 px-4 md:px-8 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-6">
+                <div onClick={() => navigate('/')} className="flex items-center gap-2 cursor-pointer group">
+                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-900/40 group-hover:scale-105 transition-transform">
+                        <Clapperboard size={18} className="text-white" />
                     </div>
+                    <span className="font-bold text-xl tracking-tight text-white hidden md:block">
+                        Cine<span className="text-cyan-400">Log</span>
+                    </span>
                 </div>
-            ))}
-            {sharedLists.length > 0 && (
-                <>
-                    <div className="pt-6 pb-2 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider">{t('shared_with')}</div>
-                    {sharedLists.map(list => (
-                         <div key={list.id} onClick={() => navigate(`/list/${list.id}`)} className="px-4 py-2 rounded-xl text-slate-400 hover:bg-slate-800/50 cursor-pointer flex items-center gap-2">
-                             <UserIcon size={14}/> <span className="truncate">{list.name}</span>
-                         </div>
-                    ))}
-                </>
-            )}
 
-            {(user.role === UserRole.ADMIN || user.role === UserRole.MANAGER) && (
-                 <div onClick={() => navigate('/users')} className={`mt-6 flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-colors ${location.pathname === '/users' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'}`}>
-                    <UserIcon size={20} />
-                    <span className="font-medium">{t('manage_users')}</span>
-                </div>
-            )}
-        </nav>
-
-        <AiRecommendationButton 
-            items={items.filter(i => i.userId === user.id)}
-            onAdd={handleAdd}
-            apiKey={tmdbKey}
-        />
-
-        {/* SIDEBAR FOOTER (Small) */}
-        <div className="p-4 border-t border-slate-800">
-            <button onClick={() => navigate('/profile')} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800 cursor-pointer w-full text-left">
-                <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden">
-                    {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon className="p-1 text-slate-400"/>}
-                </div>
-                <div className="flex-grow overflow-hidden">
-                    <div className="text-sm font-bold text-white truncate">{user.username}</div>
-                    <div className="text-xs text-slate-500 truncate">{user.email}</div>
-                </div>
-            </button>
-        </div>
-      </aside>
-
-      {/* MAIN CONTENT AREA */}
-      <main className="md:ml-64 p-4 md:p-8 min-h-screen">
-        
-        {/* MOBILE HEADER */}
-        <div className="md:hidden flex justify-between items-center mb-6">
-             <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400 flex items-center gap-2">
-                <Clapperboard className="text-cyan-400" size={24} /> InFocus CineLog
-             </h1>
-             <div className="flex gap-4">
-                <button onClick={() => setIsSearchOpen(true)} className="text-white"><Search size={24}/></button>
-                <div onClick={() => setIsMobileMenuOpen(true)} className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden border border-slate-600">
-                    {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon className="p-1 text-slate-400" />}
-                </div>
-             </div>
-        </div>
-
-        {/* DESKTOP HEADER WITH PROFILE MENU */}
-        <div className="hidden md:flex justify-between items-center mb-8">
-            <div className="flex items-center gap-4">
-                 <button 
-                    onClick={() => setIsSearchOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl shadow-lg shadow-cyan-900/20 transition-all hover:scale-105 font-medium"
-                 >
-                    <Plus size={18} /> {t('add_button')}
-                 </button>
-                 <button 
-                    onClick={() => setIsImportOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition-all font-medium"
-                 >
-                    <Download size={18} /> Import
-                 </button>
+                {/* Desktop Nav */}
+                <nav className="hidden md:flex items-center gap-1">
+                    <button onClick={() => navigate('/')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${location.pathname === '/' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('overview')}</button>
+                    <button onClick={() => navigate('/watchlist')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${location.pathname === '/watchlist' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('watchlist')}</button>
+                    <button onClick={() => navigate('/favorites')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${location.pathname === '/favorites' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('favorites')}</button>
+                </nav>
             </div>
 
-            {/* Top Right Profile Dropdown */}
-            <div className="relative" ref={profileMenuRef}>
-                <button 
-                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                    className="flex items-center gap-3 bg-slate-800 hover:bg-slate-700 rounded-full pl-4 pr-2 py-1.5 border border-slate-700 transition-colors"
-                >
-                    <span className="text-sm font-bold text-white">{user.username}</span>
-                    <div className="w-8 h-8 rounded-full bg-slate-600 overflow-hidden">
-                        {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon className="p-1 text-slate-400" />}
-                    </div>
-                    <ChevronDown size={16} className="text-slate-400" />
+            <div className="flex items-center gap-3">
+                {/* Search Trigger */}
+                <button onClick={() => setIsSearchOpen(true)} className="p-2 rounded-full hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
+                    <Search size={20} />
                 </button>
 
-                {isProfileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 overflow-hidden animate-in fade-in zoom-in-95 z-50">
-                        <div className="p-3 border-b border-slate-700">
-                            <p className="text-xs text-slate-500 uppercase font-bold">Account</p>
-                            <p className="text-sm text-white truncate">{user.email}</p>
+                {/* Profile Menu */}
+                <div className="relative" ref={profileMenuRef}>
+                    <button 
+                        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                        className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
+                    >
+                        <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden border border-slate-600">
+                             {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon size={16} className="text-slate-400 m-auto mt-2"/>}
                         </div>
-                        <div className="p-2">
-                            <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg">
+                        <ChevronDown size={14} className="text-slate-500 mr-1" />
+                    </button>
+
+                    {isProfileMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="px-4 py-3 border-b border-white/5 mb-1">
+                                <p className="text-sm font-bold text-white truncate">{user.username}</p>
+                                <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                            </div>
+                            
+                            <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
                                 <UserIcon size={16} /> {t('profile')}
                             </button>
-                            {/* FIXED: Open Modal instead of prompt */}
-                            <button onClick={() => { 
-                                 setIsSettingsOpen(true);
-                                 setIsProfileMenuOpen(false);
-                            }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg">
-                                <Settings size={16} /> API Keys
+                            
+                            {(user.role === UserRole.ADMIN || user.role === UserRole.MANAGER) && (
+                                <button onClick={() => { navigate('/users'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
+                                    <List size={16} /> {t('user_management')}
+                                </button>
+                            )}
+
+                            <button onClick={() => { setIsSettingsOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
+                                <Settings size={16} /> {t('settings')}
                             </button>
-                            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 rounded-lg">
-                                {theme === 'dark' ? <Moon size={16}/> : <Sun size={16}/>} Theme: {theme}
+                             <button onClick={() => { setIsImportOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
+                                <Download size={16} /> {t('smart_import')}
                             </button>
-                        </div>
-                        <div className="p-2 border-t border-slate-700">
-                            <button onClick={() => { logout(); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg">
+
+                            <div className="h-px bg-white/5 my-1"></div>
+                            
+                             <button onClick={() => { logout(); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2">
                                 <LogOut size={16} /> {t('logout')}
                             </button>
                         </div>
-                    </div>
-                )}
-            </div>
-        </div>
-
-        {/* STATS COMPONENT */}
-        {location.pathname === '/' && <Stats items={items.filter(i => i.userId === user?.id)} />}
-
-        <Routes>
-          <Route path="/" element={renderGrid()} />
-          <Route path="/watchlist" element={renderGrid(WatchStatus.TO_WATCH)} />
-          <Route path="/favorites" element={renderGrid()} />
-          <Route path="/profile" element={<ProfilePage items={items.filter(i => i.userId === user?.id)} />} />
-          <Route path="/users" element={<UserManagementPage />} />
-          <Route path="/list/:id" element={<ListRoute customLists={customLists} renderGrid={renderGrid} />} />
-        </Routes>
-      </main>
-
-      {/* MOBILE BOTTOM NAV */}
-      <MobileNav 
-        onSearchClick={() => setIsSearchOpen(true)} 
-        onListsClick={() => setIsMobileMenuOpen(true)}
-      />
-      
-      {/* MOBILE MENU OVERLAY (INLINED) */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[60] flex flex-col justify-end md:hidden">
-            {/* Backdrop */}
-            <div 
-                className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200"
-                onClick={() => setIsMobileMenuOpen(false)}
-            ></div>
-            
-            {/* Sheet */}
-            <div className="relative bg-slate-900 border-t border-slate-700 rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-300 max-h-[85vh] overflow-y-auto custom-scrollbar pb-safe">
-                <div className="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-6"></div>
-                
-                <div className="space-y-6">
-                    {/* User Profile Section */}
-                    <div className="flex items-center gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50" onClick={() => { navigate('/profile'); setIsMobileMenuOpen(false); }}>
-                        <div className="w-12 h-12 rounded-full bg-slate-700 overflow-hidden border border-slate-600">
-                            {user?.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon className="p-2 text-slate-400 w-full h-full"/>}
-                        </div>
-                        <div className="flex-grow">
-                            <h3 className="text-white font-bold text-lg">{user?.username}</h3>
-                            <p className="text-slate-400 text-sm">{user?.email}</p>
-                        </div>
-                        <Settings size={20} className="text-slate-500" />
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <button onClick={() => { setIsImportOpen(true); setIsMobileMenuOpen(false); }} className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-800 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors">
-                            <Download size={24} className="text-cyan-400" />
-                            <span className="text-xs font-bold">Import</span>
-                        </button>
-                        {/* FIXED: Open Modal here too */}
-                        <button onClick={() => { 
-                             setIsSettingsOpen(true);
-                             setIsMobileMenuOpen(false);
-                        }} className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-800 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors">
-                             <Settings size={24} className="text-purple-400" />
-                             <span className="text-xs font-bold">API Keys</span>
-                        </button>
-                    </div>
-
-                    {/* Lists Section */}
-                    <div>
-                        <div className="flex justify-between items-center mb-3">
-                            <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">{t('my_lists')}</h4>
-                            <button onClick={() => { setIsCreateListOpen(true); setIsMobileMenuOpen(false); }} className="bg-slate-800 p-1.5 rounded-lg text-slate-400 hover:text-white"><Plus size={16}/></button>
-                        </div>
-                        <div className="space-y-2">
-                            {myLists.length === 0 ? (
-                                <div className="text-center py-4 text-slate-600 text-sm italic border border-dashed border-slate-800 rounded-xl">Keine Listen vorhanden</div>
-                            ) : (
-                                myLists.map(list => (
-                                    <div key={list.id} className="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700" onClick={() => { navigate(`/list/${list.id}`); setIsMobileMenuOpen(false); }}>
-                                        <span className="text-slate-200 font-medium">{list.name}</span>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs text-slate-500 bg-slate-900 px-2 py-0.5 rounded-full">{list.items.length}</span>
-                                            <Settings size={16} className="text-slate-500" onClick={(e) => { e.stopPropagation(); setSharingList(list); setIsMobileMenuOpen(false); }} />
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                    
-                    {/* Shared Lists */}
-                    {sharedLists.length > 0 && (
-                        <div>
-                             <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">{t('shared_with')}</h4>
-                             <div className="space-y-2">
-                                {sharedLists.map(list => (
-                                    <div key={list.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl border border-slate-700/50" onClick={() => { navigate(`/list/${list.id}`); setIsMobileMenuOpen(false); }}>
-                                        <div className="flex items-center gap-2">
-                                            <UserIcon size={14} className="text-cyan-400"/>
-                                            <span className="text-slate-300 font-medium">{list.name}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                             </div>
-                        </div>
                     )}
-
-                    {/* Admin Links */}
-                    {(user?.role === UserRole.ADMIN || user?.role === UserRole.MANAGER) && (
-                         <button 
-                            onClick={() => { navigate('/users'); setIsMobileMenuOpen(false); }}
-                            className="w-full flex items-center gap-3 p-4 bg-indigo-900/20 border border-indigo-500/30 rounded-xl text-indigo-300"
-                        >
-                            <UserIcon size={20} />
-                            <span className="font-bold">{t('manage_users')}</span>
-                         </button>
-                    )}
-
-                    {/* Theme & Logout */}
-                    <div className="flex items-center gap-4 pt-4 border-t border-slate-800">
-                        <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex-1 py-3 bg-slate-800 rounded-xl text-slate-300 flex items-center justify-center gap-2">
-                            {theme === 'dark' ? <Moon size={18}/> : <Sun size={18}/>}
-                            <span>{theme === 'dark' ? 'Dark' : 'Light'}</span>
-                        </button>
-                        <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="flex-1 py-3 bg-red-900/20 text-red-400 rounded-xl flex items-center justify-center gap-2 border border-red-900/30">
-                            <LogOut size={18}/>
-                            <span>{t('logout')}</span>
-                        </button>
-                    </div>
                 </div>
             </div>
+        </header>
+
+        {/* MAIN LAYOUT */}
+        <div className="flex max-w-[1600px] mx-auto relative z-10">
+            {/* Sidebar (Desktop) */}
+            <aside className="hidden md:flex w-64 flex-col fixed left-0 top-16 bottom-0 border-r border-white/5 bg-[#0B0E14]/50 backdrop-blur-sm overflow-y-auto custom-scrollbar">
+                
+                <div className="p-4">
+                    <button onClick={() => setIsSearchOpen(true)} className="w-full flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-lg shadow-cyan-900/20 mb-6">
+                        <Plus size={20} /> {t('add_button')}
+                    </button>
+                    
+                    <div className="mb-6">
+                        <h3 className="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('my_lists')}</h3>
+                        <div className="space-y-1">
+                            {myLists.length === 0 && <p className="px-3 text-sm text-slate-600 italic">Keine Listen</p>}
+                            {myLists.map(l => (
+                                <div key={l.id} className="group flex items-center justify-between pr-2 rounded-lg hover:bg-white/5 transition-colors">
+                                    <button 
+                                        onClick={() => navigate(`/list/${l.id}`)}
+                                        className={`flex-grow text-left px-3 py-2 text-sm font-medium truncate ${location.pathname === `/list/${l.id}` ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}
+                                    >
+                                        {l.name}
+                                    </button>
+                                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
+                                        <button onClick={(e) => { e.stopPropagation(); setSharingList(l); }} className="p-1 text-slate-500 hover:text-cyan-400"><LayoutDashboard size={12}/></button>
+                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteList(l.id); }} className="p-1 text-slate-500 hover:text-red-400"><X size={12}/></button>
+                                    </div>
+                                </div>
+                            ))}
+                            <button onClick={() => setIsCreateListOpen(true)} className="w-full text-left px-3 py-2 text-sm text-cyan-500 hover:text-cyan-400 font-medium flex items-center gap-2 mt-2">
+                                <Plus size={14} /> {t('create_list')}
+                            </button>
+                        </div>
+                    </div>
+
+                    {sharedLists.length > 0 && (
+                         <div className="mb-6">
+                            <h3 className="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('shared_with')}</h3>
+                            <div className="space-y-1">
+                                {sharedLists.map(l => (
+                                    <button 
+                                        key={l.id}
+                                        onClick={() => navigate(`/list/${l.id}`)}
+                                        className={`w-full text-left px-3 py-2 text-sm font-medium truncate rounded-lg transition-colors ${location.pathname === `/list/${l.id}` ? 'bg-white/5 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}`}
+                                    >
+                                        {l.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* AI Button Sidebar Location */}
+                <AiRecommendationButton items={items} onAdd={handleAdd} apiKey={tmdbKey} />
+            </aside>
+
+            {/* Content Area */}
+            <main className="flex-grow md:pl-64 p-4 md:p-8 min-h-[calc(100vh-64px)]">
+                {/* Stats Widget (Only on Home) */}
+                {location.pathname === '/' && <Stats items={displayedItems} />}
+
+                {/* Type Filters (Pills) */}
+                {(location.pathname === '/' || location.pathname === '/watchlist' || location.pathname === '/favorites' || location.pathname.startsWith('/list/')) && (
+                     <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+                        <button 
+                            onClick={() => setTypeFilter('ALL')}
+                            className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap ${typeFilter === 'ALL' ? 'bg-white text-black border-white' : 'bg-transparent text-slate-400 border-slate-700 hover:border-slate-500'}`}
+                        >
+                            ALL
+                        </button>
+                        <button 
+                            onClick={() => setTypeFilter(MediaType.MOVIE)}
+                            className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap flex items-center gap-2 ${typeFilter === MediaType.MOVIE ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50' : 'bg-transparent text-slate-400 border-slate-700 hover:border-slate-500'}`}
+                        >
+                            <span className={`w-2 h-2 rounded-full ${typeFilter === MediaType.MOVIE ? 'bg-cyan-400' : 'bg-slate-500'}`}></span> MOVIES
+                        </button>
+                        <button 
+                            onClick={() => setTypeFilter(MediaType.SERIES)}
+                            className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all whitespace-nowrap flex items-center gap-2 ${typeFilter === MediaType.SERIES ? 'bg-purple-500/20 text-purple-400 border-purple-500/50' : 'bg-transparent text-slate-400 border-slate-700 hover:border-slate-500'}`}
+                        >
+                            <span className={`w-2 h-2 rounded-full ${typeFilter === MediaType.SERIES ? 'bg-purple-400' : 'bg-slate-500'}`}></span> SERIES
+                        </button>
+                    </div>
+                )}
+
+                <Routes>
+                    <Route path="/" element={
+                        <div>
+                            <div className="mb-6">
+                                <h2 className="text-2xl font-bold text-white">{t('collection')}</h2>
+                                <p className="text-slate-400">{t('collection_sub')}</p>
+                            </div>
+                            {renderGrid()}
+                        </div>
+                    } />
+                    <Route path="/watchlist" element={
+                        <div>
+                             <div className="mb-6">
+                                <h2 className="text-2xl font-bold text-white">{t('watchlist')}</h2>
+                            </div>
+                            {renderGrid(WatchStatus.TO_WATCH)}
+                        </div>
+                    } />
+                    <Route path="/favorites" element={
+                        <div>
+                             <div className="mb-6">
+                                <h2 className="text-2xl font-bold text-white">{t('favorites')}</h2>
+                            </div>
+                            {renderGrid()}
+                        </div>
+                    } />
+                    <Route path="/list/:id" element={<ListRoute customLists={customLists} renderGrid={renderGrid} />} />
+                    <Route path="/profile" element={<ProfilePage items={items.filter(i => i.userId === user.id)} />} />
+                    <Route path="/users" element={<UserManagementPage />} />
+                </Routes>
+            </main>
         </div>
-      )}
-      
-      {/* OTHER COMPONENTS */}
-      <ChatBot items={items.filter(i => i.userId === user.id)} />
-      
-      <AiRecommendationButton 
-        items={items.filter(i => i.userId === user.id)}
-        onAdd={handleAdd}
-        apiKey={tmdbKey}
-        mobileFabOnly={true}
-      />
 
-      <SearchModal 
-        isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)}
-        onAdd={handleAdd}
-        apiKey={tmdbKey}
-        onUpdateApiKey={(key) => updateSingleKey('tmdb_api_key', key)} 
-      />
-      
-      {/* SETTINGS MODAL: Passed both local value and save handler */}
-      <SettingsModal 
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        tmdbKey={localStorage.getItem('tmdb_api_key') || ''}
-        omdbKey={localStorage.getItem('omdb_api_key') || ''}
-        geminiKey={localStorage.getItem('cinelog_gemini_key') || ''}
-        onSave={handleSaveKeys}
-      />
-      
-      <ImportModal 
-        isOpen={isImportOpen}
-        onClose={() => setIsImportOpen(false)}
-        onImport={(results) => {
-            results.forEach(r => handleAdd(r, WatchStatus.TO_WATCH));
-        }}
-        apiKey={tmdbKey}
-        omdbApiKey={omdbKey}
-      />
+        {/* Floating Elements & Modals */}
+        <ChatBot items={items.filter(i => i.userId === user.id)} />
+        {/* Mobile AI Fab */}
+        <AiRecommendationButton items={items} onAdd={handleAdd} apiKey={tmdbKey} mobileFabOnly={true} />
+        <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsCreateListOpen(true)} />
 
-      <CreateListModal 
-        isOpen={isCreateListOpen}
-        onClose={() => setIsCreateListOpen(false)}
-        onCreate={handleCreateList}
-      />
-
-      {sharingList && (
-          <ShareModal 
-            isOpen={!!sharingList}
-            onClose={() => setSharingList(null)}
-            list={sharingList}
-            onShare={handleShareList}
-          />
-      )}
-
-      {selectedItem && (
-          <DetailView 
-            item={selectedItem}
-            isExisting={true}
-            onClose={() => setSelectedItem(null)}
+        <SearchModal 
+            isOpen={isSearchOpen} 
+            onClose={() => setIsSearchOpen(false)} 
+            onAdd={handleAdd} 
+            apiKey={tmdbKey}
+            onUpdateApiKey={(key) => {
+                localStorage.setItem('tmdb_api_key', key);
+                setTmdbKey(key);
+            }} 
+        />
+        
+        <ImportModal 
+            isOpen={isImportOpen} 
+            onClose={() => setIsImportOpen(false)} 
+            onImport={handleImport}
             apiKey={tmdbKey}
             omdbApiKey={omdbKey}
-            onUpdateStatus={handleUpdateStatus}
-            onToggleFavorite={handleToggleFavorite}
-            onUpdateNotes={handleUpdateNotes}
-            onUpdateRtScore={handleUpdateRtScore}
-          />
-      )}
-      
-      {viewingProfile && (
-          <PublicProfileModal 
-            user={viewingProfile}
-            onClose={() => setViewingProfile(null)}
-            allLists={customLists}
-            allItems={items}
-          />
-      )}
+        />
+
+        <CreateListModal 
+            isOpen={isCreateListOpen} 
+            onClose={() => setIsCreateListOpen(false)} 
+            onCreate={handleCreateList} 
+        />
+        
+        {sharingList && (
+            <ShareModal 
+                isOpen={!!sharingList} 
+                onClose={() => setSharingList(null)} 
+                list={sharingList}
+                onShare={handleShareList}
+            />
+        )}
+
+        <SettingsModal 
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            tmdbKey={tmdbKey}
+            omdbKey={omdbKey}
+            geminiKey={geminiKey}
+            onSave={handleSettingsSave}
+        />
+
+        {selectedItem && (
+            <DetailView 
+                item={selectedItem}
+                isExisting={true}
+                onClose={() => setSelectedItem(null)}
+                apiKey={tmdbKey}
+                omdbApiKey={omdbKey}
+                onUpdateStatus={handleUpdateStatus}
+                onToggleFavorite={handleToggleFavorite}
+                onUpdateNotes={handleUpdateNotes}
+                onUpdateRtScore={handleUpdateRtScore}
+            />
+        )}
+
+        {viewingProfile && (
+            <PublicProfileModal 
+                user={viewingProfile}
+                allLists={customLists}
+                allItems={items}
+                onClose={() => setViewingProfile(null)}
+            />
+        )}
     </div>
   );
 }

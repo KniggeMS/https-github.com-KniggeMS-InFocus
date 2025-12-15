@@ -43,6 +43,7 @@ export const searchTMDB = async (query: string, apiKey: string, year?: string): 
       .map((item: any) => ({
         tmdbId: item.id,
         title: item.title || item.name,
+        originalTitle: item.original_title || item.original_name,
         year: new Date(item.release_date || item.first_air_date || Date.now()).getFullYear() || 0,
         type: item.media_type === 'tv' ? MediaType.SERIES : MediaType.MOVIE,
         genre: mapGenres(item.genre_ids),
@@ -84,6 +85,7 @@ export const findByExternalId = async (externalId: string, apiKey: string): Prom
             tmdbId: item.id,
             imdbId: externalId,
             title: item.title || item.name,
+            originalTitle: item.original_title || item.original_name,
             year: new Date(item.release_date || item.first_air_date || Date.now()).getFullYear() || 0,
             type: isTv ? MediaType.SERIES : MediaType.MOVIE,
             genre: mapGenres(item.genre_ids),
@@ -110,6 +112,7 @@ export const getTMDBTrending = async (apiKey: string): Promise<SearchResult[]> =
       .map((item: any) => ({
         tmdbId: item.id,
         title: item.title || item.name,
+        originalTitle: item.original_title || item.original_name,
         year: new Date(item.release_date || item.first_air_date || Date.now()).getFullYear() || 0,
         type: item.media_type === 'tv' ? MediaType.SERIES : MediaType.MOVIE,
         genre: mapGenres(item.genre_ids),

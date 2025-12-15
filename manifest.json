@@ -1,12 +1,11 @@
-
 {
   "name": "InFocus CineLog",
   "short_name": "InFocus",
   "description": "Deine moderne Watchlist für Filme und Serien.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#0B0E14",
+  "theme_color": "#0B0E14",
   "orientation": "portrait-primary",
   "icons": [
     {

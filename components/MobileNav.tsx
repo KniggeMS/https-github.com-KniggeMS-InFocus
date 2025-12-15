@@ -11,53 +11,53 @@ interface MobileNavProps {
 
 export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick, onListsClick, hasNotification }) => {
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-xl border-t border-white/5 pb-safe z-40 shadow-[0_-10px_30px_-5px_rgba(0,0,0,0.5)]">
-      <div className="flex justify-around items-center h-16 px-2">
+    <div className="md:hidden fixed bottom-4 left-4 right-4 glass-panel pb-1 pt-1 z-40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] rounded-2xl animate-in slide-in-from-bottom-10 duration-500">
+      <div className="flex justify-around items-center h-14 px-2">
         <NavLink 
           to="/" 
           className={({ isActive }) => 
-            `flex flex-col items-center justify-center w-16 h-full space-y-1 transition-colors active:scale-90 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`
+            `flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all ${isActive ? 'bg-white/10 text-white shadow-inner' : 'text-slate-500 hover:text-slate-300'}`
           }
         >
-          <LayoutDashboard size={22} />
+          <LayoutDashboard size={20} />
         </NavLink>
         
         <NavLink 
           to="/watchlist" 
           className={({ isActive }) => 
-            `flex flex-col items-center justify-center w-16 h-full space-y-1 transition-colors active:scale-90 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`
+            `flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all ${isActive ? 'bg-white/10 text-white shadow-inner' : 'text-slate-500 hover:text-slate-300'}`
           }
         >
-          <MonitorPlay size={22} />
+          <MonitorPlay size={20} />
         </NavLink>
 
-        {/* Search Button (Floating Action Style) */}
-        <div className="relative -top-6">
+        {/* Search Button (Floating Action Style - Clean) */}
+        <div className="relative -top-8">
             <button 
                 onClick={onSearchClick}
-                className="w-14 h-14 bg-gradient-to-b from-cyan-500 to-cyan-700 rounded-full flex items-center justify-center text-white shadow-lg shadow-cyan-900/60 border-4 border-slate-900 active:scale-95 transition-transform"
+                className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl rotate-45 flex items-center justify-center text-white shadow-lg shadow-cyan-900/50 border-4 border-[#0B0E14] active:scale-95 transition-transform group"
             >
-                <Search size={24} />
+                <Search size={24} className="-rotate-45 group-hover:scale-110 transition-transform" />
             </button>
         </div>
 
         <NavLink 
           to="/favorites" 
           className={({ isActive }) => 
-            `flex flex-col items-center justify-center w-16 h-full space-y-1 transition-colors active:scale-90 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`
+            `flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all ${isActive ? 'bg-white/10 text-white shadow-inner' : 'text-slate-500 hover:text-slate-300'}`
           }
         >
-          <Heart size={22} />
+          <Heart size={20} />
         </NavLink>
 
-        {/* Menu for Custom Lists (Open Drawer) */}
+        {/* Menu for Custom Lists */}
         <button 
             onClick={onListsClick}
-            className="flex flex-col items-center justify-center w-16 h-full space-y-1 text-slate-500 active:scale-90 transition-transform relative"
+            className="flex flex-col items-center justify-center w-10 h-10 rounded-xl text-slate-500 hover:text-slate-300 active:scale-90 transition-transform relative"
         >
-          <List size={22} className={hasNotification ? 'text-cyan-400' : ''} />
+          <List size={20} className={hasNotification ? 'text-white' : ''} />
           {hasNotification && (
-              <span className="absolute top-3 right-4 w-2.5 h-2.5 bg-cyan-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
+              <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border border-slate-900 animate-pulse"></span>
           )}
         </button>
       </div>

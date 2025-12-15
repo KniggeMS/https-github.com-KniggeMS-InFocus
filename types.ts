@@ -111,6 +111,7 @@ export interface SearchResult {
   tmdbId?: number;
   imdbId?: string; // New: Support for OMDb matches
   title: string;
+  originalTitle?: string; // Added: For mapping to MediaItem
   year: number;
   type: MediaType;
   genre: string[];
