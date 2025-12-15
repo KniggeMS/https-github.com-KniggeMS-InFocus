@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.22
+**Version:** 1.9.23
 
 ---
 
@@ -97,7 +97,8 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-031** | Strategic | **Security** | **Client-Side Direct Architecture:** Bestätigung der Architektur-Entscheidung. Keys können via `vite.config.ts` injiziert werden (für Convenience) oder manuell eingegeben werden (für Flexibilität). Doku angepasst. | ✅ Done |
 | **RFC-032** | Minor | **UX / Cleanup** | **Avatar Modernization:** Entfernung der `js-md5` Abhängigkeit und des Gravatar-Fallbacks. Standardisierung auf die farbenfrohen DiceBear "Adventurer" Avatare für ein lebendigeres UI und schlankeren Code. | ✅ Done |
 | **RFC-033** | Feature | **Config / Ops** | **Hardcoded Key Fallback:** Implementierung eines `FALLBACK_KEYS` Objekts in `App.tsx`. Ermöglicht Entwicklern das direkte Eintragen von API Keys im Quellcode, um die App ohne Environment Variables (Vercel) oder manuelle Eingabe durch Endnutzer zu betreiben. | ✅ Done |
+| **RFC-034** | Standard | **UI / Design** | **Stitch Design Finalization:** Korrektur der `AuthPage.tsx` (Cut-off Fix), Synchronisierung der `manifest.json` Farben (#0B0E14) und globale CSS-Anpassungen (Selection Color) für konsistenten Look. | ✅ Done |
 
 ---
 
-*Dokumentation aktualisiert: Version 1.9.22*
+*Dokumentation aktualisiert: Version 1.9.23*
