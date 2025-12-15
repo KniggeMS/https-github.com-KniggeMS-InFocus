@@ -193,11 +193,11 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
       </div>
 
       {/* CHART BODY */}
-      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isExpanded ? 'h-80 sm:h-80 mt-8 opacity-100' : 'h-0 opacity-0'}`}>
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isExpanded ? 'h-80 sm:h-[22rem] mt-8 opacity-100' : 'h-0 opacity-0'}`}>
         <div className="flex flex-col sm:flex-row h-full items-center gap-8 md:gap-16 justify-center">
             
             {/* CHART AREA with CENTER INFO */}
-            <div className="relative w-64 h-64 sm:w-72 sm:h-72 flex-shrink-0">
+            <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
@@ -234,7 +234,7 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
                     <span className="text-sm uppercase font-bold text-slate-400 tracking-widest mt-2">
                         {centerLabel}
                     </span>
-                    <div className={`mt-3 px-3 py-1 rounded-md text-sm font-bold border transition-colors max-w-[90%] truncate ${activeItem ? 'bg-slate-700/80 border-slate-600 text-cyan-400' : 'bg-transparent border-transparent text-slate-500'}`}>
+                    <div className={`mt-3 px-4 py-1.5 rounded-md text-sm font-bold border transition-colors max-w-[90%] truncate ${activeItem ? 'bg-slate-700/80 border-slate-600 text-cyan-400' : 'bg-transparent border-transparent text-slate-500'}`}>
                         {centerContext}
                     </div>
                 </div>

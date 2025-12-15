@@ -286,7 +286,8 @@ export default function App() {
                     <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-900/40 group-hover:scale-105 transition-transform">
                         <Clapperboard size={18} className="text-white" />
                     </div>
-                    <span className="font-bold text-xl tracking-tight text-white hidden md:block">
+                    {/* Fixed Logo Branding: Always visible now */}
+                    <span className="font-bold text-xl tracking-tight text-white block">
                         InFocus <span className="text-cyan-400">CineLog</span>
                     </span>
                 </div>
