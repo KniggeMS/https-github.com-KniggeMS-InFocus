@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { MediaItem, WatchStatus, MediaType, CustomList } from '../types';
-import { Trash2, Check, Clock, PlayCircle, Film, Tv, MoreHorizontal, Heart, Star, Users, Zap } from 'lucide-react';
-import { IMAGE_BASE_URL } from '../services/tmdb';
+import { Trash2, Check, Clock, PlayCircle, Film, Tv, MoreHorizontal, Heart, Star, Users, Zap, Calendar } from 'lucide-react';
+import { IMAGE_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 
 interface MediaCardProps {
   item: MediaItem;
@@ -60,7 +60,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                 <img 
                     src={posterUrl} 
                     alt={item.title} 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                 />
             ) : (
@@ -70,10 +70,10 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
             )}
 
             {/* Gradient Overlay for Text Visibility (Bottom) */}
-            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none opacity-80" />
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none opacity-80" />
 
             {/* Type Badge */}
-            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-1.5 shadow-sm z-10">
+            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1.5 shadow-sm z-10">
                 {item.type === MediaType.MOVIE ? <Film size={12} className="text-blue-400"/> : <Tv size={12} className="text-purple-400"/>}
             </div>
 
@@ -149,13 +149,19 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                 {item.title}
             </h3>
             
-            {/* Meta Row: Year | Time | Genre */}
+            {/* Meta Row: Year | Time | Genre | FSK */}
             <div className="flex items-center flex-wrap gap-2 text-xs text-slate-400 font-medium mb-2">
                 <span className="text-slate-300">{item.year}</span>
                 {item.runtime && (
                     <>
                         <span className="text-slate-600">•</span>
                         <span>{formatRuntime(item.runtime)}</span>
+                    </>
+                )}
+                 {item.certification && (
+                    <>
+                        <span className="text-slate-600">•</span>
+                        <span className="border border-slate-600 px-1 rounded text-[10px] text-slate-400 uppercase">{item.certification}</span>
                     </>
                 )}
                 <span className="text-slate-600">•</span>
@@ -177,10 +183,26 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                         <span className={`text-[10px] font-bold ${rtState === 'fresh' ? 'text-red-200' : 'text-green-200'}`}>{item.rtScore}</span>
                     </div>
                 ) : (
-                    // Placeholder if no RT score yet (for consistent layout)
+                    // Placeholder if no RT score yet
                     <div className="h-5 w-12 rounded-md bg-white/5"></div>
                 )}
             </div>
+
+             {/* Provider Logos - WIEDER DA! */}
+             {item.providers && item.providers.length > 0 && (
+                <div className="flex items-center gap-1.5 mb-2 h-5">
+                    {item.providers.slice(0, 5).map(p => (
+                        <img 
+                            key={p.providerId}
+                            src={`${LOGO_BASE_URL}${p.logoPath}`}
+                            alt={p.providerName}
+                            title={p.providerName}
+                            className="w-5 h-5 rounded-md shadow-sm border border-white/10 object-cover bg-slate-800"
+                            loading="lazy"
+                        />
+                    ))}
+                </div>
+            )}
 
             {/* Cast Row - More Prominent */}
             {item.credits && item.credits.length > 0 && (
