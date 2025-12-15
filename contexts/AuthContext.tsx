@@ -149,40 +149,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (emailOrUsername: string, passwordAttempt: string) => {
     let finalEmail = emailOrUsername;
-    let displayUsername = emailOrUsername;
     
-    // Username handling
+    // 1. Resolve Email if Username is provided
+    // NOTE: This might fail if RLS prevents anon reading emails. 
+    // If so, users MUST use email to login.
     if (!emailOrUsername.includes('@')) {
         const { data, error } = await supabase
             .from('profiles')
-            .select('email, username')
+            .select('email')
             .eq('username', emailOrUsername)
             .single();
-            
+
         if (error || !data || !data.email) {
-            throw new Error("Benutzername nicht gefunden. Bitte E-Mail verwenden.");
+            // If we can't resolve the username to an email, we must ask for the email.
+            throw new Error("Login mit Benutzername nicht möglich (Sicherheitsrichtlinie). Bitte E-Mail verwenden.");
         }
         finalEmail = data.email;
-        displayUsername = data.username; // Ensure we broadcast the correct casing
-    } else {
-        // Even if email login, try to find username for nicer broadcast
-        const { data } = await supabase.from('profiles').select('username').eq('email', finalEmail).single();
-        if (data) displayUsername = data.username;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    // 2. Perform Authentication (Critical Path - No DB lookups here)
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: finalEmail,
         password: passwordAttempt
     });
 
     if (error) throw new Error(error.message);
 
-    // BROADCAST LOGIN EVENT (Fire and Forget)
-    supabase.channel('system_monitor').send({
-        type: 'broadcast',
-        event: 'user_activity',
-        payload: { type: 'LOGIN', username: displayUsername }
-    });
+    // 3. Post-Login: Broadcast (Now we are authenticated, so we can fetch the username safely)
+    if (authData.user) {
+        // Fire and forget username fetch for broadcast
+        // We do this AFTER auth so RLS allows reading our own profile
+        supabase.from('profiles').select('username').eq('id', authData.user.id).single()
+        .then(({ data }) => {
+             if (data && data.username) {
+                 supabase.channel('system_monitor').send({
+                    type: 'broadcast',
+                    event: 'user_activity',
+                    payload: { type: 'LOGIN', username: data.username }
+                });
+             }
+        })
+        .catch(() => { /* Silent fail for broadcast is acceptable */ });
+    }
   };
 
   const register = async (newUser: Partial<User>, password: string) => {
