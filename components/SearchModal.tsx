@@ -29,6 +29,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
   
   const [selectedItem, setSelectedItem] = useState<SearchResult | null>(null);
 
+  // 1. Reset State ONLY when opening/closing
   useEffect(() => {
     if (isOpen) {
       setQuery('');
@@ -36,14 +37,20 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
       setHasSearched(false);
       setError('');
       setSelectedItem(null);
-      
-      // Auto-show key input if missing, BUT HIDE IT if key exists (Fix for stuck state)
-      if (!apiKey) {
-          setShowKeyInput(true);
-      } else {
-          setShowKeyInput(false);
-      }
     }
+  }, [isOpen]);
+
+  // 2. Separate Effect for Key Check - Reacts to changes in apiKey prop
+  useEffect(() => {
+      if (isOpen) {
+          // If we have a key, ensure input is hidden. 
+          // If not, show it.
+          if (apiKey && apiKey.length > 0) {
+              setShowKeyInput(false);
+          } else {
+              setShowKeyInput(true);
+          }
+      }
   }, [isOpen, apiKey]);
 
   if (!isOpen) return null;
@@ -99,15 +106,16 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
       e.target.value = ''; // Reset input
   };
 
-  const isMissingKey = !apiKey || apiKey.trim() === '';
-
   const handleSaveKey = (e: React.FormEvent) => {
       e.preventDefault();
-      if (tempKey.trim() && onUpdateApiKey) {
-          onUpdateApiKey(tempKey.trim());
+      const trimmedKey = tempKey.trim();
+      if (trimmedKey && onUpdateApiKey) {
+          // 1. Update Parent
+          onUpdateApiKey(trimmedKey);
+          // 2. Optimistic Update Local State
           setShowKeyInput(false);
           setTempKey('');
-          setError(''); // Clear previous error
+          setError(''); 
       }
   };
 
@@ -161,6 +169,9 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
                         placeholder="TMDB API Key einfügen..."
                         className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl focus:border-cyan-500 focus:outline-none transition-colors"
                         autoFocus
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
                     />
                     <div className="flex gap-2">
                         {apiKey && (
