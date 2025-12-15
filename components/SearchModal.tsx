@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Loader2, Sparkles, Film, AlertCircle, Settings, ChevronLeft, Camera, Key } from 'lucide-react';
+import { X, Search, Loader2, Sparkles, Film, AlertCircle, Settings, ChevronLeft, Camera, Key, ClipboardPaste } from 'lucide-react';
 import { searchTMDB, IMAGE_BASE_URL } from '../services/tmdb';
 import { identifyMovieFromImage } from '../services/gemini';
 import { SearchResult, MediaType, WatchStatus } from '../types';
@@ -119,6 +119,17 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
       }
   };
 
+  const handlePaste = async () => {
+      try {
+          const text = await navigator.clipboard.readText();
+          if (text) setTempKey(text);
+      } catch (err) {
+          // Fallback if clipboard API fails or permission denied
+          const input = document.getElementById('apiKeyInput');
+          if (input) input.focus();
+      }
+  };
+
   if (selectedItem) {
       return (
           <DetailView 
@@ -162,17 +173,30 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
                 </p>
                 
                 <form onSubmit={handleSaveKey} className="w-full max-w-md space-y-3">
-                    <input 
-                        type="text" 
-                        value={tempKey}
-                        onChange={(e) => setTempKey(e.target.value)}
-                        placeholder="TMDB API Key einfügen..."
-                        className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl focus:border-cyan-500 focus:outline-none transition-colors"
-                        autoFocus
-                        autoComplete="off"
-                        autoCorrect="off"
-                        autoCapitalize="off"
-                    />
+                    <div className="relative">
+                        <input 
+                            id="apiKeyInput"
+                            type="text" 
+                            value={tempKey}
+                            onChange={(e) => setTempKey(e.target.value)}
+                            placeholder="TMDB API Key einfügen..."
+                            className="w-full bg-slate-800 border border-slate-700 text-white pl-4 pr-12 py-3 rounded-xl focus:border-cyan-500 focus:outline-none transition-colors"
+                            autoFocus
+                            autoComplete="off"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                        />
+                        {/* Paste Button */}
+                        <button
+                            type="button"
+                            onClick={handlePaste}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-600 rounded-lg transition-colors"
+                            title="Aus Zwischenablage einfügen"
+                        >
+                            <ClipboardPaste size={18} />
+                        </button>
+                    </div>
+
                     <div className="flex gap-2">
                         {apiKey && (
                             <button 

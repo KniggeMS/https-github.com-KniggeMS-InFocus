@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.21
+**Version:** 1.9.22
 
 ---
 
@@ -14,7 +14,7 @@ Das Ziel des Services **"InFocus CineLog"** ist die Bereitstellung einer hochver
 
 ### 1.2 Architektur-Entscheidung: Client-Side Direct
 Für die MVP-Phase und den privaten Gebrauch wurde bewusst die **"Client-Side Direct"** Architektur gewählt.
-*   **Konzept:** API Keys (TMDB, OMDb, Gemini) liegen entweder in Umgebungsvariablen (Build-Time Injection) oder im `localStorage` des Nutzers.
+*   **Konzept:** API Keys (TMDB, OMDb, Gemini) liegen entweder in Umgebungsvariablen (Build-Time Injection), im `localStorage` des Nutzers ODER fest einkodiert im `App.tsx` (Fallback).
 *   **Vorteil:** Keine komplexen Proxy-Server nötig, kostenlos das Hosting (Vercel Static), maximale Privatsphäre (Keys verlassen nie das Gerät des Nutzers Richtung eigener Server).
 *   **Trade-off:** Keys sind im Client-Code theoretisch sichtbar (bei Injection). Dies ist für den Prototyp-Status akzeptiert ("Friends & Family" Risk Level).
 
@@ -50,9 +50,9 @@ Verwaltung der externen Schnittstellen-Konfigurationen.
 
 | CI Name | Typ | Status | Speicherort |
 |:---|:---|:---|:---|
-| **CI-TMDB-KEY** | API Key | Active | Env Var (Vercel) ODER LocalStorage |
-| **CI-OMDB-KEY** | API Key | Active | Env Var (Vercel) ODER LocalStorage |
-| **CI-GEMINI-KEY** | API Key | Active | Env Var (Vercel) ODER LocalStorage |
+| **CI-TMDB-KEY** | API Key | Active | Env Var, LocalStorage oder Code-Fallback |
+| **CI-OMDB-KEY** | API Key | Active | Env Var, LocalStorage oder Code-Fallback |
+| **CI-GEMINI-KEY** | API Key | Active | Env Var, LocalStorage oder Code-Fallback |
 
 ---
 
@@ -96,7 +96,8 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-030** | Critical | **Mobile / UX** | **Mobile Key Isolation Incident:** Korrektur des Umgangs mit dem TMDB API Key. Implementierung des `SearchModal` Eingabe-UIs, um Keys lokal speichern zu können, falls keine Env-Vars vorhanden sind. | ✅ Done |
 | **RFC-031** | Strategic | **Security** | **Client-Side Direct Architecture:** Bestätigung der Architektur-Entscheidung. Keys können via `vite.config.ts` injiziert werden (für Convenience) oder manuell eingegeben werden (für Flexibilität). Doku angepasst. | ✅ Done |
 | **RFC-032** | Minor | **UX / Cleanup** | **Avatar Modernization:** Entfernung der `js-md5` Abhängigkeit und des Gravatar-Fallbacks. Standardisierung auf die farbenfrohen DiceBear "Adventurer" Avatare für ein lebendigeres UI und schlankeren Code. | ✅ Done |
+| **RFC-033** | Feature | **Config / Ops** | **Hardcoded Key Fallback:** Implementierung eines `FALLBACK_KEYS` Objekts in `App.tsx`. Ermöglicht Entwicklern das direkte Eintragen von API Keys im Quellcode, um die App ohne Environment Variables (Vercel) oder manuelle Eingabe durch Endnutzer zu betreiben. | ✅ Done |
 
 ---
 
-*Dokumentation aktualisiert: Version 1.9.21*
+*Dokumentation aktualisiert: Version 1.9.22*

@@ -27,6 +27,15 @@ import {
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole } from './types';
 import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu } from 'lucide-react';
 
+// --- KONFIGURATION: HARDCODED KEYS (OPTIONAL) ---
+// Falls du keine Environment Variables (Vercel) nutzen möchtest,
+// trage deine Keys hier direkt ein. Sie werden dann für alle Nutzer verwendet.
+const FALLBACK_KEYS = {
+    TMDB: "",   // z.B. "dein_tmdb_key_hier"
+    OMDB: "",   // z.B. "dein_omdb_key_hier"
+    GEMINI: ""  // z.B. "dein_gemini_key_hier"
+};
+
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
     const { id } = useParams();
     const list = customLists.find(l => l.id === id);
@@ -69,11 +78,11 @@ export default function App() {
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // KEY MANAGEMENT: 
-  // Priority: 1. LocalStorage (User Override), 2. Environment (Vercel Default)
+  // Priority: 1. LocalStorage (User Override), 2. Environment (Vercel Default), 3. Hardcoded Fallback
   // We use lazy initialization () => ... to read localStorage only once on mount.
-  const [tmdbKey, setTmdbKey] = useState(() => localStorage.getItem('tmdb_api_key') || process.env.VITE_TMDB_API_KEY || '');
-  const [omdbKey, setOmdbKey] = useState(() => localStorage.getItem('omdb_api_key') || process.env.VITE_OMDB_API_KEY || '');
-  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('cinelog_gemini_key') || process.env.API_KEY || '');
+  const [tmdbKey, setTmdbKey] = useState(() => localStorage.getItem('tmdb_api_key') || process.env.VITE_TMDB_API_KEY || FALLBACK_KEYS.TMDB || '');
+  const [omdbKey, setOmdbKey] = useState(() => localStorage.getItem('omdb_api_key') || process.env.VITE_OMDB_API_KEY || FALLBACK_KEYS.OMDB || '');
+  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('cinelog_gemini_key') || process.env.API_KEY || FALLBACK_KEYS.GEMINI || '');
 
   // SAFE DERIVED STATE (Moved to top level)
   const myLists = user ? customLists.filter(l => l.ownerId === user.id) : [];
@@ -221,7 +230,7 @@ export default function App() {
   
   // NEW: Centralized Key Save Handler
   const handleSaveKeys = (keys: { tmdb: string, omdb: string, gemini: string }) => {
-      // Save to localStorage (empty string means delete/reset to env)
+      // Save to localStorage (empty string means delete/reset to env/fallback)
       if (keys.tmdb) localStorage.setItem('tmdb_api_key', keys.tmdb);
       else localStorage.removeItem('tmdb_api_key');
 
@@ -231,10 +240,10 @@ export default function App() {
       if (keys.gemini) localStorage.setItem('cinelog_gemini_key', keys.gemini);
       else localStorage.removeItem('cinelog_gemini_key');
 
-      // Update State (Fallback to Env if local is empty)
-      setTmdbKey(keys.tmdb || process.env.VITE_TMDB_API_KEY || '');
-      setOmdbKey(keys.omdb || process.env.VITE_OMDB_API_KEY || '');
-      setGeminiKey(keys.gemini || process.env.API_KEY || '');
+      // Update State (Fallback chain: Local -> Env -> Hardcoded)
+      setTmdbKey(keys.tmdb || process.env.VITE_TMDB_API_KEY || FALLBACK_KEYS.TMDB || '');
+      setOmdbKey(keys.omdb || process.env.VITE_OMDB_API_KEY || FALLBACK_KEYS.OMDB || '');
+      setGeminiKey(keys.gemini || process.env.API_KEY || FALLBACK_KEYS.GEMINI || '');
   };
 
   const updateSingleKey = (keyName: 'tmdb_api_key', value: string) => {
