@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Heart, Star, Play, Clock, Check, Share2, AlertCircle, 
-  Loader2, Film, User
+  Loader2, Film, User, Calendar
 } from 'lucide-react';
 import { MediaItem, SearchResult, WatchStatus, MediaType, PublicReview } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, BACKDROP_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
@@ -39,7 +39,6 @@ export const DetailView: React.FC<DetailViewProps> = ({
     const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
     const [loadingAi, setLoadingAi] = useState(false);
     const [publicReviews, setPublicReviews] = useState<PublicReview[]>([]);
-    const [activeTab, setActiveTab] = useState<'info' | 'providers' | 'cast'>('info');
     const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
     
     // User Interaction States
@@ -190,13 +189,10 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                         </div>
                                     )}
                                     {trailerUrl && (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button 
-                                                onClick={() => setShowTrailer(true)}
-                                                className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-500 hover:scale-110 transition-all"
-                                            >
-                                                <Play size={20} fill="currentColor" className="ml-1" />
-                                            </button>
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => setShowTrailer(true)}>
+                                            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-500 hover:scale-110 transition-all">
+                                                <Play size={28} fill="currentColor" className="ml-1" />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -205,52 +201,73 @@ export const DetailView: React.FC<DetailViewProps> = ({
                     )}
                 </div>
 
-                {/* RIGHT: DETAILS */}
+                {/* RIGHT: DETAILS (SCROLLABLE CONTENT) */}
                 <div className="flex-grow flex flex-col bg-slate-900 overflow-y-auto custom-scrollbar relative z-10">
                     
-                    {/* Header Info */}
-                    <div className="p-6 md:p-8 border-b border-slate-800">
-                        <div className="flex flex-wrap gap-2 mb-3">
-                             {displayItem.type === MediaType.MOVIE ? (
-                                 <span className="px-2 py-0.5 rounded-md bg-cyan-900/30 text-cyan-400 text-[10px] font-bold uppercase tracking-wider border border-cyan-900/50">Movie</span>
-                             ) : (
-                                 <span className="px-2 py-0.5 rounded-md bg-purple-900/30 text-purple-400 text-[10px] font-bold uppercase tracking-wider border border-purple-900/50">Series</span>
-                             )}
-                             {displayItem.status && (
-                                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                                     displayItem.status === WatchStatus.WATCHED ? 'bg-green-900/30 text-green-400 border-green-900/50' : 
-                                     displayItem.status === WatchStatus.WATCHING ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 
-                                     'bg-yellow-900/30 text-yellow-400 border-yellow-900/50'
-                                 }`}>
-                                     {t(displayItem.status === WatchStatus.TO_WATCH ? 'planned' : displayItem.status === WatchStatus.WATCHING ? 'watching' : 'seen')}
-                                 </span>
-                             )}
-                        </div>
-
-                        <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-2">
-                            {displayItem.title}
-                        </h2>
+                    <div className="p-6 md:p-8 space-y-6">
                         
-                        <div className="flex items-center gap-4 text-slate-400 text-sm font-medium mb-4">
-                            <span>{displayItem.year}</span>
-                            {displayItem.runtime && (
-                                <span className="flex items-center gap-1">
-                                    <Clock size={14} /> 
-                                    {displayItem.runtime} min
-                                </span>
-                            )}
-                            {displayItem.rating > 0 && (
-                                <span className="flex items-center gap-1 text-yellow-500">
-                                    <Star size={14} fill="currentColor" />
-                                    {displayItem.rating.toFixed(1)}
-                                </span>
-                            )}
-                        </div>
+                        {/* Header Section */}
+                        <div>
+                            <div className="flex flex-wrap gap-2 mb-3">
+                                {displayItem.type === MediaType.MOVIE ? (
+                                    <span className="px-2 py-0.5 rounded-md bg-cyan-900/30 text-cyan-400 text-[10px] font-bold uppercase tracking-wider border border-cyan-900/50">Movie</span>
+                                ) : (
+                                    <span className="px-2 py-0.5 rounded-md bg-purple-900/30 text-purple-400 text-[10px] font-bold uppercase tracking-wider border border-purple-900/50">Series</span>
+                                )}
+                                {displayItem.status && (
+                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
+                                        displayItem.status === WatchStatus.WATCHED ? 'bg-green-900/30 text-green-400 border-green-900/50' : 
+                                        displayItem.status === WatchStatus.WATCHING ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 
+                                        'bg-yellow-900/30 text-yellow-400 border-yellow-900/50'
+                                    }`}>
+                                        {t(displayItem.status === WatchStatus.TO_WATCH ? 'planned' : displayItem.status === WatchStatus.WATCHING ? 'watching' : 'seen')}
+                                    </span>
+                                )}
+                            </div>
 
-                        {/* Actions Row - WRAPPED */}
-                        <div className="flex flex-wrap items-center gap-3">
-                            {isExisting ? (
-                                <>
+                            <h2 className="text-3xl md:text-4xl font-black text-white leading-tight mb-2">
+                                {displayItem.title}
+                            </h2>
+                            
+                            <div className="flex flex-wrap items-center gap-4 text-slate-400 text-sm font-medium mb-4">
+                                <span className="flex items-center gap-1"><Calendar size={14}/> {displayItem.year}</span>
+                                {displayItem.runtime && (
+                                    <span className="flex items-center gap-1">
+                                        <Clock size={14} /> 
+                                        {displayItem.runtime} min
+                                    </span>
+                                )}
+                                {displayItem.rating > 0 && (
+                                    <span className="flex items-center gap-1 text-yellow-500">
+                                        <Star size={14} fill="currentColor" />
+                                        {displayItem.rating.toFixed(1)}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Providers (ALWAYS VISIBLE NOW) */}
+                            {displayItem.providers && displayItem.providers.length > 0 ? (
+                                <div className="flex items-center gap-3 mb-6 bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50 w-fit">
+                                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mr-1">Stream:</span>
+                                    {displayItem.providers.map(p => (
+                                        <img 
+                                            key={p.providerId}
+                                            src={`${LOGO_BASE_URL}${p.logoPath}`} 
+                                            alt={p.providerName}
+                                            title={p.providerName}
+                                            className="w-8 h-8 rounded-md shadow-sm border border-white/5 hover:scale-110 transition-transform cursor-help" 
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="mb-6 flex items-center gap-2 text-xs text-slate-600">
+                                    <AlertCircle size={14} /> Keine Streaming-Infos
+                                </div>
+                            )}
+
+                            {/* Actions Row */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                {isExisting ? (
                                     <button 
                                         onClick={() => {
                                             if (onToggleFavorite && (initialItem as MediaItem).id) {
@@ -258,176 +275,134 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                                 setIsFav(!isFav);
                                             }
                                         }}
-                                        className={`p-2 rounded-full border transition-all ${isFav ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}`}
+                                        className={`p-3 rounded-xl border transition-all flex items-center gap-2 font-bold text-sm ${isFav ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'}`}
                                     >
-                                        <Heart size={20} fill={isFav ? "currentColor" : "none"} />
+                                        <Heart size={18} fill={isFav ? "currentColor" : "none"} />
+                                        {isFav ? 'Favorit' : 'Favorisieren'}
                                     </button>
-                                </>
-                            ) : (
-                                <>
-                                    <button 
-                                        onClick={() => handleAddClick(WatchStatus.TO_WATCH)}
-                                        className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-2 rounded-lg font-bold text-sm shadow-lg shadow-cyan-900/20 transition-all flex items-center gap-2"
-                                    >
-                                        <Clock size={16} /> {t('watchlist')}
-                                    </button>
-                                    <button 
-                                        onClick={() => handleAddClick(WatchStatus.WATCHED)}
-                                        className="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2"
-                                    >
-                                        <Check size={16} /> {t('seen')}
-                                    </button>
-                                </>
-                            )}
-                            
-                            <button
-                              onClick={handleShare}
-                              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 rounded-full px-3 py-2 sm:px-4 backdrop-blur-sm border border-white/5 shadow-lg transition-colors text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wide cursor-pointer flex-shrink-0"
-                            >
-                              {copied ? <Check size={16} className="text-green-400" /> : <Share2 size={16} className="text-cyan-400" />}
-                              {copied ? 'Kopiert' : t('share')}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Tabs / Navigation */}
-                    <div className="flex border-b border-slate-800 px-6 overflow-x-auto custom-scrollbar">
-                        {(['info', 'providers', 'cast'] as const).map(tab => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`px-4 py-3 text-sm font-bold uppercase tracking-wide transition-colors border-b-2 ${activeTab === tab ? 'border-cyan-500 text-cyan-400' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
-                            >
-                                {tab === 'info' ? t('overview') : tab === 'providers' ? "Stream" : t('cast')}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Tab Content */}
-                    <div className="p-6 md:p-8 space-y-8 flex-grow">
-                        {activeTab === 'info' && (
-                            <>
-                                {/* Plot */}
-                                <div>
-                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('plot')}</h3>
-                                    <p className="text-slate-300 leading-relaxed text-sm md:text-base">
-                                        {displayItem.plot}
-                                    </p>
-                                </div>
-
-                                {/* AI Insight */}
-                                <div className="bg-gradient-to-br from-purple-900/20 to-slate-800 rounded-xl p-4 border border-purple-500/20 relative overflow-hidden">
-                                     <div className="absolute -top-10 -right-10 w-24 h-24 bg-purple-500/10 rounded-full blur-xl"></div>
-                                     <h3 className="text-purple-400 text-xs font-bold uppercase mb-2 flex items-center gap-2">
-                                         <Loader2 size={12} className={loadingAi ? "animate-spin" : "hidden"} />
-                                         {t('ai_insight')}
-                                     </h3>
-                                     <p className="text-purple-100/80 text-sm italic relative z-10">
-                                         {aiAnalysis || "Analysiere Filminhalt und Rezensionen..."}
-                                     </p>
-                                </div>
-
-                                {/* User Notes (Only for Existing) */}
-                                {isExisting && (
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-end">
-                                             <label className="text-slate-500 text-xs font-bold uppercase">{t('public_review')}</label>
-                                             <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30">{t('review_public_badge')}</span>
-                                        </div>
-                                        <textarea 
-                                            value={notes} 
-                                            onChange={(e) => setNotes(e.target.value)}
-                                            onBlur={handleSaveNotes}
-                                            placeholder={t('review_placeholder')}
-                                            className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-sm text-white focus:border-cyan-500 focus:outline-none min-h-[100px] resize-none"
-                                        />
-                                    </div>
-                                )}
-
-                                {/* PUBLIC REVIEWS */}
-                                <div className="space-y-4 pt-6 border-t border-slate-800">
-                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('community_reviews')}</h3>
-                                    {publicReviews.length > 0 ? (
-                                        <div className="grid gap-4">
-                                            {publicReviews.map((rev, idx) => (
-                                                <div key={idx} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 flex gap-4">
-                                                    <div className="flex-shrink-0">
-                                                        <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
-                                                            {rev.avatar ? <img src={rev.avatar} alt={rev.username} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center"><User size={16} className="text-slate-500"/></div>}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-grow min-w-0">
-                                                        <div className="flex justify-between items-start mb-1">
-                                                            <div>
-                                                                <span className="text-sm font-bold text-white block leading-tight">{rev.username}</span>
-                                                                <span className="text-[10px] text-slate-500">{new Date(rev.date).toLocaleDateString()}</span>
-                                                            </div>
-                                                            {rev.rating > 0 && (
-                                                                <div className="flex items-center gap-1 text-yellow-500 text-xs font-bold bg-yellow-500/10 px-2 py-0.5 rounded-full">
-                                                                    <Star size={10} fill="currentColor"/> {rev.rating}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <p className="text-sm text-slate-300 leading-relaxed break-words">
-                                                            "{rev.content}"
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="text-slate-500 text-sm italic">Noch keine Bewertungen aus der Community.</p>
-                                    )}
-                                </div>
-                            </>
-                        )}
-
-                        {activeTab === 'providers' && (
-                            <div className="space-y-4">
-                                <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('stream_available')}</h3>
-                                {displayItem.providers && displayItem.providers.length > 0 ? (
-                                    <div className="flex flex-wrap gap-4">
-                                        {displayItem.providers.map(p => (
-                                            <div key={p.providerId} className="flex flex-col items-center gap-2 w-20">
-                                                <img 
-                                                    src={`${LOGO_BASE_URL}${p.logoPath}`} 
-                                                    alt={p.providerName}
-                                                    className="w-12 h-12 rounded-lg shadow-md" 
-                                                />
-                                                <span className="text-[10px] text-slate-400 text-center leading-tight">{p.providerName}</span>
-                                            </div>
-                                        ))}
-                                    </div>
                                 ) : (
-                                    <div className="text-slate-500 text-sm italic flex items-center gap-2">
-                                        <AlertCircle size={16} /> {t('no_stream')}
-                                    </div>
+                                    <>
+                                        <button 
+                                            onClick={() => handleAddClick(WatchStatus.TO_WATCH)}
+                                            className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-3 rounded-xl font-bold text-sm shadow-lg shadow-cyan-900/20 transition-all flex items-center gap-2"
+                                        >
+                                            <Clock size={18} /> {t('watchlist')}
+                                        </button>
+                                        <button 
+                                            onClick={() => handleAddClick(WatchStatus.WATCHED)}
+                                            className="bg-slate-700 hover:bg-slate-600 text-white px-5 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
+                                        >
+                                            <Check size={18} /> {t('seen')}
+                                        </button>
+                                    </>
                                 )}
+                                
+                                <button
+                                onClick={handleShare}
+                                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-3 border border-slate-700 shadow-sm transition-colors text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wide cursor-pointer ml-auto sm:ml-0"
+                                >
+                                {copied ? <Check size={16} className="text-green-400" /> : <Share2 size={16} className="text-cyan-400" />}
+                                {copied ? 'Kopiert' : t('share')}
+                                </button>
                             </div>
-                        )}
+                        </div>
 
-                        {activeTab === 'cast' && (
-                            <div className="space-y-4">
-                                <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('cast')}</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                    {displayItem.credits?.slice(0, 9).map(actor => (
-                                        <div key={actor.id} className="flex items-center gap-3 bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
-                                            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden flex-shrink-0">
+                        {/* Plot */}
+                        <div>
+                            <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('plot')}</h3>
+                            <p className="text-slate-300 leading-relaxed text-base">
+                                {displayItem.plot}
+                            </p>
+                        </div>
+
+                        {/* Cast (ALWAYS VISIBLE NOW - Top 5) */}
+                        {displayItem.credits && displayItem.credits.length > 0 && (
+                            <div>
+                                <h3 className="text-slate-500 text-xs font-bold uppercase mb-3">{t('cast')}</h3>
+                                <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                                    {displayItem.credits.slice(0, 10).map(actor => (
+                                        <div key={actor.id} className="flex flex-col items-center gap-2 w-20 flex-shrink-0 group">
+                                            <div className="w-16 h-16 rounded-full bg-slate-800 overflow-hidden border-2 border-transparent group-hover:border-cyan-500 transition-colors shadow-lg">
                                                 {actor.profilePath ? (
                                                     <img src={`${IMAGE_BASE_URL}${actor.profilePath}`} className="w-full h-full object-cover" alt={actor.name} />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-500">?</div>
+                                                    <div className="w-full h-full flex items-center justify-center text-slate-500"><User size={20}/></div>
                                                 )}
                                             </div>
-                                            <div className="min-w-0">
-                                                <div className="text-sm font-bold text-white truncate" title={actor.name}>{actor.name}</div>
-                                                <div className="text-xs text-slate-500 truncate" title={actor.character}>{actor.character}</div>
+                                            <div className="text-center">
+                                                <div className="text-[10px] font-bold text-slate-200 truncate w-full">{actor.name}</div>
+                                                <div className="text-[9px] text-slate-500 truncate w-full">{actor.character}</div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         )}
+
+                        {/* AI Insight */}
+                        <div className="bg-gradient-to-br from-purple-900/20 to-slate-800 rounded-xl p-5 border border-purple-500/20 relative overflow-hidden">
+                                <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
+                                <h3 className="text-purple-400 text-xs font-bold uppercase mb-2 flex items-center gap-2">
+                                    <Loader2 size={12} className={loadingAi ? "animate-spin" : "hidden"} />
+                                    {t('ai_insight')}
+                                </h3>
+                                <p className="text-purple-100/90 text-sm italic relative z-10 leading-relaxed">
+                                    {aiAnalysis || "Analysiere Filminhalt und Rezensionen..."}
+                                </p>
+                        </div>
+
+                        {/* User Notes (Only for Existing) */}
+                        {isExisting && (
+                            <div className="space-y-3 pt-4 border-t border-slate-800">
+                                <div className="flex justify-between items-end">
+                                        <label className="text-slate-500 text-xs font-bold uppercase">{t('public_review')}</label>
+                                        <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30">{t('review_public_badge')}</span>
+                                </div>
+                                <textarea 
+                                    value={notes} 
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    onBlur={handleSaveNotes}
+                                    placeholder={t('review_placeholder')}
+                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-sm text-white focus:border-cyan-500 focus:outline-none min-h-[100px] resize-none"
+                                />
+                            </div>
+                        )}
+
+                        {/* PUBLIC REVIEWS */}
+                        <div className="space-y-4 pt-4 border-t border-slate-800">
+                            <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('community_reviews')}</h3>
+                            {publicReviews.length > 0 ? (
+                                <div className="grid gap-4">
+                                    {publicReviews.map((rev, idx) => (
+                                        <div key={idx} className="bg-slate-800/30 p-4 rounded-xl border border-slate-700/50 flex gap-4">
+                                            <div className="flex-shrink-0">
+                                                <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
+                                                    {rev.avatar ? <img src={rev.avatar} alt={rev.username} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center"><User size={16} className="text-slate-500"/></div>}
+                                                </div>
+                                            </div>
+                                            <div className="flex-grow min-w-0">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <div>
+                                                        <span className="text-sm font-bold text-white block leading-tight">{rev.username}</span>
+                                                        <span className="text-[10px] text-slate-500">{new Date(rev.date).toLocaleDateString()}</span>
+                                                    </div>
+                                                    {rev.rating > 0 && (
+                                                        <div className="flex items-center gap-1 text-yellow-500 text-xs font-bold bg-yellow-500/10 px-2 py-0.5 rounded-full">
+                                                            <Star size={10} fill="currentColor"/> {rev.rating}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-slate-300 leading-relaxed break-words">
+                                                    "{rev.content}"
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-slate-500 text-sm italic">Noch keine Bewertungen aus der Community.</p>
+                            )}
+                        </div>
                     </div>
                 </div>
              </div>
