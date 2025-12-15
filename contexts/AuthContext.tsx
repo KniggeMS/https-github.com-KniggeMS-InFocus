@@ -151,8 +151,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     let finalEmail = emailOrUsername;
     
     // 1. Resolve Email if Username is provided
-    // NOTE: This might fail if RLS prevents anon reading emails. 
-    // If so, users MUST use email to login.
     if (!emailOrUsername.includes('@')) {
         const { data, error } = await supabase
             .from('profiles')
@@ -161,7 +159,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             .single();
 
         if (error || !data || !data.email) {
-            // If we can't resolve the username to an email, we must ask for the email.
             throw new Error("Login mit Benutzername nicht möglich (Sicherheitsrichtlinie). Bitte E-Mail verwenden.");
         }
         finalEmail = data.email;
@@ -177,19 +174,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // 3. Post-Login: Broadcast (Now we are authenticated, so we can fetch the username safely)
     if (authData.user) {
-        // Fire and forget username fetch for broadcast
-        // We do this AFTER auth so RLS allows reading our own profile
-        supabase.from('profiles').select('username').eq('id', authData.user.id).single()
-        .then(({ data }) => {
-             if (data && data.username) {
-                 supabase.channel('system_monitor').send({
-                    type: 'broadcast',
-                    event: 'user_activity',
-                    payload: { type: 'LOGIN', username: data.username }
-                });
-             }
-        })
-        .catch(() => { /* Silent fail for broadcast is acceptable */ });
+        // We use an async IIFE for fire-and-forget to avoid PromiseLike type issues with .catch()
+        const broadcastLogin = async () => {
+            try {
+                const { data } = await supabase.from('profiles').select('username').eq('id', authData.user!.id).single();
+                if (data && data.username) {
+                    await supabase.channel('system_monitor').send({
+                        type: 'broadcast',
+                        event: 'user_activity',
+                        payload: { type: 'LOGIN', username: data.username }
+                    });
+                }
+            } catch (e) {
+                // Silent fail for broadcast is acceptable
+            }
+        };
+        broadcastLogin();
     }
   };
 

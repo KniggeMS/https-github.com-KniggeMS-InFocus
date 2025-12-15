@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.26
+**Version:** 1.9.27
 
 ---
 
@@ -101,7 +101,8 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-035** | Standard | **UI / Branding** | **Web Typography & Branding Polish:** Erzwungene Sichtbarkeit des "InFocus"-Brandings im Header. Massive Vergrößerung der Schriftarten in `Stats.tsx` und `MediaCard.tsx` für bessere Lesbarkeit auf Desktop-Screens. Optimierung der Charts-Logik. | ✅ Done |
 | **RFC-036** | Standard | **UI / Data** | **MediaCard Metadata Restoration:** Wiedereinführung der Icons für TMDB und Rotten Tomatoes, Anzeige der Laufzeit und der Hauptdarsteller (Cast) in der Listenansicht (Grid), unter Beibehaltung des neuen "Stitch"-Designs. | ✅ Done |
 | **RFC-037** | Bugfix | **Auth** | **Auth Logic Hardening:** Entkopplung der Datenbank-Abfragen vom Login-Prozess. Der Login erfolgt nun priorisiert via E-Mail. Broadcast-Events und Username-Lookups finden erst NACH erfolgreicher Authentifizierung statt, um RLS-Fehler bei anonymen Zugriffen zu verhindern. | ✅ Done |
+| **RFC-038** | Emergency | **Build / Ops** | **PromiseLike Fix:** Umbau der asynchronen Broadcast-Logik in `AuthContext` auf `async/await` IIFE, um TypeScript-Fehler `Property 'catch' does not exist on type 'PromiseLike<void>'` während des Vercel Builds zu beheben. | ✅ Done |
 
 ---
 
-*Dokumentation aktualisiert: Version 1.9.26*
+*Dokumentation aktualisiert: Version 1.9.27*
