@@ -79,17 +79,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    supabase.auth.getSession().then(({ data, error }) => {
-        if (error) {
-            console.error("Session init error:", error);
-            if (mounted) setLoading(false);
-        } else {
-            fetchProfile(data.session?.user);
+    // Use async IIFE inside useEffect instead of .then().catch() to avoid PromiseLike issues
+    const initSession = async () => {
+        try {
+            const { data, error } = await supabase.auth.getSession();
+            if (error) {
+                console.error("Session init error:", error);
+                if (mounted) setLoading(false);
+            } else {
+                await fetchProfile(data.session?.user);
+            }
+        } catch (err) {
+             console.error("Supabase client connection error:", err);
+             if (mounted) setLoading(false);
         }
-    }).catch(err => {
-        console.error("Supabase client connection error:", err);
-        if (mounted) setLoading(false);
-    });
+    };
+
+    initSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         if (mounted) {
@@ -174,22 +180,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // 3. Post-Login: Broadcast (Now we are authenticated, so we can fetch the username safely)
     if (authData.user) {
-        // We use an async IIFE for fire-and-forget to avoid PromiseLike type issues with .catch()
-        const broadcastLogin = async () => {
-            try {
-                const { data } = await supabase.from('profiles').select('username').eq('id', authData.user!.id).single();
-                if (data && data.username) {
-                    await supabase.channel('system_monitor').send({
+        // Fire and forget, but wrapped in async function to avoid floating promises warning/error
+        (async () => {
+             try {
+                 const { data } = await supabase.from('profiles').select('username').eq('id', authData.user!.id).single();
+                 if (data && data.username) {
+                     await supabase.channel('system_monitor').send({
                         type: 'broadcast',
                         event: 'user_activity',
                         payload: { type: 'LOGIN', username: data.username }
                     });
-                }
-            } catch (e) {
-                // Silent fail for broadcast is acceptable
-            }
-        };
-        broadcastLogin();
+                 }
+             } catch (e) {
+                 // Silent fail for broadcast is acceptable
+             }
+        })();
     }
   };
 
