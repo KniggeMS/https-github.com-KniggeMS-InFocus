@@ -20,13 +20,14 @@ import { ImportModal } from './components/ImportModal';
 import { RecoveryPage } from './components/RecoveryPage';
 import { PublicProfileModal } from './components/PublicProfileModal';
 import { SettingsModal } from './components/SettingsModal';
+import { GuidePage } from './components/GuidePage';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes, updateMediaItemRtScore,
   fetchCustomLists, createCustomList, updateCustomListItems, deleteCustomList, shareCustomList
 } from './services/db';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
-import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu } from 'lucide-react';
+import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu, BookOpen } from 'lucide-react';
 
 const FALLBACK_KEYS = {
     TMDB: "4115939bdc412c5f7b0c4598fcf29b77", 
@@ -69,6 +70,7 @@ export default function App() {
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false); // NEW State for Guide
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [viewingProfile, setViewingProfile] = useState<User | null>(null);
@@ -341,6 +343,10 @@ export default function App() {
                              <button onClick={() => { setIsImportOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
                                 <Download size={16} /> {t('smart_import')}
                             </button>
+                            
+                            <button onClick={() => { setIsGuideOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
+                                <BookOpen size={16} /> Handbuch
+                            </button>
 
                             <div className="h-px bg-white/5 my-1"></div>
                             
@@ -519,6 +525,12 @@ export default function App() {
             geminiKey={geminiKey}
             onSave={handleSettingsSave}
         />
+        
+        {isGuideOpen && (
+             <div className="fixed inset-0 z-[100] bg-[#0B0E14] overflow-y-auto animate-in slide-in-from-right-10 duration-200">
+                <GuidePage onBack={() => setIsGuideOpen(false)} />
+             </div>
+        )}
 
         {selectedItem && (
             <DetailView 

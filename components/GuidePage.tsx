@@ -34,7 +34,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
   const navItems = [
     ...(isAdmin ? [{ id: 'start', label: 'Erste Schritte', icon: Key }] : []),
     { id: 'search', label: 'Suchen & Filter', icon: Search },
-    { id: 'import', label: 'Smart Import', icon: Download }, // NEW
+    { id: 'import', label: 'Smart Import', icon: Download },
     { id: 'ai', label: 'AI Power Features', icon: Sparkles },
     { id: 'lists', label: 'Listen & Reviews', icon: List },
     { id: 'gamification', label: 'Level & Trophäen', icon: Trophy },
