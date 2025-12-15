@@ -26,6 +26,8 @@ import {
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes, updateMediaItemRtScore,
   fetchCustomLists, createCustomList, updateCustomListItems, deleteCustomList, shareCustomList
 } from './services/db';
+import { getMediaDetails } from './services/tmdb';
+import { getOmdbRatings } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
 import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu, BookOpen, ShieldAlert } from 'lucide-react';
 
@@ -117,11 +119,30 @@ export default function App() {
         alert("Bereits in deiner Sammlung!");
         return;
     }
+
+    // ENRICHMENT STEP: Fetch full details (Cast, Runtime, Providers) before saving
+    let details: Partial<MediaItem> = {};
+    if (tmdbKey) {
+        try {
+            details = await getMediaDetails(result, tmdbKey);
+        } catch(e) { console.error("Details fetch failed", e); }
+    }
+
+    // ENRICHMENT STEP: Fetch OMDb Rating (RT Score)
+    let rtScore = undefined;
+    const imdbId = result.imdbId || details.imdbId;
+    if (omdbKey && imdbId) {
+        try {
+            const score = await getOmdbRatings(imdbId, omdbKey);
+            if (score) rtScore = score;
+        } catch(e) { console.error("OMDb fetch failed", e); }
+    }
+
     const newItem: MediaItem = {
         id: crypto.randomUUID(),
         userId: user.id,
         tmdbId: result.tmdbId,
-        imdbId: result.imdbId,
+        imdbId: result.imdbId || details.imdbId,
         title: result.title,
         originalTitle: result.originalTitle,
         year: result.year,
@@ -136,7 +157,17 @@ export default function App() {
         isFavorite: isFav,
         userRating: 0,
         userNotes: result.customNotes || '',
+        // Merged Details
+        runtime: details.runtime,
+        seasons: details.seasons,
+        episodes: details.episodes,
+        certification: details.certification,
+        trailerKey: details.trailerKey,
+        credits: details.credits || [],
+        providers: details.providers || [],
+        rtScore: rtScore
     };
+
     const saved = await addMediaItem(newItem, user.id);
     if (saved) {
         setItems(prev => [saved, ...prev]);

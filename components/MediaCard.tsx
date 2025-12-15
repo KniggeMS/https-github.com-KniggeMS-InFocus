@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { MediaItem, WatchStatus, MediaType, CustomList } from '../types';
-import { Trash2, Check, Clock, PlayCircle, Film, Tv, MoreHorizontal, Heart, Star, Users } from 'lucide-react';
+import { Trash2, Check, Clock, PlayCircle, Film, Tv, MoreHorizontal, Heart, Star, Users, Zap, Database } from 'lucide-react';
 import { IMAGE_BASE_URL } from '../services/tmdb';
 
 interface MediaCardProps {
@@ -162,36 +162,33 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onStatusChange, onDe
                 <span className="truncate max-w-[100px] text-slate-500">{item.genre[0]}</span>
             </div>
 
-            {/* Ratings Row with Logos */}
-            <div className="flex items-center gap-3 mb-2">
+            {/* Ratings Row with High Contrast Badges */}
+            <div className="flex items-center gap-2 mb-2">
                 {/* TMDB */}
-                <div className="flex items-center gap-1.5 bg-[#0d253f] px-1.5 py-0.5 rounded border border-blue-900/50" title="TMDB Score">
-                    <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" className="w-3.5 h-3.5" alt="TMDB" />
-                    <span className="text-[10px] font-bold text-cyan-400">{item.rating.toFixed(1)}</span>
+                <div className="flex items-center gap-1.5 bg-[#0d253f]/80 px-2 py-0.5 rounded-md border border-[#01b4e4]/30" title="TMDB Score">
+                    <div className="font-black text-[9px] text-[#01b4e4] tracking-tighter">TMDB</div>
+                    <span className="text-[10px] font-bold text-white">{item.rating.toFixed(1)}</span>
                 </div>
 
                 {/* Rotten Tomatoes */}
-                {rtState && (
-                    <div className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${rtState === 'fresh' ? 'bg-[#fa320a]/10 border-[#fa320a]/30' : 'bg-green-900/20 border-green-700/30'}`} title="Rotten Tomatoes">
-                        <img 
-                            src={rtState === 'fresh' 
-                                ? "https://www.rottentomatoes.com/assets/pizza-pie/images/icons/tomatometer/tomatometer-fresh.149b5e8adc3.svg" 
-                                : "https://www.rottentomatoes.com/assets/pizza-pie/images/icons/tomatometer/tomatometer-rotten.f1ef4f02ce3.svg"
-                            } 
-                            className="w-3.5 h-3.5" 
-                            alt="RT" 
-                        />
-                        <span className={`text-[10px] font-bold ${rtState === 'fresh' ? 'text-red-400' : 'text-green-400'}`}>{item.rtScore}</span>
+                {rtState ? (
+                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md border ${rtState === 'fresh' ? 'bg-[#fa320a]/20 border-[#fa320a]/30' : 'bg-green-600/20 border-green-600/30'}`} title="Rotten Tomatoes">
+                        <Zap size={10} className={rtState === 'fresh' ? 'text-[#fa320a] fill-[#fa320a]' : 'text-green-500 fill-green-500'} />
+                        <span className={`text-[10px] font-bold ${rtState === 'fresh' ? 'text-red-200' : 'text-green-200'}`}>{item.rtScore}</span>
                     </div>
+                ) : (
+                    // Placeholder if no RT score yet (for consistent layout)
+                    <div className="h-5 w-12 rounded-md bg-white/5"></div>
                 )}
             </div>
 
-            {/* Cast Row */}
+            {/* Cast Row - More Prominent */}
             {item.credits && item.credits.length > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                    <Users size={12} className="text-slate-600"/>
-                    <span className="truncate">
+                <div className="flex items-center gap-1.5 text-xs bg-slate-800/50 p-1.5 rounded-md border border-white/5 mt-1">
+                    <Users size={12} className="text-slate-400 flex-shrink-0"/>
+                    <span className="truncate text-slate-300 font-medium" title={item.credits.map(c => c.name).join(', ')}>
                         {item.credits.slice(0, 2).map(c => c.name).join(', ')}
+                        {item.credits.length > 2 && '...'}
                     </span>
                 </div>
             )}
