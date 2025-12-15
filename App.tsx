@@ -27,13 +27,13 @@ import {
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole } from './types';
 import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu } from 'lucide-react';
 
-// --- KONFIGURATION: HARDCODED KEYS (OPTIONAL) ---
-// Falls du keine Environment Variables (Vercel) nutzen möchtest,
-// trage deine Keys hier direkt ein. Sie werden dann für alle Nutzer verwendet.
+// --- KONFIGURATION: HARDCODED KEYS (MANUELL) ---
+// Trage deine Keys hier direkt ein, damit die App ohne Vercel-Vars funktioniert.
+// Das ist der "Client-Side Direct" Weg für einfaches Teilen.
 const FALLBACK_KEYS = {
-    TMDB: "",   // z.B. "dein_tmdb_key_hier"
-    OMDB: "",   // z.B. "dein_omdb_key_hier"
-    GEMINI: ""  // z.B. "dein_gemini_key_hier"
+    TMDB: "4115939bdc412c5f7b0c4598fcf29b77",   // HIER DEINEN TMDB KEY EINFÜGEN (z.B. "abc123...")
+    OMDB: "33df5dc9",   // HIER DEINEN OMDB KEY EINFÜGEN
+    GEMINI: "AIzaSyAcHqT8PGqCQ2h0KE0dlGbPlVi-fPMaIA0"  // HIER DEINEN GEMINI KEY EINFÜGEN
 };
 
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
@@ -79,7 +79,6 @@ export default function App() {
 
   // KEY MANAGEMENT: 
   // Priority: 1. LocalStorage (User Override), 2. Environment (Vercel Default), 3. Hardcoded Fallback
-  // We use lazy initialization () => ... to read localStorage only once on mount.
   const [tmdbKey, setTmdbKey] = useState(() => localStorage.getItem('tmdb_api_key') || process.env.VITE_TMDB_API_KEY || FALLBACK_KEYS.TMDB || '');
   const [omdbKey, setOmdbKey] = useState(() => localStorage.getItem('omdb_api_key') || process.env.VITE_OMDB_API_KEY || FALLBACK_KEYS.OMDB || '');
   const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('cinelog_gemini_key') || process.env.API_KEY || FALLBACK_KEYS.GEMINI || '');
