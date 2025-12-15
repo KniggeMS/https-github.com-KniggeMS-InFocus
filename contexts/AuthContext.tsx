@@ -5,7 +5,7 @@ import { supabase } from '../services/supabase';
 
 interface AuthContextType {
   user: User | null;
-  login: (emailOrUsername: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   register: (user: Partial<User>, password: string) => Promise<void>;
   logout: () => void;
   updateProfile: (data: Partial<User>) => Promise<void>;
@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    // Use async IIFE inside useEffect instead of .then().catch() to avoid PromiseLike issues
+    // Use async IIFE inside useEffect
     const initSession = async () => {
         try {
             const { data, error } = await supabase.auth.getSession();
@@ -115,12 +115,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Admin Surveillance Listener
   useEffect(() => {
       if (user && user.role === UserRole.ADMIN) {
-          // Join the global system channel
           const channel = supabase.channel('system_monitor')
               .on('broadcast', { event: 'user_activity' }, (payload) => {
                   if (payload.payload.type === 'LOGIN') {
                       setAdminNotification(`Login erkannt: ${payload.payload.username}`);
-                      // Auto dismiss after 5 seconds
                       setTimeout(() => setAdminNotification(null), 5000);
                   }
               })
@@ -153,34 +151,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
   }, [user]);
 
-  const login = async (emailOrUsername: string, passwordAttempt: string) => {
-    let finalEmail = emailOrUsername;
-    
-    // 1. Resolve Email if Username is provided
-    if (!emailOrUsername.includes('@')) {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('username', emailOrUsername)
-            .single();
-
-        if (error || !data || !data.email) {
-            throw new Error("Login mit Benutzername nicht möglich (Sicherheitsrichtlinie). Bitte E-Mail verwenden.");
-        }
-        finalEmail = data.email;
+  const login = async (emailInput: string, passwordAttempt: string) => {
+    // Force Email usage
+    if (!emailInput.includes('@')) {
+        throw new Error("Login nur mit E-Mail-Adresse möglich. Bitte gib deine E-Mail ein.");
     }
 
-    // 2. Perform Authentication (Critical Path - No DB lookups here)
+    // Perform Authentication
     const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: finalEmail,
+        email: emailInput,
         password: passwordAttempt
     });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+        // Translate common Supabase errors
+        if (error.message === "Invalid login credentials") {
+            throw new Error("E-Mail oder Passwort falsch.");
+        }
+        throw new Error(error.message);
+    }
 
-    // 3. Post-Login: Broadcast (Now we are authenticated, so we can fetch the username safely)
+    // Post-Login: Broadcast
     if (authData.user) {
-        // Fire and forget, but wrapped in async function to avoid floating promises warning/error
         (async () => {
              try {
                  const { data } = await supabase.from('profiles').select('username').eq('id', authData.user!.id).single();
@@ -199,14 +191,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const register = async (newUser: Partial<User>, password: string) => {
-    const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('username', newUser.username)
-        .single();
-        
-    if (existingUser) {
-        throw new Error("Dieser Benutzername ist bereits vergeben.");
+    // Check if username exists (Public read might be allowed on username, or this might fail if RLS is strict)
+    // We attempt it, but catch errors gracefully.
+    try {
+        const { data: existingUser } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('username', newUser.username)
+            .single();
+            
+        if (existingUser) {
+            throw new Error("Dieser Benutzername ist bereits vergeben.");
+        }
+    } catch (e: any) {
+        // If error is "already taken", rethrow. If it's RLS/Permission (PGRST116 or 406), ignore and proceed to Auth try.
+        if (e.message === "Dieser Benutzername ist bereits vergeben.") throw e;
     }
 
     const { error } = await supabase.auth.signUp({

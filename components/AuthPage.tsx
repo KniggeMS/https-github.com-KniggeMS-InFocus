@@ -20,7 +20,7 @@ export const AuthPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   // Form State
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(''); // Used for Login Email input too
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -44,6 +44,7 @@ export const AuthPage: React.FC = () => {
 
     try {
       if (view === 'login') {
+        // username state holds the input value for login field
         await login(username, password); 
       } else if (view === 'register') {
         if (!username || !email || !password) throw new Error("Fehlende Pflichtfelder");
@@ -68,7 +69,8 @@ export const AuthPage: React.FC = () => {
           setSuccess(t('reset_link_sent'));
       }
     } catch (err: any) {
-      setError(err.message || "Fehler aufgetreten");
+      console.error("Auth Error:", err);
+      setError(err.message || "Ein unbekannter Fehler ist aufgetreten.");
     } finally {
       setIsLoading(false);
     }
@@ -84,8 +86,9 @@ export const AuthPage: React.FC = () => {
 
   const handleDemoLogin = async () => {
       setIsLoading(true);
-      try { await login('BigDaddy', 'password123'); } 
-      catch (e) { setError("Demo User nicht gefunden"); } 
+      // Demo login tries to use an email now, or fails if account gone
+      try { await login('demo@example.com', 'password123'); } 
+      catch (e: any) { setError("Demo User nicht verfügbar: " + e.message); } 
       finally { setIsLoading(false); }
   };
 
@@ -138,15 +141,17 @@ export const AuthPage: React.FC = () => {
                 {view === 'login' && (
                     <>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-400 uppercase ml-1">E-Mail oder Username</label>
+                            <label className="text-xs font-bold text-slate-400 uppercase ml-1">E-Mail Adresse</label>
                             <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                                 <input 
-                                    type="text" 
+                                    type="email" 
                                     value={username} 
                                     onChange={(e) => setUsername(e.target.value)}
                                     className="w-full bg-[#1c212c] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-cyan-500 transition-colors"
                                     placeholder="name@example.com"
+                                    autoComplete="email"
+                                    required
                                 />
                             </div>
                         </div>
@@ -163,6 +168,7 @@ export const AuthPage: React.FC = () => {
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full bg-[#1c212c] border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white focus:border-cyan-500 transition-colors"
                                     placeholder="••••••••"
+                                    required
                                 />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -272,19 +278,10 @@ export const AuthPage: React.FC = () => {
                     </button>
                 )}
             </div>
-            
-            {/* Quick Demo Login Helper for Devs */}
-            {view === 'login' && (
-                <div className="mt-8 pt-6 border-t border-white/5 text-center">
-                    <button onClick={handleDemoLogin} className="text-[10px] uppercase tracking-widest text-slate-600 hover:text-cyan-500 font-bold transition-colors">
-                        Demo Zugang
-                    </button>
-                </div>
-            )}
         </div>
 
         <div className="absolute bottom-4 text-[10px] text-slate-600 font-mono">
-            InFocus CineLog v1.9.22 • Stitch Design
+            InFocus CineLog v1.9.28 • Stitch Design
         </div>
     </div>
   );
