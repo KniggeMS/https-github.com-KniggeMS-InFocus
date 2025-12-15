@@ -38,6 +38,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
     const [loadingAi, setLoadingAi] = useState(false);
     const [publicReviews, setPublicReviews] = useState<PublicReview[]>([]);
     const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
+    const [backgroundTrailerUrl, setBackgroundTrailerUrl] = useState<string | null>(null);
     
     // UI State
     const [activeTab, setActiveTab] = useState<'overview' | 'cast' | 'watch' | 'reviews'>('overview');
@@ -53,7 +54,10 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 setDetails(extended);
                 
                 if (extended.trailerKey) {
+                    // Full Trailer (Sound, Controls)
                     setTrailerUrl(`https://www.youtube.com/embed/${extended.trailerKey}?autoplay=1`);
+                    // Background Ambient Trailer (Muted, Loop, No Controls)
+                    setBackgroundTrailerUrl(`https://www.youtube.com/embed/${extended.trailerKey}?autoplay=1&mute=1&controls=0&loop=1&playlist=${extended.trailerKey}&showinfo=0&modestbranding=1`);
                 }
 
                 const imdbId = initialItem.imdbId || extended.imdbId;
@@ -148,9 +152,10 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 </button>
 
                 {/* LEFT: VISUALS */}
-                <div className="w-full md:w-2/5 relative bg-black flex-shrink-0 min-h-[250px] md:min-h-full">
+                <div className="w-full md:w-2/5 relative bg-black flex-shrink-0 min-h-[250px] md:min-h-full overflow-hidden">
+                    {/* Active Trailer Overlay */}
                     {showTrailer && trailerUrl ? (
-                         <div className="absolute inset-0 z-20 bg-black">
+                         <div className="absolute inset-0 z-30 bg-black animate-in fade-in duration-500">
                             <iframe src={trailerUrl} title="Trailer" className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
                             <button onClick={() => setShowTrailer(false)} className="absolute top-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-bold border border-white/20 backdrop-blur-md">
                                 {t('close_trailer')}
@@ -158,22 +163,41 @@ export const DetailView: React.FC<DetailViewProps> = ({
                          </div>
                     ) : (
                         <>
-                            {backdropUrl ? (
-                                <div className="absolute inset-0">
-                                    <img src={backdropUrl} className="w-full h-full object-cover opacity-60" alt="" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-slate-900" />
-                                </div>
-                            ) : null}
-                            <div className="absolute inset-0 flex items-center justify-center p-8 z-10">
-                                <div className="relative w-40 md:w-48 shadow-2xl rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform duration-500">
+                            {/* Cinematic Background Layer */}
+                            <div className="absolute inset-0 z-0">
+                                {backgroundTrailerUrl ? (
+                                    <div className="w-full h-full relative overflow-hidden">
+                                        <iframe 
+                                            src={backgroundTrailerUrl} 
+                                            className="w-full h-[140%] -mt-[20%] object-cover scale-150 opacity-40 pointer-events-none" 
+                                            title="Ambient Trailer"
+                                            allow="autoplay; encrypted-media"
+                                            tabIndex={-1}
+                                        />
+                                        {/* Overlay to ensure text readability and cinematic feel */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-black/60 md:bg-gradient-to-r md:from-transparent md:to-slate-900" />
+                                    </div>
+                                ) : (
+                                    backdropUrl && (
+                                        <>
+                                            <img src={backdropUrl} className="w-full h-full object-cover opacity-60" alt="" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-slate-900" />
+                                        </>
+                                    )
+                                )}
+                            </div>
+                            
+                            {/* Poster Floating Layer */}
+                            <div className="absolute inset-0 flex items-center justify-center p-8 z-10 pointer-events-none">
+                                <div className="relative w-40 md:w-48 shadow-2xl rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform duration-500 pointer-events-auto">
                                     {posterUrl ? (
                                         <img src={posterUrl} alt="" className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-64 bg-slate-800 flex items-center justify-center text-slate-500"><Film size={48} /></div>
                                     )}
                                     {trailerUrl && (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => setShowTrailer(true)}>
-                                            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-500 hover:scale-110 transition-all">
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors cursor-pointer" onClick={() => setShowTrailer(true)}>
+                                            <div className="w-16 h-16 bg-red-600/90 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-500 hover:scale-110 transition-all backdrop-blur-sm">
                                                 <Play size={28} fill="currentColor" className="ml-1" />
                                             </div>
                                         </div>
