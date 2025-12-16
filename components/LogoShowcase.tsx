@@ -1,136 +1,155 @@
 
-import React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, MousePointer2, Waves, Zap, Fingerprint, ScanFace, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const LogoShowcase: React.FC = () => {
   const navigate = useNavigate();
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Track global mouse movement relative to the container
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-[#0B0E14] text-white p-8 relative overflow-hidden">
-        {/* Background FX */}
-        <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
-        <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px] translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
+    <div 
+        ref={containerRef}
+        onMouseMove={handleMouseMove}
+        className="min-h-screen bg-[#020408] text-white p-8 relative overflow-hidden font-sans selection:bg-cyan-500/30"
+    >
+        
+        {/* INTERACTIVE BACKGROUND: Spotlight follows mouse */}
+        <div 
+            className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-300"
+            style={{
+                background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(34, 211, 238, 0.04), transparent 40%)`
+            }}
+        />
 
-        <div className="max-w-6xl mx-auto relative z-10">
-            <header className="flex items-center gap-4 mb-12">
-                <button onClick={() => navigate('/')} className="p-2 rounded-full bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-colors">
-                    <ArrowLeft size={24} />
+        {/* Ambient Noise Texture (Static) */}
+        <div className="fixed inset-0 z-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }}></div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
+            <header className="flex items-center gap-6 mb-16 border-b border-white/5 pb-6">
+                <button onClick={() => navigate('/')} className="group flex items-center gap-2 px-4 py-2 rounded-lg border border-white/5 hover:border-white/20 hover:bg-white/5 transition-all backdrop-blur-md">
+                    <ArrowLeft size={20} className="text-slate-400 group-hover:-translate-x-1 transition-transform group-hover:text-white" />
+                    <span className="text-sm font-mono text-slate-400 uppercase tracking-widest group-hover:text-white">Return</span>
                 </button>
                 <div>
-                    <h1 className="text-3xl font-bold">Design Lab</h1>
-                    <p className="text-slate-400">Phase 3: Next Gen Glass</p>
+                    <h1 className="text-4xl font-black uppercase tracking-tight flex items-center gap-3">
+                        <Sparkles className="text-cyan-400" />
+                        Design Lab <span className="text-cyan-600">.06</span>
+                    </h1>
+                    <p className="text-slate-500 font-mono text-xs mt-1 tracking-[0.2em] uppercase">Phase 6: Sentient Glass & Physics</p>
                 </div>
             </header>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-8">
                 
-                {/* CONCEPT 1: The Prism */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 flex flex-col items-center hover:border-cyan-500/50 transition-colors group">
-                    <div className="mb-4 text-xs font-bold text-cyan-400 uppercase tracking-widest">Konzept 1</div>
-                    <h2 className="text-xl font-bold mb-8">The Prism</h2>
-                    
-                    <div className="w-48 h-48 bg-[#0B0E14] rounded-3xl shadow-2xl shadow-cyan-900/10 border border-white/5 flex items-center justify-center mb-8 group-hover:scale-105 transition-transform duration-500 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-transparent opacity-50"></div>
+                {/* CONCEPT 1: SPOTLIGHT CARD */}
+                {/* Creates a border glow effect based on mouse position */}
+                <div className="group relative rounded-2xl bg-slate-900/40 backdrop-blur-xl border border-white/5 p-8 overflow-hidden hover:bg-slate-900/60 transition-colors duration-500">
+                    {/* The Spotlight Glow inside the card */}
+                    <div 
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                        style={{
+                            background: `radial-gradient(400px circle at ${mousePos.x - (containerRef.current?.getBoundingClientRect().left || 0) - (containerRef.current?.querySelector('.concept-1')?.getBoundingClientRect()?.left || 0)}px ${mousePos.y - 300}px, rgba(34, 211, 238, 0.1), transparent 40%)`
+                        }}
+                    ></div>
+
+                    <div className="concept-1 relative z-10 flex flex-col items-center">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center mb-6 border border-white/10 group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-cyan-900/20">
+                            <MousePointer2 size={32} className="text-cyan-400" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-white mb-2">Smart Light</h2>
+                        <p className="text-sm text-slate-400 text-center leading-relaxed">
+                            Beweg deine Maus. Das Licht folgt dir nicht nur im Hintergrund, sondern beleuchtet subtil die Ränder und Details dieser Karte. 
+                        </p>
                         
-                        <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <linearGradient id="prismGrad" x1="0" y1="0" x2="100" y2="100">
-                                    <stop offset="0%" stopColor="white" stopOpacity="0.4" />
-                                    <stop offset="100%" stopColor="white" stopOpacity="0.05" />
-                                </linearGradient>
-                            </defs>
-                            
-                            {/* Main Body - Prism Look */}
-                            <path d="M20 40 L80 40 L85 80 L15 80 L20 40 Z" fill="url(#prismGrad)" stroke="white" strokeWidth="1" strokeOpacity="0.5" />
-                            
-                            {/* Top Arm - Angled */}
-                            <path d="M20 35 L80 20 L85 30 L25 45 Z" fill="#22d3ee" fillOpacity="0.8" />
-                            
-                            {/* Play Button - Cutout style */}
-                            <path d="M45 55 L60 62.5 L45 70 V55 Z" fill="white" />
-                        </svg>
+                        <div className="mt-8 w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-cyan-500 w-1/3 animate-[shimmer_2s_infinite] relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                            </div>
+                        </div>
                     </div>
-
-                    <p className="text-center text-slate-400 text-sm leading-relaxed mb-6">
-                        Scharfe Kanten und Transparenz wie geschliffenes Glas. Der obere Arm ist ein solider Cyan-Akzent, der Rest wirkt zerbrechlich und edel.
-                    </p>
                 </div>
 
-                {/* CONCEPT 2: The Continuous Line */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 flex flex-col items-center hover:border-purple-500/50 transition-colors group">
-                    <div className="mb-4 text-xs font-bold text-purple-400 uppercase tracking-widest">Konzept 2</div>
-                    <h2 className="text-xl font-bold mb-8">The Glow Line</h2>
-                    
-                    <div className="w-48 h-48 bg-[#0B0E14] rounded-3xl shadow-2xl shadow-purple-900/10 border border-white/5 flex items-center justify-center mb-8 group-hover:scale-105 transition-transform duration-500">
-                         <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <linearGradient id="neonStroke" x1="0" y1="0" x2="100" y2="100">
-                                    <stop offset="0%" stopColor="#22d3ee" />
-                                    <stop offset="100%" stopColor="#c084fc" />
-                                </linearGradient>
-                                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                                    <feGaussianBlur stdDeviation="2" result="blur" />
-                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                                </filter>
-                            </defs>
-                            
-                            {/* One continuous path */}
-                            <path 
-                                d="M25 35 L80 20 M80 20 V80 C80 82 78 84 76 84 H24 C22 84 20 82 20 80 V36.5" 
-                                stroke="url(#neonStroke)" 
-                                strokeWidth="8" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round"
-                                filter="url(#glow)"
-                            />
-                            
-                            <circle cx="50" cy="60" r="5" fill="white" />
-                        </svg>
+                {/* CONCEPT 2: LIQUID MAGMA */}
+                <div className="relative group rounded-2xl overflow-hidden border border-white/5 p-8">
+                    {/* Animated Liquid Background */}
+                    <div className="absolute inset-0 bg-[#0B0E14]">
+                        <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] animate-[spin_10s_linear_infinite] opacity-30"
+                             style={{ background: 'conic-gradient(from 0deg, transparent 0deg, #8b5cf6 120deg, transparent 180deg, #3b82f6 300deg, transparent 360deg)' }}>
+                        </div>
+                        <div className="absolute inset-[2px] bg-[#05070a] rounded-2xl"></div>
                     </div>
 
-                    <p className="text-center text-slate-400 text-sm leading-relaxed mb-6">
-                        Reduziert auf das absolute Minimum. Ein dicker, leuchtender Neon-Strich, der die Form andeutet. Sehr modern und passt perfekt zum Dark Mode.
-                    </p>
+                    <div className="relative z-10 flex flex-col items-center h-full justify-between">
+                         <div className="mb-6 relative">
+                             <div className="absolute inset-0 bg-purple-500 blur-2xl opacity-20 animate-pulse"></div>
+                             <Waves size={48} className="text-purple-400 relative z-10" />
+                         </div>
+
+                         <div className="text-center">
+                            <h2 className="text-2xl font-bold text-white mb-2">Liquid Energy</h2>
+                            <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                                Kein statischer Rand. Ein lebendiger "Magma"-Strom, der sich permanent bewegt. Wirkt extrem hochwertig und futuristisch.
+                            </p>
+                         </div>
+
+                         <button className="w-full py-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-purple-500/50 transition-all font-mono text-xs uppercase tracking-widest text-purple-300">
+                             Activate
+                         </button>
+                    </div>
                 </div>
 
-                {/* CONCEPT 3: Floating Panes */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 flex flex-col items-center hover:border-blue-500/50 transition-colors group">
-                    <div className="mb-4 text-xs font-bold text-blue-400 uppercase tracking-widest">Konzept 3</div>
-                    <h2 className="text-xl font-bold mb-8">Floating Panes</h2>
+                {/* CONCEPT 3: BIOMETRIC SCAN */}
+                <div className="relative group rounded-2xl bg-slate-900/40 backdrop-blur-xl border border-white/5 p-8 overflow-hidden flex flex-col items-center">
                     
-                    <div className="w-48 h-48 bg-[#0B0E14] rounded-3xl shadow-2xl shadow-blue-900/10 border border-white/5 flex items-center justify-center mb-8 group-hover:scale-105 transition-transform duration-500">
-                        <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <linearGradient id="paneGrad" x1="0" y1="0" x2="0" y2="100">
-                                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
-                                    <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.4" />
-                                </linearGradient>
-                            </defs>
-                            
-                            {/* Bottom Pane (Body) */}
-                            <rect x="20" y="40" width="60" height="40" rx="8" fill="url(#paneGrad)" />
-                            
-                            {/* Top Pane (Arm) - Floating above */}
-                            <rect x="20" y="20" width="60" height="15" rx="4" fill="white" fillOpacity="0.9" transform="rotate(-10 50 27)" />
-                            
-                            {/* Detail Lines on Body */}
-                            <path d="M35 40 V80" stroke="black" strokeOpacity="0.2" strokeWidth="2" />
-                            <path d="M65 40 V80" stroke="black" strokeOpacity="0.2" strokeWidth="2" />
-                        </svg>
+                    {/* Scan Line Animation */}
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-emerald-500/10 to-transparent -translate-y-full group-hover:translate-y-full transition-transform duration-1000 ease-in-out pointer-events-none"></div>
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.8)] -translate-y-full group-hover:translate-y-[400px] transition-transform duration-1000 ease-in-out pointer-events-none"></div>
+
+                    <div className="relative w-32 h-32 mb-8 flex items-center justify-center">
+                        <div className="absolute inset-0 border border-dashed border-slate-700 rounded-full animate-[spin_20s_linear_infinite]"></div>
+                        <div className="absolute inset-2 border border-slate-800 rounded-full"></div>
+                        <ScanFace size={48} className="text-emerald-500/50 group-hover:text-emerald-400 transition-colors duration-300" />
+                        
+                        {/* Fingerprint Overlay appearing on hover */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-50 group-hover:scale-100">
+                            <Fingerprint size={64} className="text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                        </div>
                     </div>
 
-                    <p className="text-center text-slate-400 text-sm leading-relaxed mb-6">
-                        Zwei schwebende Elemente. Der Körper ist halbtransparentes, farbiges Glas, der Arm ist massives Weiß darüber. Erzeugt Tiefe und 3D-Effekt.
+                    <h2 className="text-2xl font-bold text-white mb-2">Biometric ID</h2>
+                    <p className="text-sm text-slate-400 text-center leading-relaxed mb-6">
+                        Hover mich. Ein Scanner läuft über die Karte und enthüllt einen Fingerabdruck. Interaktion, die eine Geschichte erzählt.
                     </p>
+
+                    <div className="flex gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span className="text-[10px] font-mono text-emerald-500 uppercase">System Ready</span>
+                    </div>
                 </div>
 
             </div>
 
-             <div className="mt-12 p-6 bg-slate-800 rounded-xl border border-slate-700 text-center">
-                <p className="text-slate-300">
-                    Na, ist "The One" dabei? Sag mir Bescheid (z.B. <strong>"Nimm Konzept 2"</strong>), und wir zementieren es!
-                </p>
+            <div className="mt-16 bg-slate-900/50 border border-slate-800 p-8 rounded-2xl text-center relative overflow-hidden">
+                <div className="relative z-10">
+                    <Zap size={32} className="mx-auto text-yellow-400 mb-4" />
+                    <h3 className="text-xl font-bold text-white mb-2">Warum Phase 6?</h3>
+                    <p className="text-slate-400 max-w-2xl mx-auto">
+                        In modernen Apps geht es nicht mehr nur darum, wie etwas aussieht, sondern wie es sich <em>anfühlt</em>.
+                        Die "Spotlight"-Technik (Maus-Tracking) wird von Branchenführern wie Vercel, Linear oder Apple genutzt, um Oberflächen Tiefe zu verleihen.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
