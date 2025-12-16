@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Routes, Route, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { useTranslation } from './contexts/LanguageContext';
 import { useTheme } from './contexts/ThemeContext';
@@ -435,9 +435,12 @@ export default function App() {
                                 <UserIcon size={16} /> {t('profile')}
                             </button>
 
-                            <button onClick={() => { navigate('/design-lab'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
-                                <Palette size={16} /> 🎨 Design Lab
-                            </button>
+                            {/* DESIGN LAB - ADMIN ONLY */}
+                            {user.role === UserRole.ADMIN && (
+                                <button onClick={() => { navigate('/design-lab'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-purple-400 hover:bg-purple-500/10 flex items-center gap-2">
+                                    <Palette size={16} /> 🎨 Design Lab
+                                </button>
+                            )}
                             
                             {(user.role === UserRole.ADMIN || user.role === UserRole.MANAGER) && (
                                 <button onClick={() => { navigate('/users'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
@@ -502,11 +505,14 @@ export default function App() {
                         </div>
                     </div>
 
-                    <div className="mb-6">
-                        <button onClick={() => navigate('/design-lab')} className="w-full text-left px-3 py-2 text-sm text-slate-400 hover:text-white font-medium flex items-center gap-2 rounded-lg hover:bg-white/5 transition-colors">
-                             <Palette size={16} /> 🎨 Design Lab
-                        </button>
-                    </div>
+                    {/* DESIGN LAB - ADMIN ONLY */}
+                    {user.role === UserRole.ADMIN && (
+                        <div className="mb-6">
+                            <button onClick={() => navigate('/design-lab')} className="w-full text-left px-3 py-2 text-sm text-purple-400 hover:text-purple-300 font-medium flex items-center gap-2 rounded-lg hover:bg-purple-500/10 transition-colors">
+                                <Palette size={16} /> 🎨 Design Lab
+                            </button>
+                        </div>
+                    )}
 
                     {sharedLists.length > 0 && (
                          <div className="mb-6">
@@ -585,7 +591,7 @@ export default function App() {
                     <Route path="/list/:id" element={<ListRoute customLists={customLists} renderGrid={renderGrid} />} />
                     <Route path="/profile" element={<ProfilePage items={items.filter(i => i.userId === user.id)} />} />
                     <Route path="/users" element={<UserManagementPage />} />
-                    <Route path="/design-lab" element={<LogoShowcase />} />
+                    <Route path="/design-lab" element={user.role === UserRole.ADMIN ? <LogoShowcase /> : <Navigate to="/" replace />} />
                 </Routes>
             </main>
         </div>

@@ -32,6 +32,15 @@ export const MediaCard = memo<MediaCardProps>(({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Spotlight Effect Logic
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { left, top } = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = e.clientY - top;
+    e.currentTarget.style.setProperty('--x', `${x}px`);
+    e.currentTarget.style.setProperty('--y', `${y}px`);
+  };
+
   const posterUrl = item.posterPath ? `${IMAGE_BASE_URL}${item.posterPath}` : null;
   
   // Helper to format runtime (e.g. 105 -> 1h 45m)
@@ -57,13 +66,22 @@ export const MediaCard = memo<MediaCardProps>(({
         {/* Card Image Container (Overflow Hidden for Zoom Effect) */}
         <div 
             onClick={() => onClick(item)}
-            className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#1c212c] border border-white/5 shadow-lg cursor-pointer hover:shadow-blue-500/20 hover:border-blue-500/30 transition-all duration-300 hover:scale-[1.02]"
+            onMouseMove={handleMouseMove}
+            className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#1c212c] border border-white/5 shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500/30"
         >
+            {/* SPOTLIGHT EFFECT LAYER */}
+            <div 
+                className="absolute inset-0 z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                    background: 'radial-gradient(600px circle at var(--x) var(--y), rgba(255,255,255,0.1), transparent 40%)'
+                }}
+            ></div>
+
             {posterUrl ? (
                 <img 
                     src={posterUrl} 
                     alt={item.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 relative z-0"
                     loading="lazy"
                 />
             ) : (
@@ -73,23 +91,23 @@ export const MediaCard = memo<MediaCardProps>(({
             )}
 
             {/* Gradient Overlay for Text Visibility (Bottom) */}
-            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none opacity-80" />
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none opacity-80 z-10" />
 
             {/* Type Badge */}
-            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1.5 shadow-sm z-10">
+            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1.5 shadow-sm z-30">
                 {item.type === MediaType.MOVIE ? <Film size={12} className="text-blue-400"/> : <Tv size={12} className="text-purple-400"/>}
             </div>
 
             {/* Status Indicator (Bottom Right) */}
             {item.status !== WatchStatus.TO_WATCH && (
-                <div className={`absolute bottom-2 right-2 p-1.5 rounded-full backdrop-blur-md border border-white/10 shadow-lg z-10 ${item.status === WatchStatus.WATCHED ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                <div className={`absolute bottom-2 right-2 p-1.5 rounded-full backdrop-blur-md border border-white/10 shadow-lg z-30 ${item.status === WatchStatus.WATCHED ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
                     {item.status === WatchStatus.WATCHED ? <Check size={14} /> : <PlayCircle size={14} />}
                 </div>
             )}
             
             {/* User Rating Badge (On Image) */}
             {item.userRating && item.userRating > 0 && (
-                 <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-yellow-500 text-black px-2 py-0.5 rounded font-bold text-xs shadow-lg shadow-yellow-900/50 z-10">
+                 <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-yellow-500 text-black px-2 py-0.5 rounded font-bold text-xs shadow-lg shadow-yellow-900/50 z-30">
                     <Star size={10} fill="currentColor" /> {item.userRating}
                 </div>
             )}
