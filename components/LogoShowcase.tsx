@@ -19,111 +19,109 @@ export const LogoShowcase: React.FC = () => {
                 </button>
                 <div>
                     <h1 className="text-3xl font-bold">Design Lab</h1>
-                    <p className="text-slate-400">Phase 2: Modern Glass Clapperboard</p>
+                    <p className="text-slate-400">Phase 3: Next Gen Glass</p>
                 </div>
             </header>
 
             <div className="grid md:grid-cols-3 gap-8">
                 
-                {/* CONCEPT 1: The Glass Slate */}
+                {/* CONCEPT 1: The Prism */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 flex flex-col items-center hover:border-cyan-500/50 transition-colors group">
                     <div className="mb-4 text-xs font-bold text-cyan-400 uppercase tracking-widest">Konzept 1</div>
-                    <h2 className="text-xl font-bold mb-8">The Glass Slate</h2>
+                    <h2 className="text-xl font-bold mb-8">The Prism</h2>
                     
                     <div className="w-48 h-48 bg-[#0B0E14] rounded-3xl shadow-2xl shadow-cyan-900/10 border border-white/5 flex items-center justify-center mb-8 group-hover:scale-105 transition-transform duration-500 relative overflow-hidden">
-                        {/* Background Glow inside icon */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 opacity-50 blur-xl"></div>
+                        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-transparent opacity-50"></div>
                         
-                        <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative z-10">
-                            {/* Base Body - Glassy */}
-                            <rect x="15" y="40" width="70" height="45" rx="6" fill="white" fillOpacity="0.1" stroke="white" strokeOpacity="0.3" strokeWidth="2" />
-                            
-                            {/* Clapper Top - Angled & Solid */}
-                            <path d="M15 32 L85 32 L85 15 L15 15 Z" fill="url(#gradSlate)" />
-                            <path d="M25 15 L15 32 M45 15 L35 32 M65 15 L55 32" stroke="#0B0E14" strokeWidth="3" />
-                            
-                            {/* Play Symbol on Glass */}
-                            <path d="M45 55 L60 62.5 L45 70 V55 Z" fill="white" fillOpacity="0.9" />
-
+                        <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <defs>
-                                <linearGradient id="gradSlate" x1="0" y1="0" x2="100" y2="0">
-                                    <stop offset="0%" stopColor="#22d3ee" />
-                                    <stop offset="100%" stopColor="#3b82f6" />
+                                <linearGradient id="prismGrad" x1="0" y1="0" x2="100" y2="100">
+                                    <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+                                    <stop offset="100%" stopColor="white" stopOpacity="0.05" />
                                 </linearGradient>
                             </defs>
+                            
+                            {/* Main Body - Prism Look */}
+                            <path d="M20 40 L80 40 L85 80 L15 80 L20 40 Z" fill="url(#prismGrad)" stroke="white" strokeWidth="1" strokeOpacity="0.5" />
+                            
+                            {/* Top Arm - Angled */}
+                            <path d="M20 35 L80 20 L85 30 L25 45 Z" fill="#22d3ee" fillOpacity="0.8" />
+                            
+                            {/* Play Button - Cutout style */}
+                            <path d="M45 55 L60 62.5 L45 70 V55 Z" fill="white" />
                         </svg>
                     </div>
 
                     <p className="text-center text-slate-400 text-sm leading-relaxed mb-6">
-                        Klassische Form, aber aus "Glas". Der untere Teil ist transparent (Glassmorphism), der obere Teil ein kräftiger Gradient-Akzent.
+                        Scharfe Kanten und Transparenz wie geschliffenes Glas. Der obere Arm ist ein solider Cyan-Akzent, der Rest wirkt zerbrechlich und edel.
                     </p>
                 </div>
 
-                {/* CONCEPT 2: The Neon Outline */}
+                {/* CONCEPT 2: The Continuous Line */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 flex flex-col items-center hover:border-purple-500/50 transition-colors group">
                     <div className="mb-4 text-xs font-bold text-purple-400 uppercase tracking-widest">Konzept 2</div>
-                    <h2 className="text-xl font-bold mb-8">The Neon Edge</h2>
+                    <h2 className="text-xl font-bold mb-8">The Glow Line</h2>
                     
                     <div className="w-48 h-48 bg-[#0B0E14] rounded-3xl shadow-2xl shadow-purple-900/10 border border-white/5 flex items-center justify-center mb-8 group-hover:scale-105 transition-transform duration-500">
                          <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <defs>
-                                <linearGradient id="gradNeon" x1="0" y1="0" x2="100" y2="100">
+                                <linearGradient id="neonStroke" x1="0" y1="0" x2="100" y2="100">
                                     <stop offset="0%" stopColor="#22d3ee" />
-                                    <stop offset="50%" stopColor="#c084fc" />
-                                    <stop offset="100%" stopColor="#ec4899" />
+                                    <stop offset="100%" stopColor="#c084fc" />
                                 </linearGradient>
+                                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feGaussianBlur stdDeviation="2" result="blur" />
+                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                </filter>
                             </defs>
                             
-                            {/* Outline with Gradient */}
-                            <path d="M20 40 H80 V80 C80 82.2 78.2 84 76 84 H24 C21.8 84 20 82.2 20 80 V40 Z" stroke="url(#gradNeon)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+                            {/* One continuous path */}
+                            <path 
+                                d="M25 35 L80 20 M80 20 V80 C80 82 78 84 76 84 H24 C22 84 20 82 20 80 V36.5" 
+                                stroke="url(#neonStroke)" 
+                                strokeWidth="8" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round"
+                                filter="url(#glow)"
+                            />
                             
-                            {/* Clapper Top - Open */}
-                            <path d="M20 30 L80 18" stroke="url(#gradNeon)" strokeWidth="6" strokeLinecap="round" />
-                            
-                            {/* Detail Dots */}
-                            <circle cx="50" cy="62" r="4" fill="white" fillOpacity="0.8" />
-                            <circle cx="35" cy="62" r="2" fill="white" fillOpacity="0.4" />
-                            <circle cx="65" cy="62" r="2" fill="white" fillOpacity="0.4" />
+                            <circle cx="50" cy="60" r="5" fill="white" />
                         </svg>
                     </div>
 
                     <p className="text-center text-slate-400 text-sm leading-relaxed mb-6">
-                        Minimalistisch und futuristisch. Die Form wird nur durch einen leuchtenden Neon-Verlauf angedeutet. Passt perfekt zum Dark Mode.
+                        Reduziert auf das absolute Minimum. Ein dicker, leuchtender Neon-Strich, der die Form andeutet. Sehr modern und passt perfekt zum Dark Mode.
                     </p>
                 </div>
 
-                {/* CONCEPT 3: The Modern Solid */}
+                {/* CONCEPT 3: Floating Panes */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 flex flex-col items-center hover:border-blue-500/50 transition-colors group">
                     <div className="mb-4 text-xs font-bold text-blue-400 uppercase tracking-widest">Konzept 3</div>
-                    <h2 className="text-xl font-bold mb-8">The Modern Solid</h2>
+                    <h2 className="text-xl font-bold mb-8">Floating Panes</h2>
                     
                     <div className="w-48 h-48 bg-[#0B0E14] rounded-3xl shadow-2xl shadow-blue-900/10 border border-white/5 flex items-center justify-center mb-8 group-hover:scale-105 transition-transform duration-500">
                         <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <defs>
-                                <linearGradient id="gradSolid" x1="10" y1="10" x2="90" y2="90">
-                                    <stop offset="0%" stopColor="#3b82f6" />
-                                    <stop offset="100%" stopColor="#06b6d4" />
+                                <linearGradient id="paneGrad" x1="0" y1="0" x2="0" y2="100">
+                                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
+                                    <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.4" />
                                 </linearGradient>
                             </defs>
                             
-                            {/* Main Body - Solid Gradient */}
-                            <rect x="20" y="20" width="60" height="60" rx="12" fill="url(#gradSolid)" />
+                            {/* Bottom Pane (Body) */}
+                            <rect x="20" y="40" width="60" height="40" rx="8" fill="url(#paneGrad)" />
                             
-                            {/* Cutout Lines for Clapper look */}
-                            <path d="M20 40 H80" stroke="#0B0E14" strokeWidth="4" />
-                            <path d="M35 20 V40" stroke="#0B0E14" strokeWidth="4" />
-                            <path d="M65 20 V40" stroke="#0B0E14" strokeWidth="4" />
+                            {/* Top Pane (Arm) - Floating above */}
+                            <rect x="20" y="20" width="60" height="15" rx="4" fill="white" fillOpacity="0.9" transform="rotate(-10 50 27)" />
                             
-                            {/* Play Triangle overlay */}
-                            <path d="M45 55 L60 62.5 L45 70 V55 Z" fill="#0B0E14" />
-                            
-                            {/* Small decorative circle */}
-                            <circle cx="70" cy="70" r="3" fill="white" fillOpacity="0.5" />
+                            {/* Detail Lines on Body */}
+                            <path d="M35 40 V80" stroke="black" strokeOpacity="0.2" strokeWidth="2" />
+                            <path d="M65 40 V80" stroke="black" strokeOpacity="0.2" strokeWidth="2" />
                         </svg>
                     </div>
 
                     <p className="text-center text-slate-400 text-sm leading-relaxed mb-6">
-                        Flach, fett und modern. Das App-Icon als Ganzes IST die Filmklappe. Hoher Wiedererkennungswert, sehr sauber.
+                        Zwei schwebende Elemente. Der Körper ist halbtransparentes, farbiges Glas, der Arm ist massives Weiß darüber. Erzeugt Tiefe und 3D-Effekt.
                     </p>
                 </div>
 
@@ -131,7 +129,7 @@ export const LogoShowcase: React.FC = () => {
 
              <div className="mt-12 p-6 bg-slate-800 rounded-xl border border-slate-700 text-center">
                 <p className="text-slate-300">
-                    Besser? Diese Varianten basieren alle auf der <strong>Filmklappe</strong>, nutzen aber Glas, Neon und moderne Geometrie.
+                    Na, ist "The One" dabei? Sag mir Bescheid (z.B. <strong>"Nimm Konzept 2"</strong>), und wir zementieren es!
                 </p>
             </div>
         </div>
