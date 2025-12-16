@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.27
+**Version:** 1.9.28
 
 ---
 
@@ -102,7 +102,8 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **RFC-036** | Standard | **UI / Data** | **MediaCard Metadata Restoration:** Wiedereinführung der Icons für TMDB und Rotten Tomatoes, Anzeige der Laufzeit und der Hauptdarsteller (Cast) in der Listenansicht (Grid), unter Beibehaltung des neuen "Stitch"-Designs. | ✅ Done |
 | **RFC-037** | Bugfix | **Auth** | **Auth Logic Hardening:** Entkopplung der Datenbank-Abfragen vom Login-Prozess. Der Login erfolgt nun priorisiert via E-Mail. Broadcast-Events und Username-Lookups finden erst NACH erfolgreicher Authentifizierung statt, um RLS-Fehler bei anonymen Zugriffen zu verhindern. | ✅ Done |
 | **RFC-038** | Emergency | **Build / Ops** | **PromiseLike Fix:** Umbau der asynchronen Broadcast-Logik in `AuthContext` auf `async/await` IIFE, um TypeScript-Fehler `Property 'catch' does not exist on type 'PromiseLike<void>'` während des Vercel Builds zu beheben. | ✅ Done |
+| **RFC-039** | Critical | **DB / Performance** | **RLS Optimization:** Bereitstellung eines SQL-Skripts (`supabase_performance_fix.sql`) zur Behebung von `auth_rls_initplan`-Warnungen. Umstellung von `auth.uid()` auf `(select auth.uid())` zur Reduktion der Query-Evaluationen und Zusammenfassung permissiver Policies. | ✅ Done |
 
 ---
 
-*Dokumentation aktualisiert: Version 1.9.27*
+*Dokumentation aktualisiert: Version 1.9.28*
