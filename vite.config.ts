@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
         }
       })
     ],
-    base: './', // WICHTIG für GitHub Pages (relative Pfade)
+    base: './', 
     build: {
       outDir: 'dist',
       emptyOutDir: true,
