@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Search, Camera, Sparkles, BrainCircuit, 
   Share2, Trophy, List, Key, Shield, Smartphone, 
-  MessageCircle, Layers, Star, Lock, Download, Filter, FileText
+  MessageCircle, Layers, Star, Lock, Download, Filter, FileText,
+  PlusSquare, Share
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
@@ -33,6 +34,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
 
   const navItems = [
     ...(isAdmin ? [{ id: 'start', label: 'Erste Schritte', icon: Key }] : []),
+    { id: 'install', label: 'App Installation', icon: Smartphone },
     { id: 'search', label: 'Suchen & Filter', icon: Search },
     { id: 'import', label: 'Smart Import', icon: Download },
     { id: 'ai', label: 'AI Power Features', icon: Sparkles },
@@ -60,7 +62,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
               <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
                 Benutzerhandbuch
               </h1>
-              <p className="text-slate-400 text-sm mt-1">Version 1.9.24 • InFocus CineLog</p>
+              <p className="text-slate-400 text-sm mt-1">Version 1.9.29 • InFocus CineLog</p>
           </div>
         </header>
 
@@ -84,6 +86,63 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
 
           {/* Main Content */}
           <main className="lg:col-span-3 space-y-12">
+
+            {/* SECTION: INSTALLATION (NEW) */}
+            <section id="install" className="scroll-mt-24">
+                <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-cyan-500/20 rounded-3xl p-6 md:p-8 shadow-2xl">
+                    <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                        <Smartphone className="text-cyan-400" /> App Installation
+                    </h2>
+                    
+                    <p className="text-slate-300 mb-6 leading-relaxed">
+                        InFocus CineLog ist eine <strong>Progressive Web App (PWA)</strong>. Das bedeutet, du kannst sie direkt aus dem Browser heraus installieren – ohne App Store!
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        {/* iOS */}
+                        <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+                            <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                                <span className="bg-white text-black text-xs font-bold px-1.5 py-0.5 rounded">iOS</span> iPhone / iPad
+                            </h3>
+                            <ol className="space-y-4 text-sm text-slate-300">
+                                <li className="flex gap-3">
+                                    <span className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center text-cyan-400 font-bold shrink-0">1</span>
+                                    <span>Öffne die App in <strong>Safari</strong>.</span>
+                                </li>
+                                <li className="flex gap-3">
+                                    <span className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center text-cyan-400 font-bold shrink-0">2</span>
+                                    <span>Tippe unten in der Leiste auf den <strong className="text-white inline-flex items-center gap-1"><Share size={14}/> Teilen</strong> Button.</span>
+                                </li>
+                                <li className="flex gap-3">
+                                    <span className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center text-cyan-400 font-bold shrink-0">3</span>
+                                    <span>Scrolle etwas nach unten und wähle <strong className="text-white inline-flex items-center gap-1"><PlusSquare size={14}/> Zum Home-Bildschirm</strong>.</span>
+                                </li>
+                            </ol>
+                        </div>
+
+                        {/* Android */}
+                        <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+                            <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                                <span className="bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">Android</span> Chrome
+                            </h3>
+                            <ol className="space-y-4 text-sm text-slate-300">
+                                <li className="flex gap-3">
+                                    <span className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center text-cyan-400 font-bold shrink-0">1</span>
+                                    <span>Öffne das Profil-Menü oben rechts (dein Avatar).</span>
+                                </li>
+                                <li className="flex gap-3">
+                                    <span className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center text-cyan-400 font-bold shrink-0">2</span>
+                                    <span>Tippe auf <strong className="text-cyan-400">App installieren</strong>.</span>
+                                </li>
+                                <li className="flex gap-3">
+                                    <span className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center text-cyan-400 font-bold shrink-0">3</span>
+                                    <span>Alternativ erscheint oft automatisch ein Hinweis am unteren Bildschirmrand.</span>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* SECTION 1: ERSTE SCHRITTE (ADMIN ONLY) */}
             {isAdmin && (
@@ -188,7 +247,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
               </div>
             </section>
 
-            {/* SECTION: SMART IMPORT (NEW) */}
+            {/* SECTION: SMART IMPORT */}
             <section id="import" className="scroll-mt-24">
               <div className="bg-slate-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl">
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
@@ -366,7 +425,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
               </div>
             </section>
 
-            {/* SECTION 6: SICHERHEIT & PRIVACY (NEW) */}
+            {/* SECTION 6: SICHERHEIT & PRIVACY */}
             <section id="security" className="scroll-mt-24">
               <div className="bg-slate-900/60 backdrop-blur-md border border-red-500/10 rounded-3xl p-6 md:p-8 shadow-2xl">
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
@@ -392,11 +451,6 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
                               <div className="text-lg font-mono text-white mt-1">KaffeeSonneRegen</div>
                               <p className="text-xs text-slate-400 mt-2">Lang, einfach zu merken, extrem schwer zu knacken. Das nennt man "Passphrase".</p>
                           </div>
-                      </div>
-                      
-                      <div className="mt-4 flex items-center gap-2 text-sm text-slate-400 bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
-                          <BrainCircuit size={16} className="text-cyan-400" />
-                          <span><strong>Tipp:</strong> Denke dir einen kurzen Satz aus oder kombiniere 3 zufällige Wörter.</span>
                       </div>
                   </div>
                 </div>

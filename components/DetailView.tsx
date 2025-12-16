@@ -54,10 +54,11 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 setDetails(extended);
                 
                 if (extended.trailerKey) {
-                    // Full Trailer (Sound, Controls)
+                    // Full Trailer (Sound, Controls) for Modal
                     setTrailerUrl(`https://www.youtube.com/embed/${extended.trailerKey}?autoplay=1`);
                     // Background Ambient Trailer (Muted, Loop, No Controls)
-                    setBackgroundTrailerUrl(`https://www.youtube.com/embed/${extended.trailerKey}?autoplay=1&mute=1&controls=0&loop=1&playlist=${extended.trailerKey}&showinfo=0&modestbranding=1`);
+                    // Playlist parameter is required for loop to work on single video embeds
+                    setBackgroundTrailerUrl(`https://www.youtube.com/embed/${extended.trailerKey}?autoplay=1&mute=1&controls=0&loop=1&playlist=${extended.trailerKey}&showinfo=0&modestbranding=1&iv_load_policy=3`);
                 }
 
                 const imdbId = initialItem.imdbId || extended.imdbId;

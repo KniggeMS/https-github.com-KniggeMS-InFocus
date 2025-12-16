@@ -21,6 +21,7 @@ import { RecoveryPage } from './components/RecoveryPage';
 import { PublicProfileModal } from './components/PublicProfileModal';
 import { SettingsModal } from './components/SettingsModal';
 import { GuidePage } from './components/GuidePage';
+import { InstallPwaModal } from './components/InstallPwaModal';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes, updateMediaItemRtScore, updateMediaItemDetails,
@@ -77,6 +78,10 @@ export default function App() {
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [viewingProfile, setViewingProfile] = useState<User | null>(null);
   
+  // PWA State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -92,6 +97,17 @@ export default function App() {
       loadData();
     }
   }, [user]);
+
+  // PWA Prompt Listener
+  useEffect(() => {
+    const handler = (e: any) => {
+        e.preventDefault();
+        setDeferredPrompt(e);
+        console.log("Install Prompt intercepted");
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
 
   useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -408,6 +424,12 @@ export default function App() {
                                 <p className="text-xs text-slate-500 truncate">{user.email}</p>
                             </div>
                             
+                            {/* PWA INSTALL ENTRY */}
+                            <button onClick={() => { setIsInstallModalOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-cyan-400 hover:bg-white/5 flex items-center gap-2 font-bold">
+                                <Download size={16} /> App installieren
+                            </button>
+                            <div className="h-px bg-white/5 my-1"></div>
+
                             <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
                                 <UserIcon size={16} /> {t('profile')}
                             </button>
@@ -599,6 +621,12 @@ export default function App() {
             omdbKey={omdbKey}
             geminiKey={geminiKey}
             onSave={handleSettingsSave}
+        />
+
+        <InstallPwaModal 
+            isOpen={isInstallModalOpen} 
+            onClose={() => setIsInstallModalOpen(false)}
+            installPrompt={deferredPrompt}
         />
         
         {isGuideOpen && (
