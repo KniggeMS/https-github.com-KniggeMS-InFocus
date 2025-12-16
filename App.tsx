@@ -22,6 +22,7 @@ import { PublicProfileModal } from './components/PublicProfileModal';
 import { SettingsModal } from './components/SettingsModal';
 import { GuidePage } from './components/GuidePage';
 import { InstallPwaModal } from './components/InstallPwaModal';
+import { LogoShowcase } from './components/LogoShowcase';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes, updateMediaItemRtScore, updateMediaItemDetails,
@@ -30,7 +31,7 @@ import {
 import { getMediaDetails } from './services/tmdb';
 import { getOmdbRatings } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
-import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu, BookOpen, ShieldAlert } from 'lucide-react';
+import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu, BookOpen, ShieldAlert, Palette } from 'lucide-react';
 
 const FALLBACK_KEYS = {
     TMDB: "4115939bdc412c5f7b0c4598fcf29b77", 
@@ -141,7 +142,6 @@ export default function App() {
 
   const handleToggleFavorite = useCallback(async (id: string) => {
       // Optimistic update difficult inside useCallback without item state, so we use functional setter logic
-      // But we need the current state to toggle. 
       // Correct approach: Find item in setter, toggle DB.
       setItems(prev => {
           const item = prev.find(i => i.id === id);
@@ -383,6 +383,7 @@ export default function App() {
         )}
 
         {/* HEADER */}
+        {location.pathname !== '/design-lab' && (
         <header className="sticky top-0 z-30 bg-[#0B0E14]/80 backdrop-blur-md border-b border-white/5 px-4 md:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-6">
                 <div onClick={() => navigate('/')} className="flex items-center gap-2 cursor-pointer group">
@@ -433,6 +434,10 @@ export default function App() {
                             <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
                                 <UserIcon size={16} /> {t('profile')}
                             </button>
+
+                            <button onClick={() => { navigate('/design-lab'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
+                                <Palette size={16} /> 🎨 Design Lab
+                            </button>
                             
                             {(user.role === UserRole.ADMIN || user.role === UserRole.MANAGER) && (
                                 <button onClick={() => { navigate('/users'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white flex items-center gap-2">
@@ -461,10 +466,12 @@ export default function App() {
                 </div>
             </div>
         </header>
+        )}
 
         {/* MAIN LAYOUT */}
         <div className="flex max-w-[1600px] mx-auto relative z-10">
             {/* Sidebar */}
+            {location.pathname !== '/design-lab' && (
             <aside className="hidden md:flex w-64 flex-col fixed left-0 top-16 bottom-0 border-r border-white/5 bg-[#0B0E14]/50 backdrop-blur-sm overflow-y-auto custom-scrollbar">
                 <div className="p-4">
                     <button onClick={() => setIsSearchOpen(true)} className="w-full flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-lg shadow-cyan-900/20 mb-6">
@@ -495,6 +502,12 @@ export default function App() {
                         </div>
                     </div>
 
+                    <div className="mb-6">
+                        <button onClick={() => navigate('/design-lab')} className="w-full text-left px-3 py-2 text-sm text-slate-400 hover:text-white font-medium flex items-center gap-2 rounded-lg hover:bg-white/5 transition-colors">
+                             <Palette size={16} /> 🎨 Design Lab
+                        </button>
+                    </div>
+
                     {sharedLists.length > 0 && (
                          <div className="mb-6">
                             <h3 className="px-3 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('shared_with')}</h3>
@@ -514,9 +527,10 @@ export default function App() {
                 </div>
                 <AiRecommendationButton items={items} onAdd={handleAdd} apiKey={tmdbKey} />
             </aside>
+            )}
 
             {/* Content Area */}
-            <main className="flex-grow md:pl-64 p-4 md:p-8 min-h-[calc(100vh-64px)]">
+            <main className={`flex-grow p-4 md:p-8 min-h-[calc(100vh-64px)] ${location.pathname !== '/design-lab' ? 'md:pl-64' : ''}`}>
                 {location.pathname === '/' && <Stats items={displayedItems} />}
 
                 {(location.pathname === '/' || location.pathname === '/watchlist' || location.pathname === '/favorites' || location.pathname.startsWith('/list/')) && (
@@ -571,14 +585,19 @@ export default function App() {
                     <Route path="/list/:id" element={<ListRoute customLists={customLists} renderGrid={renderGrid} />} />
                     <Route path="/profile" element={<ProfilePage items={items.filter(i => i.userId === user.id)} />} />
                     <Route path="/users" element={<UserManagementPage />} />
+                    <Route path="/design-lab" element={<LogoShowcase />} />
                 </Routes>
             </main>
         </div>
 
         {/* Modals & Helpers */}
-        <ChatBot items={items.filter(i => i.userId === user.id)} />
-        <AiRecommendationButton items={items} onAdd={handleAdd} apiKey={tmdbKey} mobileFabOnly={true} />
-        <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsCreateListOpen(true)} />
+        {location.pathname !== '/design-lab' && (
+            <>
+                <ChatBot items={items.filter(i => i.userId === user.id)} />
+                <AiRecommendationButton items={items} onAdd={handleAdd} apiKey={tmdbKey} mobileFabOnly={true} />
+                <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsCreateListOpen(true)} />
+            </>
+        )}
 
         <SearchModal 
             isOpen={isSearchOpen} 
