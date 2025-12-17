@@ -54,22 +54,19 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 
                 if (extended.trailerKey) {
                     const origin = window.location.origin;
-                    // Standard Trailer URL
+                    
+                    // Standard Trailer URL for direct play
                     setTrailerUrl(`https://www.youtube-nocookie.com/embed/${extended.trailerKey}?autoplay=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(origin)}`);
                     
-                    // FIX: Ambient Trailer with extra params to prevent "Bot detection" on web
-                    // origin and widget_referrer are critical for YouTube's security handshake
+                    // FIXED: Ambient Background Trailer URL
+                    // Note: We remove 'modestbranding' and 'iv_load_policy' because YouTube Desktop 
+                    // sometimes triggers bot detection if the player UI is too restricted.
                     const bgParams = new URLSearchParams({
                         autoplay: '1',
                         mute: '1',
                         controls: '0',
                         loop: '1',
                         playlist: extended.trailerKey,
-                        showinfo: '0',
-                        modestbranding: '1',
-                        iv_load_policy: '3',
-                        disablekb: '1',
-                        fs: '0',
                         rel: '0',
                         playsinline: '1',
                         enablejsapi: '1',
@@ -195,14 +192,14 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                     <div className="w-full h-full relative overflow-hidden">
                                         <iframe 
                                             src={backgroundTrailerUrl} 
-                                            className="w-full h-[140%] -mt-[20%] object-cover scale-150 opacity-40 pointer-events-none" 
+                                            className="w-full h-[120%] -mt-[10%] object-cover scale-125 opacity-50 pointer-events-none" 
                                             title="Ambient Trailer Background"
                                             allow="autoplay; encrypted-media"
                                             tabIndex={-1}
                                             referrerPolicy="strict-origin-when-cross-origin"
                                         />
                                         {/* Overlay to ensure text readability and cinematic feel */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-black/60 md:bg-gradient-to-r md:from-transparent md:to-slate-900" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-black/50 md:bg-gradient-to-r md:from-transparent md:to-slate-900" />
                                     </div>
                                 ) : (
                                     backdropUrl && (

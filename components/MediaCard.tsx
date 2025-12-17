@@ -96,15 +96,15 @@ export const MediaCard = memo<MediaCardProps>(({
         <div 
             onClick={() => onClick(item)}
             onMouseMove={handleMouseMove}
-            className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#1c212c] border border-white/5 shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500/50"
+            className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#1c212c] border border-white/5 shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500/60"
         >
-            {/* SENTIENT GLASS: Interactive Border & Spotlight - INCREASED INTENSITY */}
+            {/* SENTIENT GLASS: Interactive Border & Spotlight - BOOSTED (v1.9.32) */}
             <div 
                 className="absolute inset-0 z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{
                     background: `
-                        radial-gradient(450px circle at var(--x) var(--y), rgba(34, 211, 238, 0.2), transparent 40%),
-                        radial-gradient(120px circle at var(--x) var(--y), rgba(34, 211, 238, 0.5), transparent 80%)
+                        radial-gradient(450px circle at var(--x) var(--y), rgba(34, 211, 238, 0.25), transparent 45%),
+                        radial-gradient(120px circle at var(--x) var(--y), rgba(34, 211, 238, 0.6), transparent 85%)
                     `
                 }}
             ></div>
