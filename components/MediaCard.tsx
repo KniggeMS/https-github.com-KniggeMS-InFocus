@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, memo } from 'react';
 import { MediaItem, WatchStatus, MediaType, CustomList } from '../types';
 import { Trash2, Check, Clock, PlayCircle, Film, Tv, MoreHorizontal, Heart, Star, Users, Zap, RefreshCw } from 'lucide-react';
@@ -44,11 +43,12 @@ export const MediaCard = memo<MediaCardProps>(({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMobile]);
 
-  // Spotlight Effect Logic
+  // Enhanced Spotlight Effect Logic
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const { left, top } = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - left;
     const y = e.clientY - top;
+    // Set custom properties for CSS
     e.currentTarget.style.setProperty('--x', `${x}px`);
     e.currentTarget.style.setProperty('--y', `${y}px`);
   };
@@ -96,15 +96,20 @@ export const MediaCard = memo<MediaCardProps>(({
         <div 
             onClick={() => onClick(item)}
             onMouseMove={handleMouseMove}
-            className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#1c212c] border border-white/5 shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500/30"
+            className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#1c212c] border border-white/5 shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500/40"
         >
+            {/* SENTIENT GLASS: Interactive Border & Spotlight */}
             <div 
                 className="absolute inset-0 z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 style={{
-                    background: 'radial-gradient(600px circle at var(--x) var(--y), rgba(255,255,255,0.1), transparent 40%)'
+                    background: `
+                        radial-gradient(400px circle at var(--x) var(--y), rgba(34, 211, 238, 0.15), transparent 40%),
+                        radial-gradient(100px circle at var(--x) var(--y), rgba(34, 211, 238, 0.4), transparent 80%)
+                    `
                 }}
             ></div>
 
+            {/* Content Layers */}
             {posterUrl ? (
                 <img 
                     src={posterUrl} 
@@ -118,8 +123,10 @@ export const MediaCard = memo<MediaCardProps>(({
                 </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none opacity-80 z-10" />
+            {/* Gradient Overlays */}
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none opacity-90 z-10" />
 
+            {/* Badges */}
             <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1.5 shadow-sm z-30">
                 {item.type === MediaType.MOVIE ? <Film size={12} className="text-blue-400"/> : <Tv size={12} className="text-purple-400"/>}
             </div>
@@ -137,6 +144,7 @@ export const MediaCard = memo<MediaCardProps>(({
             )}
         </div>
 
+        {/* Menu Button Overlay */}
         <div className="absolute top-2 right-2 z-30" ref={menuRef}>
             <button 
                 onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
@@ -210,8 +218,9 @@ export const MediaCard = memo<MediaCardProps>(({
             />
         )}
 
+        {/* Text Details Area */}
         <div className="px-1 min-h-[90px] flex flex-col justify-end">
-            <h3 onClick={() => onClick(item)} className="font-bold text-white text-lg leading-tight line-clamp-1 hover:text-blue-400 transition-colors cursor-pointer mb-1.5" title={item.title}>
+            <h3 onClick={() => onClick(item)} className="font-bold text-white text-lg leading-tight line-clamp-1 hover:text-cyan-400 transition-colors cursor-pointer mb-1.5" title={item.title}>
                 {item.title}
             </h3>
             

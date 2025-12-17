@@ -359,10 +359,11 @@ export default function App() {
 
   return (
     <div className={`min-h-screen bg-[#0B0E14] text-slate-200 pb-20 md:pb-0 font-sans selection:bg-cyan-500/30 relative overflow-hidden`}>
-        {/* Subtle Ambient Background */}
+        {/* REINFORCED Ambient Background Glow */}
         <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-             <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-900/5 rounded-full blur-[120px]"></div>
-             <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-900/5 rounded-full blur-[120px]"></div>
+             <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-blue-600/15 rounded-full blur-[140px] animate-pulse"></div>
+             <div className="absolute bottom-[-10%] left-[-10%] w-[700px] h-[700px] bg-purple-600/10 rounded-full blur-[140px]"></div>
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-cyan-900/5 rounded-full blur-[160px]"></div>
         </div>
 
         {/* ADMIN NOTIFICATION TOAST */}
