@@ -54,11 +54,30 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 
                 if (extended.trailerKey) {
                     const origin = window.location.origin;
-                    // FIX: Using youtube-nocookie.com and adding origin/rel parameters to prevent bot detection overlays
-                    setTrailerUrl(`https://www.youtube-nocookie.com/embed/${extended.trailerKey}?autoplay=1&rel=0&origin=${encodeURIComponent(origin)}`);
+                    // Standard Trailer URL
+                    setTrailerUrl(`https://www.youtube-nocookie.com/embed/${extended.trailerKey}?autoplay=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(origin)}`);
                     
-                    // Background Ambient Trailer (Muted, Loop, No Controls, No Keyboard)
-                    setBackgroundTrailerUrl(`https://www.youtube-nocookie.com/embed/${extended.trailerKey}?autoplay=1&mute=1&controls=0&loop=1&playlist=${extended.trailerKey}&showinfo=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&rel=0&origin=${encodeURIComponent(origin)}`);
+                    // FIX: Ambient Trailer with extra params to prevent "Bot detection" on web
+                    // origin and widget_referrer are critical for YouTube's security handshake
+                    const bgParams = new URLSearchParams({
+                        autoplay: '1',
+                        mute: '1',
+                        controls: '0',
+                        loop: '1',
+                        playlist: extended.trailerKey,
+                        showinfo: '0',
+                        modestbranding: '1',
+                        iv_load_policy: '3',
+                        disablekb: '1',
+                        fs: '0',
+                        rel: '0',
+                        playsinline: '1',
+                        enablejsapi: '1',
+                        origin: origin,
+                        widget_referrer: origin
+                    }).toString();
+                    
+                    setBackgroundTrailerUrl(`https://www.youtube-nocookie.com/embed/${extended.trailerKey}?${bgParams}`);
                 }
 
                 const imdbId = initialItem.imdbId || extended.imdbId;
@@ -157,7 +176,13 @@ export const DetailView: React.FC<DetailViewProps> = ({
                     {/* Active Trailer Overlay */}
                     {showTrailer && trailerUrl ? (
                          <div className="absolute inset-0 z-30 bg-black animate-in fade-in duration-500">
-                            <iframe src={trailerUrl} title="Trailer" className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
+                            <iframe 
+                                src={trailerUrl} 
+                                title="Trailer Player" 
+                                className="w-full h-full" 
+                                allow="autoplay; encrypted-media" 
+                                allowFullScreen 
+                            />
                             <button onClick={() => setShowTrailer(false)} className="absolute top-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-bold border border-white/20 backdrop-blur-md">
                                 {t('close_trailer')}
                             </button>
@@ -171,9 +196,10 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                         <iframe 
                                             src={backgroundTrailerUrl} 
                                             className="w-full h-[140%] -mt-[20%] object-cover scale-150 opacity-40 pointer-events-none" 
-                                            title="Ambient Trailer"
+                                            title="Ambient Trailer Background"
                                             allow="autoplay; encrypted-media"
                                             tabIndex={-1}
+                                            referrerPolicy="strict-origin-when-cross-origin"
                                         />
                                         {/* Overlay to ensure text readability and cinematic feel */}
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-black/60 md:bg-gradient-to-r md:from-transparent md:to-slate-900" />
