@@ -2,10 +2,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { MediaType, SearchResult, MediaItem, ChatMessage } from "../types";
 
 // CONSTANTS
-const GEMINI_KEY_STORAGE_KEY = 'cinelog_gemini_key';
-const MODEL_NAME = "gemini-2.5-flash";
-// Note: We keep the image model ref for Vision Search, but remove it for Avatars to save quota.
-// const IMAGE_MODEL_NAME = "gemini-2.5-flash-image"; 
+// Fixed: Updated to gemini-3-flash-preview for general text tasks as per guidelines
+const MODEL_NAME = "gemini-3-flash-preview";
 
 // --- HELPERS ---
 
@@ -15,33 +13,10 @@ const cleanJsonString = (text: string): string => {
     return cleaned;
 };
 
-const sanitizeKey = (key: string | null | undefined): string => {
-    if (!key) return '';
-    let cleaned = key.trim();
-    
-    // Remove potential "API_KEY=" prefix from .env copy-pastes
-    if (cleaned.startsWith('API_KEY=')) {
-        cleaned = cleaned.replace('API_KEY=', '');
-    }
-    
-    // Remove quotes if user copied JSON string
-    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-        cleaned = cleaned.substring(1, cleaned.length - 1);
-    }
-    
-    return cleaned.trim();
-};
-
 // --- CLIENT FACTORY ---
+// Fixed: Gemini API key must be obtained exclusively from process.env.API_KEY
 const getAiClient = () => {
-    // Priority: 1. LocalStorage (User Input), 2. Env Var (Deployment)
-    const rawKey = localStorage.getItem(GEMINI_KEY_STORAGE_KEY) || process.env.API_KEY || '';
-    const apiKey = sanitizeKey(rawKey);
-    
-    if (!apiKey) {
-        console.warn("Gemini Client initialized without API Key.");
-    }
-    return new GoogleGenAI({ apiKey });
+    return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 };
 
 // --- CACHING UTILS ---
@@ -82,7 +57,7 @@ const generateOfflineAnalysis = (item: MediaItem, userNotes?: string): string =>
         } else if (p.includes('weltraum') || p.includes('zukunft')) {
             vibe += " Ein futuristisches Setting erwartet dich.";
         } else {
-            vibe += " Die Geschichte wirkt komplex und vielschichtig.";
+            vibe += " Die Geschichte wirkt komplex and vielschichtig.";
         }
     }
 
@@ -94,34 +69,6 @@ const generateOfflineAnalysis = (item: MediaItem, userNotes?: string): string =>
 };
 
 // --- API FUNCTIONS ---
-
-/**
- * Validates the API key by making a minimal request.
- */
-export const testGeminiConnection = async (apiKey: string): Promise<{success: boolean, message: string}> => {
-    const cleanKey = sanitizeKey(apiKey);
-    if (!cleanKey) return { success: false, message: "Key ist leer." };
-    
-    try {
-        const ai = new GoogleGenAI({ apiKey: cleanKey });
-        // Minimal request to test auth
-        await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: "Hi",
-        });
-        return { success: true, message: "Verbindung erfolgreich!" };
-    } catch (error: any) {
-        console.error("Test Connection Failed:", error);
-        let msg = "Unbekannter Fehler";
-        if (error.message) {
-            if (error.message.includes("API key") || error.message.includes("400")) msg = "Ungültiger Key (Prüfe Copy-Paste).";
-            else if (error.message.includes("403")) msg = "Zugriff verweigert (Code 403). Prüfe Billing.";
-            else if (error.message.includes("429")) msg = "Quota Limit erreicht (Code 429).";
-            else msg = error.message;
-        }
-        return { success: false, message: msg };
-    }
-};
 
 export const getRecommendations = async (items: MediaItem[], forceRefresh = false): Promise<SearchResult[]> => {
   if (items.length === 0) return [];
@@ -245,7 +192,7 @@ export const identifyMovieFromImage = async (base64Image: string): Promise<strin
         const base64Data = base64Image.split(',')[1];
 
         const response = await ai.models.generateContent({
-            model: MODEL_NAME, // Flash is cheaper/faster for this than Pro
+            model: MODEL_NAME,
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: base64Data } },

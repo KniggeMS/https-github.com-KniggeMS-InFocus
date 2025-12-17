@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, Shield, Check, RotateCcw, Eye, EyeOff } from 'lucide-react';
+import { X, Key, Shield, Check, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from '../contexts/LanguageContext';
 
 interface SettingsModalProps {
@@ -8,17 +8,15 @@ interface SettingsModalProps {
   // Current values (from LocalStorage or Env)
   tmdbKey: string;
   omdbKey: string;
-  geminiKey: string;
   // Updaters
-  onSave: (keys: { tmdb: string, omdb: string, gemini: string }) => void;
+  onSave: (keys: { tmdb: string, omdb: string }) => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, tmdbKey, omdbKey, geminiKey, onSave }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, tmdbKey, omdbKey, onSave }) => {
   const { t } = useTranslation();
   
   const [localTmdb, setLocalTmdb] = useState(tmdbKey);
   const [localOmdb, setLocalOmdb] = useState(omdbKey);
-  const [localGemini, setLocalGemini] = useState(geminiKey);
   
   const [showSecrets, setShowSecrets] = useState(false);
 
@@ -27,7 +25,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
     if (isOpen) {
         setLocalTmdb(localStorage.getItem('tmdb_api_key') || '');
         setLocalOmdb(localStorage.getItem('omdb_api_key') || '');
-        setLocalGemini(localStorage.getItem('cinelog_gemini_key') || '');
     }
   }, [isOpen]);
 
@@ -37,8 +34,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
       e.preventDefault();
       onSave({
           tmdb: localTmdb,
-          omdb: localOmdb,
-          gemini: localGemini
+          omdb: localOmdb
       });
       onClose();
   };
@@ -105,27 +101,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     value={localOmdb}
                     onChange={e => setLocalOmdb(e.target.value)}
                     placeholder={process.env.VITE_OMDB_API_KEY ? "Verwende System Key..." : "Key eingeben..."}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none font-mono text-sm"
-                />
-            </div>
-
-            {/* Gemini Key */}
-            <div className="space-y-2">
-                <div className="flex justify-between">
-                    <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
-                        <Key size={12}/> Google Gemini API Key
-                    </label>
-                    {isEnvActive('cinelog_gemini_key', process.env.API_KEY) && !localGemini && (
-                        <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30 flex items-center gap-1">
-                            <Check size={10}/> System Default aktiv
-                        </span>
-                    )}
-                </div>
-                <input 
-                    type={showSecrets ? "text" : "password"}
-                    value={localGemini}
-                    onChange={e => setLocalGemini(e.target.value)}
-                    placeholder={process.env.API_KEY ? "Verwende System Key..." : "Key eingeben..."}
                     className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none font-mono text-sm"
                 />
             </div>

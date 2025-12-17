@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
@@ -31,12 +30,11 @@ import {
 import { getMediaDetails } from './services/tmdb';
 import { getOmdbRatings } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
-import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Sun, Moon, Ghost, Download, Plus, X, ChevronDown, Menu, BookOpen, ShieldAlert, Palette } from 'lucide-react';
+import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Download, Plus, X, ChevronDown, Palette, ShieldAlert, BookOpen } from 'lucide-react';
 
 const FALLBACK_KEYS = {
     TMDB: "4115939bdc412c5f7b0c4598fcf29b77", 
-    OMDB: "33df5dc9", 
-    GEMINI: "" 
+    OMDB: "33df5dc9"
 };
 
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
@@ -72,7 +70,6 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
@@ -88,7 +85,6 @@ export default function App() {
 
   const [tmdbKey, setTmdbKey] = useState(() => localStorage.getItem('tmdb_api_key') || process.env.VITE_TMDB_API_KEY || FALLBACK_KEYS.TMDB || '');
   const [omdbKey, setOmdbKey] = useState(() => localStorage.getItem('omdb_api_key') || process.env.VITE_OMDB_API_KEY || FALLBACK_KEYS.OMDB || '');
-  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('cinelog_gemini_key') || process.env.API_KEY || FALLBACK_KEYS.GEMINI || '');
 
   const myLists = user ? customLists.filter(l => l.ownerId === user.id) : [];
   const sharedLists = user ? customLists.filter(l => l.sharedWith.includes(user.id)) : [];
@@ -141,8 +137,6 @@ export default function App() {
   }, []);
 
   const handleToggleFavorite = useCallback(async (id: string) => {
-      // Optimistic update difficult inside useCallback without item state, so we use functional setter logic
-      // Correct approach: Find item in setter, toggle DB.
       setItems(prev => {
           const item = prev.find(i => i.id === id);
           if (item) {
@@ -299,10 +293,10 @@ export default function App() {
       setIsImportOpen(false);
   };
 
-  const handleSettingsSave = (keys: { tmdb: string, omdb: string, gemini: string }) => {
+  // Fixed: Removed Gemini API Key from settings save logic
+  const handleSettingsSave = (keys: { tmdb: string, omdb: string }) => {
       if (keys.tmdb) { localStorage.setItem('tmdb_api_key', keys.tmdb); setTmdbKey(keys.tmdb); }
       if (keys.omdb) { localStorage.setItem('omdb_api_key', keys.omdb); setOmdbKey(keys.omdb); }
-      if (keys.gemini) { localStorage.setItem('cinelog_gemini_key', keys.gemini); setGeminiKey(keys.gemini); }
       setIsSettingsOpen(false);
   };
 
@@ -644,7 +638,6 @@ export default function App() {
             onClose={() => setIsSettingsOpen(false)}
             tmdbKey={tmdbKey}
             omdbKey={omdbKey}
-            geminiKey={geminiKey}
             onSave={handleSettingsSave}
         />
 

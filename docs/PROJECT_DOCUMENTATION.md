@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.30
+**Version:** 1.9.31
 
 ---
 
@@ -68,7 +68,8 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | **...** | ... | ... | ... | ... |
 | **RFC-040** | Security | **RBAC / Routing** | **Design Lab Lockdown:** Beschränkung der Route `/design-lab` auf Administratoren. | ✅ Done |
 | **RFC-041** | Feature | **UI / UX** | **Sentient Glass (Phase 6):** Implementierung von "Smart Borders" und einem "Spotlight"-Effekt auf `MediaCard.tsx`. | ✅ Done |
-| **RFC-042** | Bugfix | **Mobile / PWA** | **PWA Install Troubleshooting:** Erweiterung des `InstallPwaModal` um Hilfe-Texte für Android-Berechtigungskonflikte (Xiaomi/Android Shortcut Permission Problem). | ✅ Done |
+| **RFC-042** | Bugfix | **Mobile / PWA** | **PWA Install Troubleshooting:** Erweiterung des `InstallPwaModal` um Hilfe-Texte. | ✅ Done |
+| **RFC-043** | Feature | **Mobile / UX** | **Sentient Bottom Sheet:** Ersatz der Mobile-Dropdowns durch native-like Bottom Sheets zur Behebung von Viewport-Clipping und Verbesserung der Ergonomie. | ✅ Done |
 
 ---
 
@@ -80,4 +81,4 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 
 ---
 
-*Dokumentation aktualisiert: Version 1.9.30*
+*Dokumentation aktualisiert: Version 1.9.31*
