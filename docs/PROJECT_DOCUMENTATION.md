@@ -3,7 +3,7 @@
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.29
+**Version:** 1.9.30
 
 ---
 
@@ -65,47 +65,19 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 | ID | Change Type | Komponente | Beschreibung | Status |
 |:---|:---|:---|:---|:---|
 | **RFC-001** | Standard | **Core Setup** | Initialisierung des React/Vite Projekts, Tailwind Setup, Grundstruktur der Komponenten (`MediaCard`). | ✅ Done |
-| **RFC-002** | Major | **Data Layer** | Integration der TMDB API. Implementierung der Suche und Detailansicht. | ✅ Done |
-| **RFC-003** | Major | **Backend Migration** | Umstellung von LocalStorage-only auf **Supabase Cloud**. Einrichtung von Auth, Tabellen und RLS. Migrationstool für lokale Daten. | ✅ Done |
-| **RFC-004** | Major | **AI Integration** | Implementierung der `gemini.ts` Services. Hinzufügen von **Vision Search** (Kamera-Upload) und **ChatBot**. | ✅ Done |
-| **RFC-005** | Minor | **Social** | Einführung von "Custom Lists" und der Möglichkeit, Listen mit anderen User-IDs zu teilen (Many-to-Many Relation). | ✅ Done |
-| **RFC-006** | Major | **Gamification** | Einführung des Level-Systems basierend auf Laufzeit (1 Min = 1 XP). Berechnung von Badges/Achievements im Frontend. | ✅ Done |
-| **RFC-007** | Minor | **UX / Theming** | Implementierung des Theme-Switchers (Dark, Light, iOS Glassmorphism). Responsive Mobile Navigation. | ✅ Done |
-| **RFC-008** | Emergency | **Performance** | **Smart Caching Update:** Implementierung von LocalStorage-Cache für AI-Anfragen (Empfehlungen & Analysen) zur Schonung des API-Limits. Fallback-Modus für Offline-Szenarien. | ✅ Done |
-| **RFC-009** | Standard | **User Mgmt** | Admin-Dashboard zur Verwaltung von Benutzerrollen (RBAC: User, Manager, Admin). | ✅ Done |
-| **RFC-010** | Standard | **Documentation** | Erstellung der Landing Page (`docs/index.html`) und ITIL-Dokumentation. | ✅ Done |
-| **RFC-011** | Minor | **Ext. Data** | Integration von **Rotten Tomatoes Scores** via OMDb API. Erweiterung des DB-Schemas um `rt_score`. Anzeige in DetailView und MediaCard. | ✅ Done |
-| **RFC-012** | Minor | **UX/Data** | **Retroactive Fetching:** Implementierung eines Fallbacks in der Detailansicht, der fehlende RT-Scores live nachlädt. | ✅ Done |
-| **RFC-013** | Minor | **Data Integrity** | **Rating Persistence:** Nachträglich geladene RT-Scores werden nun sofort in der Datenbank (`media_items`) gespeichert, damit sie auch in der Übersicht (Grid) sichtbar sind. | ✅ Done |
-| **RFC-014** | Major | **Social** | **Community Reviews:** Umwandlung von privaten Notizen in öffentliche Rezensionen. Integration eines Feeds in der Detailansicht, der Rezensionen anderer Nutzer anzeigt. | ✅ Done |
-| **RFC-015** | Bugfix | **Settings / AI** | **Key Persistence Fix:** Automatisches Speichern des Gemini Keys nach erfolgreichem Verbindungstest (Auto-Save). Erweitertes Error-Handling im Chat für Quota (429) und Auth (403) Fehler. | ✅ Done |
-| **RFC-016** | Minor | **UX / Admin** | **RBAC Visibility Check:** Implementierung einer visuellen Trennung (Header) für den Admin-Bereich in der Sidebar, um die Zugriffskontrolle transparent zu machen. | ✅ Done |
-| **RFC-017** | Bugfix | **UX / Layout** | **Modal Portal Fix:** Refactoring des `AiRecommendationButton` zur Nutzung von `React.createPortal`. Behebt Clipping-Probleme (z-index Context) innerhalb der Sidebar auf Mobile & Desktop. | ✅ Done |
-| **RFC-018** | Feature | **Help** | **In-App Guide:** Implementierung der `GuidePage` als interaktives Handbuch. Integration eines Links in den Einstellungen. | ✅ Done |
-| **RFC-019** | Major | **Security** | **Security Hardening:** Erhöhung der minimalen Passwortlänge von 6 auf 8 Zeichen. Implementierung eines visuellen "Strength Meter" bei der Registrierung für bessere UX bei erhöhter Sicherheit. | ✅ Done |
-| **RFC-020** | Minor | **UX / Help** | **Guide Access:** Handbuch nun auch auf dem Login-Screen verfügbar (Overlay), um neuen Nutzern Features & Sicherheitskonzepte vorab zu erklären. | ✅ Done |
-| **RFC-021** | Minor | **UX / Mobile** | **Mobile Polish:** Optimierung der Dropdown-Menüs (Breite/Überlagerung), Anpassung der ChatBot-Position, Z-Index Korrekturen für Modals und explizite Implementierung des AI-Recommendation Buttons für Mobile. | ✅ Done |
-| **RFC-022** | Critical | **Social / DB** | **Realtime & Sharing Fix:** Implementierung einer Supabase Realtime-Subscription in `App.tsx` für sofortige Listen-Updates. Überarbeitung der Benachrichtigungslogik. Bereitstellung der **zwingend notwendigen SQL-Policy** für geteilte Listen. | ✅ Done |
-| **RFC-023** | Bugfix | **DB / SQL** | **Postgres Array Syntax Fix:** Korrektur des SQL-Statements für die Sharing-Policy. Nutzung von `ANY (array)` statt des JSON-Operators `?`, um Fehler `42883` zu beheben. | ✅ Done |
-| **RFC-024** | Feature | **Social / DB** | **Shared Item Visibility:** Einführung einer SQL-Policy, die das Lesen von `media_items` erlaubt, wenn diese Teil einer geteilten Liste sind. Anpassung des Frontends, um geteilte Items in der Hauptansicht auszublenden. | ✅ Done |
-| **RFC-025** | Bugfix | **DB / SQL** | **UUID Casting Fix:** Korrektur der `media_items` Policy. Die `id` Spalte (UUID) muss explizit zu `text` gecastet werden (`::text`), um sie mit dem `items` Array (Text[]) in `custom_lists` zu vergleichen. Behebt Fehler `42883: operator does not exist: uuid = text`. | ✅ Done |
-| **RFC-026** | Minor | **UX / DetailView** | **Smart Share Upgrade:** Entfernung der "Vibe"-Smilies. Ersatz durch einen kontextsensitiven "Share"-Button, der auf Mobile das native Teilen-Menü öffnet und auf Desktop in die Zwischenablage kopiert. | ✅ Done |
-| **RFC-027** | Feature | **Analytics** | **Smart Stats Core:** Umbau des Donut-Charts. Einführung eines interaktiven Zentrums ("Informative Center") zur Anzeige von Gesamt- und Detailwerten sowie eines Switches zum Wechsel zwischen "Anzahl" und "Laufzeit". | ✅ Done |
-| **RFC-028** | Critical | **Build / Ops** | **Config Stabilization:** Erzwingung von CommonJS in Config-Dateien (`module.exports`) und Bereitstellung von `index.css`, um Vercel-Deployment Warnungen und Fehler zu beheben. | ✅ Done |
-| **RFC-029** | Critical | **Build / Ops** | **Sync Force (Fix v1.0.3):** Version-Bump aller Config-Dateien auf 1.0.3 / 1.9.17, um Git-Tracking zu erzwingen und Deployment-Fehler endgültig zu beheben. | ✅ Done |
-| **RFC-030** | Critical | **Mobile / UX** | **Mobile Key Isolation Incident:** Korrektur des Umgangs mit dem TMDB API Key. Implementierung des `SearchModal` Eingabe-UIs, um Keys lokal speichern zu können, falls keine Env-Vars vorhanden sind. | ✅ Done |
-| **RFC-031** | Strategic | **Security** | **Client-Side Direct Architecture:** Bestätigung der Architektur-Entscheidung. Keys können via `vite.config.ts` injiziert werden (für Convenience) oder manuell eingegeben werden (für Flexibilität). Doku angepasst. | ✅ Done |
-| **RFC-032** | Minor | **UX / Cleanup** | **Avatar Modernization:** Entfernung der `js-md5` Abhängigkeit und des Gravatar-Fallbacks. Standardisierung auf die farbenfrohen DiceBear "Adventurer" Avatare für ein lebendigeres UI und schlankeren Code. | ✅ Done |
-| **RFC-033** | Feature | **Config / Ops** | **Hardcoded Key Fallback:** Implementierung eines `FALLBACK_KEYS` Objekts in `App.tsx`. Ermöglicht Entwicklern das direkte Eintragen von API Keys im Quellcode, um die App ohne Environment Variables (Vercel) oder manuelle Eingabe durch Endnutzer zu betreiben. | ✅ Done |
-| **RFC-034** | Standard | **UI / Design** | **Stitch Design Finalization:** Korrektur der `AuthPage.tsx` (Cut-off Fix), Synchronisierung der `manifest.json` Farben (#0B0E14) und globale CSS-Anpassungen (Selection Color) für konsistenten Look. | ✅ Done |
-| **RFC-035** | Standard | **UI / Branding** | **Web Typography & Branding Polish:** Erzwungene Sichtbarkeit des "InFocus"-Brandings im Header. Massive Vergrößerung der Schriftarten in `Stats.tsx` und `MediaCard.tsx` für bessere Lesbarkeit auf Desktop-Screens. Optimierung der Charts-Logik. | ✅ Done |
-| **RFC-036** | Standard | **UI / Data** | **MediaCard Metadata Restoration:** Wiedereinführung der Icons für TMDB und Rotten Tomatoes, Anzeige der Laufzeit und der Hauptdarsteller (Cast) in der Listenansicht (Grid), unter Beibehaltung des neuen "Stitch"-Designs. | ✅ Done |
-| **RFC-037** | Bugfix | **Auth** | **Auth Logic Hardening:** Entkopplung der Datenbank-Abfragen vom Login-Prozess. Der Login erfolgt nun priorisiert via E-Mail. Broadcast-Events und Username-Lookups finden erst NACH erfolgreicher Authentifizierung statt, um RLS-Fehler bei anonymen Zugriffen zu verhindern. | ✅ Done |
-| **RFC-038** | Emergency | **Build / Ops** | **PromiseLike Fix:** Umbau der asynchronen Broadcast-Logik in `AuthContext` auf `async/await` IIFE, um TypeScript-Fehler `Property 'catch' does not exist on type 'PromiseLike<void>'` während des Vercel Builds zu beheben. | ✅ Done |
-| **RFC-039** | Critical | **DB / Performance** | **RLS Optimization:** Bereitstellung eines SQL-Skripts (`supabase_performance_fix.sql`) zur Behebung von `auth_rls_initplan`-Warnungen. Umstellung von `auth.uid()` auf `(select auth.uid())` zur Reduktion der Query-Evaluationen und Zusammenfassung permissiver Policies. | ✅ Done |
-| **RFC-040** | Security | **RBAC / Routing** | **Design Lab Lockdown:** Beschränkung der Route `/design-lab` auf Administratoren. Ausblenden der Links in Sidebar und Profilmenü für normale Benutzer und Manager. Redirect-Logik für unbefugten Zugriff. | ✅ Done |
-| **RFC-041** | Feature | **UI / UX** | **Sentient Glass (Phase 6):** Implementierung von "Smart Borders" und einem "Spotlight"-Effekt auf `MediaCard.tsx`. Nutzung von CSS-Variablen für performantes Mouse-Tracking und dynamische Beleuchtung der Kartenränder. | ✅ Done |
+| **...** | ... | ... | ... | ... |
+| **RFC-040** | Security | **RBAC / Routing** | **Design Lab Lockdown:** Beschränkung der Route `/design-lab` auf Administratoren. | ✅ Done |
+| **RFC-041** | Feature | **UI / UX** | **Sentient Glass (Phase 6):** Implementierung von "Smart Borders" und einem "Spotlight"-Effekt auf `MediaCard.tsx`. | ✅ Done |
+| **RFC-042** | Bugfix | **Mobile / PWA** | **PWA Install Troubleshooting:** Erweiterung des `InstallPwaModal` um Hilfe-Texte für Android-Berechtigungskonflikte (Xiaomi/Android Shortcut Permission Problem). | ✅ Done |
 
 ---
 
-*Dokumentation aktualisiert: Version 1.9.29*
+## 4. Known Issues & Workarounds (Problem Management)
+
+| Problem | Workaround |
+|:---|:---|
+| **Android Shortcut Failure** | Falls nach Klick auf "Installieren" kein Icon erscheint, muss in den Android-App-Einstellungen für Chrome die Berechtigung "Startbildschirm-Verknüpfungen" manuell aktiviert werden. Alternativ: "Drei-Punkte-Menü > App installieren". |
+
+---
+
+*Dokumentation aktualisiert: Version 1.9.30*

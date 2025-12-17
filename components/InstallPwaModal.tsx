@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { X, Download, Share, PlusSquare, Smartphone, Monitor } from 'lucide-react';
+import { X, Download, Share, PlusSquare, Smartphone, Info, AlertTriangle, MoreVertical } from 'lucide-react';
 import { useTranslation } from '../contexts/LanguageContext';
 
 interface InstallPwaModalProps {
@@ -12,6 +12,7 @@ interface InstallPwaModalProps {
 export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({ isOpen, onClose, installPrompt }) => {
     const { t } = useTranslation();
     const [isIOS, setIsIOS] = useState(false);
+    const [showTroubleshooting, setShowTroubleshooting] = useState(false);
 
     useEffect(() => {
         // Detect iOS
@@ -68,7 +69,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({ isOpen, onClos
                             </div>
                         </div>
                     ) : (
-                        // ANDROID / DESKTOP BUTTON
+                        // ANDROID / DESKTOP
                         <div className="space-y-4 w-full">
                              <p className="text-slate-400 text-sm mb-4">
                                 Füge die App zu deinem Startbildschirm hinzu für schnelleren Zugriff und Vollbild-Modus.
@@ -82,9 +83,34 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({ isOpen, onClos
                                     <Download size={20} /> Jetzt installieren
                                 </button>
                             ) : (
-                                <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-200 text-xs">
-                                    <p className="mb-1 font-bold">Installation bereits aktiv oder nicht unterstützt.</p>
-                                    <p>Prüfe deine Browser-Einstellungen oder die Adressleiste.</p>
+                                <div className="space-y-3">
+                                    <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-200 text-xs">
+                                        <p className="mb-1 font-bold">Installation blockiert oder nicht möglich.</p>
+                                        <p>Der Browser meldet, dass die App bereits aktiv ist oder das System das Anlegen von Icons verhindert.</p>
+                                    </div>
+                                    
+                                    <button 
+                                        onClick={() => setShowTroubleshooting(!showTroubleshooting)}
+                                        className="text-xs text-cyan-400 flex items-center gap-1 mx-auto hover:underline"
+                                    >
+                                        <Info size={14} /> Hilfe bei Android-Problemen
+                                    </button>
+
+                                    {showTroubleshooting && (
+                                        <div className="text-left bg-slate-800 rounded-xl p-4 border border-slate-700 animate-in slide-in-from-top-2 duration-300">
+                                            <p className="text-[11px] text-slate-300 mb-3 font-medium">Falls kein Icon erscheint:</p>
+                                            <ul className="text-[10px] text-slate-400 space-y-2">
+                                                <li className="flex gap-2">
+                                                    <AlertTriangle size={12} className="text-orange-500 shrink-0" />
+                                                    <span><strong>Android Einstellungen:</strong> Prüfe unter <i>Apps > Chrome > Berechtigungen</i>, ob <strong>"Startbildschirm-Verknüpfungen"</strong> erlaubt ist.</span>
+                                                </li>
+                                                <li className="flex gap-2">
+                                                    <MoreVertical size={12} className="text-cyan-500 shrink-0" />
+                                                    <span><strong>Manueller Weg:</strong> Tippe oben rechts im Browser auf die 3 Punkte und wähle <strong>"App installieren"</strong> oder <strong>"Zum Startbildschirm hinzufügen"</strong>.</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
