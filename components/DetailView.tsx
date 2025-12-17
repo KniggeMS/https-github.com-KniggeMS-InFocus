@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   X, Heart, Star, Play, Clock, Check, Share2, AlertCircle, 
@@ -54,11 +53,12 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 setDetails(extended);
                 
                 if (extended.trailerKey) {
-                    // Full Trailer (Sound, Controls) for Modal
-                    setTrailerUrl(`https://www.youtube.com/embed/${extended.trailerKey}?autoplay=1`);
-                    // Background Ambient Trailer (Muted, Loop, No Controls)
-                    // Playlist parameter is required for loop to work on single video embeds
-                    setBackgroundTrailerUrl(`https://www.youtube.com/embed/${extended.trailerKey}?autoplay=1&mute=1&controls=0&loop=1&playlist=${extended.trailerKey}&showinfo=0&modestbranding=1&iv_load_policy=3`);
+                    const origin = window.location.origin;
+                    // FIX: Using youtube-nocookie.com and adding origin/rel parameters to prevent bot detection overlays
+                    setTrailerUrl(`https://www.youtube-nocookie.com/embed/${extended.trailerKey}?autoplay=1&rel=0&origin=${encodeURIComponent(origin)}`);
+                    
+                    // Background Ambient Trailer (Muted, Loop, No Controls, No Keyboard)
+                    setBackgroundTrailerUrl(`https://www.youtube-nocookie.com/embed/${extended.trailerKey}?autoplay=1&mute=1&controls=0&loop=1&playlist=${extended.trailerKey}&showinfo=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&rel=0&origin=${encodeURIComponent(origin)}`);
                 }
 
                 const imdbId = initialItem.imdbId || extended.imdbId;
@@ -189,8 +189,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
                             </div>
                             
                             {/* Poster Floating Layer */}
-                            <div className="absolute inset-0 flex items-center justify-center p-8 z-10 pointer-events-none">
-                                <div className="relative w-40 md:w-48 shadow-2xl rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform duration-500 pointer-events-auto">
+                            <div className="absolute inset-0 flex items-center justify-center p-8 z-10 pointer-events-auto">
+                                <div className="relative w-40 md:w-48 shadow-2xl rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform duration-500">
                                     {posterUrl ? (
                                         <img src={posterUrl} alt="" className="w-full h-full object-cover" />
                                     ) : (
