@@ -359,11 +359,11 @@ export default function App() {
 
   return (
     <div className={`min-h-screen bg-[#0B0E14] text-slate-200 pb-20 md:pb-0 font-sans selection:bg-cyan-500/30 relative overflow-hidden`}>
-        {/* REINFORCED Ambient Background Glow - High Visibility (v1.9.32) */}
+        {/* REINFORCED Ambient Background Glow - High Visibility (v1.9.40) */}
         <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-             <div className="absolute top-[-10%] right-[-10%] w-[1200px] h-[1200px] bg-blue-600/35 rounded-full blur-[160px] animate-pulse"></div>
-             <div className="absolute bottom-[-10%] left-[-10%] w-[1100px] h-[1100px] bg-purple-600/30 rounded-full blur-[160px]"></div>
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1400px] h-[1400px] bg-cyan-900/20 rounded-full blur-[180px]"></div>
+             <div className="absolute top-[-10%] right-[-10%] w-[1300px] h-[1300px] bg-blue-600/40 rounded-full blur-[160px] animate-pulse"></div>
+             <div className="absolute bottom-[-10%] left-[-10%] w-[1200px] h-[1200px] bg-purple-600/35 rounded-full blur-[160px]"></div>
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1500px] h-[1500px] bg-cyan-900/25 rounded-full blur-[180px]"></div>
         </div>
 
         {/* ADMIN NOTIFICATION TOAST */}
