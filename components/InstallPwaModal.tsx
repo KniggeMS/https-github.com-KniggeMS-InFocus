@@ -102,7 +102,7 @@ export const InstallPwaModal: React.FC<InstallPwaModalProps> = ({ isOpen, onClos
                                             <ul className="text-[10px] text-slate-400 space-y-2">
                                                 <li className="flex gap-2">
                                                     <AlertTriangle size={12} className="text-orange-500 shrink-0" />
-                                                    <span><strong>Android Einstellungen:</strong> Prüfe unter <i>Apps > Chrome > Berechtigungen</i>, ob <strong>"Startbildschirm-Verknüpfungen"</strong> erlaubt ist.</span>
+                                                    <span><strong>Android Einstellungen:</strong> Prüfe unter <i>Apps &gt; Chrome &gt; Berechtigungen</i>, ob <strong>"Startbildschirm-Verknüpfungen"</strong> erlaubt ist.</span>
                                                 </li>
                                                 <li className="flex gap-2">
                                                     <MoreVertical size={12} className="text-cyan-500 shrink-0" />
