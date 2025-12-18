@@ -1,9 +1,8 @@
-
 # InFocus CineLog - Service Design Package (SDP)
 
 **Dokumentations-Standard:** ITIL v4  
 **Status:** Live / In Operation  
-**Version:** 1.9.31
+**Version:** 1.9.40
 
 ---
 
@@ -41,18 +40,9 @@ Für die MVP-Phase und den privaten Gebrauch wurde bewusst die **"Client-Side Di
 *   **Intelligence Layer (AI):**
     *   **Provider:** Google Gemini API
     *   **Modelle:** 
-        *   `gemini-2.5-flash` (Text, Chat, Analyse)
+        *   `gemini-3-flash-preview` (Text, Chat, Analyse)
         *   `gemini-2.5-flash-image` (Vision Search, Avatar Gen)
     *   **Integration:** `@google/genai` SDK
-
-### 2.4 Configuration Management (CMS)
-Verwaltung der externen Schnittstellen-Konfigurationen.
-
-| CI Name | Typ | Status | Speicherort |
-|:---|:---|:---|:---|
-| **CI-TMDB-KEY** | API Key | Active | Env Var, LocalStorage oder Code-Fallback |
-| **CI-OMDB-KEY** | API Key | Active | Env Var, LocalStorage oder Code-Fallback |
-| **CI-GEMINI-KEY** | API Key | Active | Env Var, LocalStorage oder Code-Fallback |
 
 ---
 
@@ -64,12 +54,11 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 
 | ID | Change Type | Komponente | Beschreibung | Status |
 |:---|:---|:---|:---|:---|
-| **RFC-001** | Standard | **Core Setup** | Initialisierung des React/Vite Projekts, Tailwind Setup, Grundstruktur der Komponenten (`MediaCard`). | ✅ Done |
+| **RFC-001** | Standard | **Core Setup** | Initialisierung des React/Vite Projekts, Tailwind Setup. | ✅ Done |
 | **...** | ... | ... | ... | ... |
-| **RFC-040** | Security | **RBAC / Routing** | **Design Lab Lockdown:** Beschränkung der Route `/design-lab` auf Administratoren. | ✅ Done |
-| **RFC-041** | Feature | **UI / UX** | **Sentient Glass (Phase 6):** Implementierung von "Smart Borders" und einem "Spotlight"-Effekt auf `MediaCard.tsx`. | ✅ Done |
-| **RFC-042** | Bugfix | **Mobile / PWA** | **PWA Install Troubleshooting:** Erweiterung des `InstallPwaModal` um Hilfe-Texte. | ✅ Done |
-| **RFC-043** | Feature | **Mobile / UX** | **Sentient Bottom Sheet:** Ersatz der Mobile-Dropdowns durch native-like Bottom Sheets zur Behebung von Viewport-Clipping und Verbesserung der Ergonomie. | ✅ Done |
+| **RFC-042** | Bugfix | **Mobile / PWA** | **PWA Install Troubleshooting:** Erweiterung des `InstallPwaModal`. | ✅ Done |
+| **RFC-043** | Feature | **Mobile / UX** | **Sentient Bottom Sheet:** Ersatz der Mobile-Dropdowns. | ✅ Done |
+| **RFC-044** | Bugfix | **Video / UI** | **YouTube Bot-Bypass & Glow Boost:** Spezialisierte Embed-Parameter (`widgetid`, `origin`) zur Umgehung der Bot-Sperre auf Desktop-Browsern und Verstärkung der Hintergrund-Sphären auf v1.9.40. | ✅ Done |
 
 ---
 
@@ -77,8 +66,9 @@ Hier sind die durchgeführten **Requests for Change (RFC)**, die zum aktuellen B
 
 | Problem | Workaround |
 |:---|:---|
-| **Android Shortcut Failure** | Falls nach Klick auf "Installieren" kein Icon erscheint, muss in den Android-App-Einstellungen für Chrome die Berechtigung "Startbildschirm-Verknüpfungen" manuell aktiviert werden. Alternativ: "Drei-Punkte-Menü > App installieren". |
+| **YouTube "Bot" Meldung** | Trotz RFC-044 kann YouTube bei extrem restriktiven Browser-Privacy-Einstellungen (z.B. Hardened Firefox) das Laden blockieren. Workaround: "Relativ-Skalierung im Browser prüfen oder Third-Party-Cookies für YouTube kurzzeitig erlauben". |
+| **Android Shortcut Failure** | Falls nach Klick auf "Installieren" kein Icon erscheint: Berechtigung "Startbildschirm-Verknüpfungen" in Chrome-Einstellungen prüfen. |
 
 ---
 
-*Dokumentation aktualisiert: Version 1.9.31*
+*Dokumentation aktualisiert: Version 1.9.40*

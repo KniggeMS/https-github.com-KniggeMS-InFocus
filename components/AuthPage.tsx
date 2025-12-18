@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -274,7 +273,7 @@ export const AuthPage: React.FC = () => {
         </div>
 
         <div className="absolute bottom-4 text-[10px] text-slate-600 font-mono">
-            InFocus CineLog v1.9.28 • Stitch Design
+            InFocus CineLog v1.9.40 • Stitch Design
         </div>
     </div>
   );

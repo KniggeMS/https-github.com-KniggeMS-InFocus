@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -62,7 +61,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
               <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-400">
                 Benutzerhandbuch
               </h1>
-              <p className="text-slate-400 text-sm mt-1">Version 1.9.29 • InFocus CineLog</p>
+              <p className="text-slate-400 text-sm mt-1">Version 1.9.40 • InFocus CineLog</p>
           </div>
         </header>
 
@@ -115,7 +114,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
                                 </li>
                                 <li className="flex gap-3">
                                     <span className="w-6 h-6 bg-slate-700 rounded-full flex items-center justify-center text-cyan-400 font-bold shrink-0">3</span>
-                                    <span>Scrolle etwas nach unten und wähle <strong className="text-white inline-flex items-center gap-1"><PlusSquare size={14}/> Zum Home-Bildschirm</strong>.</span>
+                                    <span>Wähle <strong className="text-white inline-flex items-center gap-1"><PlusSquare size={14}/> Zum Home-Bildschirm</strong>.</span>
                                 </li>
                             </ol>
                         </div>
@@ -396,7 +395,7 @@ export const GuidePage: React.FC<GuidePageProps> = ({ onBack }) => {
                 <div className="flex flex-col md:flex-row gap-8 items-center">
                   <div className="flex-1">
                     <p className="text-slate-300 mb-4">
-                      InFocus CineLog belohnt dich fürs Schauen! Für jede Minute Laufzeit deiner gesehenen Filme erhältst du <strong className="text-yellow-400">XP</strong>.
+                      InFocus CineLog belohnt dich fürs Schauen! Für jede minute Laufzeit deiner gesehenen Filme erhältst du <strong className="text-yellow-400">XP</strong>.
                     </p>
                     <div className="space-y-3">
                       <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-lg border border-slate-700">

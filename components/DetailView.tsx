@@ -187,18 +187,19 @@ export const DetailView: React.FC<DetailViewProps> = ({
                     ) : (
                         <>
                             {/* Cinematic Background Layer */}
-                            <div className="absolute inset-0 z-0">
+                            <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
                                 {backgroundTrailerUrl ? (
-                                    <div className="w-full h-full relative overflow-hidden">
+                                    <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+                                        {/* FIXED: Massive Oversize & Absolute Center to force "object-cover" on any screen */}
                                         <iframe 
                                             src={backgroundTrailerUrl} 
-                                            className="w-full h-[110%] -mt-[5%] object-cover scale-[1.05] opacity-[0.65] pointer-events-none" 
+                                            className="absolute top-1/2 left-1/2 w-[400%] h-[400%] -translate-x-1/2 -translate-y-1/2 opacity-[0.65] pointer-events-none" 
                                             title="Ambient Trailer Background"
                                             allow="autoplay; encrypted-media"
                                             tabIndex={-1}
                                             referrerPolicy="strict-origin-when-cross-origin"
                                         />
-                                        {/* Overlay to ensure text readability and cinematic feel */}
+                                        {/* Cinematic Overlays */}
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-black/60 md:bg-gradient-to-r md:from-transparent md:to-slate-900" />
                                     </div>
                                 ) : (
