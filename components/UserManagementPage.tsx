@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { fetchAllProfiles, updateUserRole, deleteUserProfile } from '../services/db';
 import { User, UserRole } from '../types';
-import { Shield, Search, Trash2, Check, User as UserIcon, Loader2, AlertCircle, Clock, Hash } from 'lucide-react';
+import { Shield, Search, Trash2, Check, User as UserIcon, Loader2, AlertCircle, Clock, Hash, Calendar } from 'lucide-react';
 
 export const UserManagementPage: React.FC = () => {
     const { user: currentUser } = useAuth();
@@ -91,14 +91,13 @@ export const UserManagementPage: React.FC = () => {
         }
     };
 
-    const formatDate = (timestamp?: number) => {
+    const formatDate = (timestamp?: number, includeTime = true) => {
         if (!timestamp) return 'Nie';
         return new Intl.DateTimeFormat('de-DE', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            ...(includeTime ? { hour: '2-digit', minute: '2-digit' } : {})
         }).format(new Date(timestamp));
     };
 
@@ -153,8 +152,9 @@ export const UserManagementPage: React.FC = () => {
                                 <tr>
                                     <th className="p-4 pl-6">Benutzer</th>
                                     <th className="p-4">Rolle</th>
-                                    <th className="p-4"><div className="flex items-center gap-1"><Hash size={12}/> Logins</div></th>
-                                    <th className="p-4"><div className="flex items-center gap-1"><Clock size={12}/> Letzter Login</div></th>
+                                    <th className="p-4"><div className="flex items-center gap-1 text-emerald-400"><Calendar size={12}/> Registriert</div></th>
+                                    <th className="p-4"><div className="flex items-center gap-1 text-cyan-400"><Hash size={12}/> Logins</div></th>
+                                    <th className="p-4"><div className="flex items-center gap-1 text-cyan-400"><Clock size={12}/> Letzter Login</div></th>
                                     <th className="p-4 text-right pr-6">Aktionen</th>
                                 </tr>
                             </thead>
@@ -194,7 +194,12 @@ export const UserManagementPage: React.FC = () => {
                                             )}
                                         </td>
                                         <td className="p-4">
-                                            <div className="text-sm font-mono text-slate-300 bg-slate-900/50 inline-block px-2 py-0.5 rounded">
+                                            <div className="text-xs text-slate-400 font-medium">
+                                                {formatDate(u.createdAt, false)}
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="text-sm font-mono text-slate-300 bg-slate-900/50 inline-block px-2.5 py-1 rounded-lg border border-white/5">
                                                 {u.loginCount || 0}
                                             </div>
                                         </td>

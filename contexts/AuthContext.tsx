@@ -21,7 +21,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const PROFILE_CACHE_TTL = 10 * 60 * 1000;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -30,6 +29,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [adminNotification, setAdminNotification] = useState<{ message: string, type: 'login' | 'register' } | null>(null);
 
+  // Initialer Session Check & Profil Laden
   useEffect(() => {
     let mounted = true;
 
@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  // System Monitor für Admins
+  // System-Überwachung für Admins (Realtime Broadcasts)
   useEffect(() => {
       if (user && (user.role === UserRole.ADMIN || user.role === UserRole.MANAGER)) {
           const channel = supabase.channel('admin_surveillance')
@@ -104,8 +104,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   if (type === 'REGISTER') {
                       setAdminNotification({ message: `Neu registriert: ${username} 🎉`, type: 'register' });
                   } else if (type === 'LOGIN') {
-                      setAdminNotification({ message: `Benutzer online: ${username} 🟢`, type: 'login' });
+                      setAdminNotification({ message: `Login: ${username} ist online 🟢`, type: 'login' });
                   }
+                  // Auto-Dismiss nach 8 Sekunden
                   setTimeout(() => setAdminNotification(null), 8000);
               })
               .subscribe();
@@ -114,6 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
   }, [user]);
 
+  // Userliste für Management laden (Admin/Manager only)
   useEffect(() => {
       if (user && (user.role === UserRole.ADMIN || user.role === UserRole.MANAGER)) {
           const loadUsers = async () => {
@@ -133,7 +135,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               }
           };
           loadUsers();
-          // Realtime Update der Userliste
+          
+          // Abonnement für Profiländerungen (Realtime)
           const sub = supabase.channel('profiles_changed').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, loadUsers).subscribe();
           return () => { supabase.removeChannel(sub); };
       }
@@ -148,13 +151,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (error) throw error;
 
     if (authData.user) {
+        // Login-Statistiken aktualisieren
         const { data: profile } = await supabase.from('profiles').select('login_count, username').eq('id', authData.user.id).single();
         if (profile) {
             const newCount = (profile.login_count || 0) + 1;
             const now = new Date().toISOString();
             await supabase.from('profiles').update({ login_count: newCount, last_login_at: now }).eq('id', authData.user.id);
             
-            // Broadcast an Admins
+            // Broadcast an Admins senden
             supabase.channel('admin_surveillance').send({
                 type: 'broadcast',
                 event: 'user_action',
@@ -173,7 +177,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (error) throw error;
 
-    // Broadcast an Admins (Wird erst aktiv wenn der Admin eingeloggt ist)
+    // Registrierung broadcasten (für bereits eingeloggte Admins)
     supabase.channel('admin_surveillance').send({
         type: 'broadcast',
         event: 'user_action',
