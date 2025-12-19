@@ -16,14 +16,11 @@ interface AuthContextType {
   isLoading: boolean;
   isRecoveryMode: boolean;
   completeRecovery: () => void;
-  // Admin Notification State
-  adminNotification: string | null;
+  adminNotification: { message: string, type: 'login' | 'register' } | null;
   dismissAdminNotification: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Cache TTL in Milliseconds (10 Minutes)
 const PROFILE_CACHE_TTL = 10 * 60 * 1000;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -31,9 +28,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
-  const [adminNotification, setAdminNotification] = useState<string | null>(null);
+  const [adminNotification, setAdminNotification] = useState<{ message: string, type: 'login' | 'register' } | null>(null);
 
-  // Initialize Auth Listener
   useEffect(() => {
     let mounted = true;
 
@@ -41,30 +37,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsRecoveryMode(true);
     }
 
-    const fetchProfile = async (sessionUser: any, forceRefresh = false) => {
+    const fetchProfile = async (sessionUser: any) => {
         if (!sessionUser) {
             if (mounted) {
                 setUser(null);
                 setLoading(false);
             }
             return;
-        }
-
-        const cacheKey = `cinelog_profile_${sessionUser.id}`;
-        if (!forceRefresh) {
-            try {
-                const cachedRaw = localStorage.getItem(cacheKey);
-                if (cachedRaw) {
-                    const cached = JSON.parse(cachedRaw);
-                    if (Date.now() - cached.timestamp < PROFILE_CACHE_TTL) {
-                        if (mounted) {
-                            setUser(cached.data);
-                            setLoading(false);
-                        }
-                        return; 
-                    }
-                }
-            } catch (e) {}
         }
 
         try {
@@ -74,44 +53,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 .eq('id', sessionUser.id)
                 .single();
 
-            if (mounted) {
-                if (data && !error) {
-                    const userProfile: User = {
-                        id: data.id,
-                        email: data.email,
-                        username: data.username,
-                        avatar: data.avatar,
-                        firstName: data.first_name,
-                        lastName: data.last_name,
-                        role: data.role as UserRole,
-                        isStatsPublic: data.is_stats_public,
-                        createdAt: new Date(data.created_at).getTime(),
-                        loginCount: data.login_count || 0,
-                        lastLoginAt: data.last_login_at ? new Date(data.last_login_at).getTime() : undefined
-                    };
-                    
-                    setUser(userProfile);
-                    localStorage.setItem(cacheKey, JSON.stringify({
-                        timestamp: Date.now(),
-                        data: userProfile
-                    }));
-                }
-                setLoading(false);
+            if (mounted && data && !error) {
+                const userProfile: User = {
+                    id: data.id,
+                    email: data.email,
+                    username: data.username,
+                    avatar: data.avatar,
+                    firstName: data.first_name,
+                    lastName: data.last_name,
+                    role: data.role as UserRole,
+                    isStatsPublic: data.is_stats_public,
+                    createdAt: new Date(data.created_at).getTime(),
+                    loginCount: data.login_count || 0,
+                    lastLoginAt: data.last_login_at ? new Date(data.last_login_at).getTime() : undefined
+                };
+                setUser(userProfile);
             }
+            if (mounted) setLoading(false);
         } catch (e) {
             if (mounted) setLoading(false);
         }
     };
 
     const initSession = async () => {
-        try {
-            const { data, error } = await supabase.auth.getSession();
-            if (!error) {
-                await fetchProfile(data.session?.user);
-            } else if (mounted) setLoading(false);
-        } catch (err) {
-             if (mounted) setLoading(false);
-        }
+        const { data } = await supabase.auth.getSession();
+        await fetchProfile(data.session?.user);
     };
 
     initSession();
@@ -129,31 +95,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  // Admin Surveillance Listener
+  // System Monitor für Admins
   useEffect(() => {
       if (user && (user.role === UserRole.ADMIN || user.role === UserRole.MANAGER)) {
-          const channel = supabase.channel('system_monitor')
-              .on('broadcast', { event: 'user_activity' }, (payload) => {
-                  if (payload.payload.type === 'LOGIN') {
-                      setAdminNotification(`Login: ${payload.payload.username} ist jetzt online.`);
-                  } else if (payload.payload.type === 'REGISTER') {
-                      setAdminNotification(`Neuankömmling: ${payload.payload.username} hat sich registriert! 🎉`);
+          const channel = supabase.channel('admin_surveillance')
+              .on('broadcast', { event: 'user_action' }, (payload) => {
+                  const { type, username } = payload.payload;
+                  if (type === 'REGISTER') {
+                      setAdminNotification({ message: `Neu registriert: ${username} 🎉`, type: 'register' });
+                  } else if (type === 'LOGIN') {
+                      setAdminNotification({ message: `Benutzer online: ${username} 🟢`, type: 'login' });
                   }
-                  setTimeout(() => setAdminNotification(null), 6000);
+                  setTimeout(() => setAdminNotification(null), 8000);
               })
               .subscribe();
 
-          return () => {
-              supabase.removeChannel(channel);
-          };
+          return () => { supabase.removeChannel(channel); };
       }
   }, [user]);
 
-  // Fetch all users for management
   useEffect(() => {
       if (user && (user.role === UserRole.ADMIN || user.role === UserRole.MANAGER)) {
           const loadUsers = async () => {
-              const { data } = await supabase.from('profiles').select('*');
+              const { data } = await supabase.from('profiles').select('*').order('last_login_at', { ascending: false });
               if (data) {
                   setAllUsers(data.map((u: any) => ({
                       id: u.id,
@@ -169,61 +133,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               }
           };
           loadUsers();
+          // Realtime Update der Userliste
+          const sub = supabase.channel('profiles_changed').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, loadUsers).subscribe();
+          return () => { supabase.removeChannel(sub); };
       }
   }, [user]);
 
   const login = async (emailInput: string, passwordAttempt: string) => {
-    const cleanEmail = emailInput.trim();
     const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
+        email: emailInput.trim(),
         password: passwordAttempt
     });
 
-    if (error) throw new Error(error.message === "Invalid login credentials" ? "E-Mail oder Passwort falsch." : error.message);
+    if (error) throw error;
 
     if (authData.user) {
-         // Update Login Stats in DB
-         const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authData.user.id)
-            .single();
-         
-         if (profile) {
+        const { data: profile } = await supabase.from('profiles').select('login_count, username').eq('id', authData.user.id).single();
+        if (profile) {
             const newCount = (profile.login_count || 0) + 1;
             const now = new Date().toISOString();
+            await supabase.from('profiles').update({ login_count: newCount, last_login_at: now }).eq('id', authData.user.id);
             
-            await supabase.from('profiles').update({
-                login_count: newCount,
-                last_login_at: now
-            }).eq('id', authData.user.id);
-
-            const userProfile: User = {
-                id: profile.id,
-                email: profile.email,
-                username: profile.username,
-                avatar: profile.avatar,
-                firstName: profile.first_name,
-                lastName: profile.last_name,
-                role: profile.role as UserRole,
-                isStatsPublic: profile.is_stats_public,
-                createdAt: new Date(profile.created_at).getTime(),
-                loginCount: newCount,
-                lastLoginAt: new Date(now).getTime()
-            };
-            setUser(userProfile);
-            localStorage.setItem(`cinelog_profile_${profile.id}`, JSON.stringify({
-                timestamp: Date.now(),
-                data: userProfile
-            }));
-
-            // Broadcast Login
-            supabase.channel('system_monitor').send({
+            // Broadcast an Admins
+            supabase.channel('admin_surveillance').send({
                 type: 'broadcast',
-                event: 'user_activity',
+                event: 'user_action',
                 payload: { type: 'LOGIN', username: profile.username }
             });
-         }
+        }
     }
   };
 
@@ -231,81 +168,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { error } = await supabase.auth.signUp({
         email: newUser.email!.trim(),
         password: password,
-        options: {
-            data: {
-                username: newUser.username,
-                role: 'USER'
-            }
-        }
+        options: { data: { username: newUser.username, role: 'USER' } }
     });
 
-    if (error) throw new Error(error.message);
+    if (error) throw error;
 
-    // Broadcast New Registration
-    supabase.channel('system_monitor').send({
+    // Broadcast an Admins (Wird erst aktiv wenn der Admin eingeloggt ist)
+    supabase.channel('admin_surveillance').send({
         type: 'broadcast',
-        event: 'user_activity',
+        event: 'user_action',
         payload: { type: 'REGISTER', username: newUser.username }
     });
   };
 
-  const updateProfile = async (data: Partial<User>) => {
-    if (!user) return;
-    const updates: any = {};
-    if (data.username) updates.username = data.username;
-    if (data.avatar) updates.avatar = data.avatar;
-    if (data.firstName) updates.first_name = data.firstName;
-    if (data.lastName) updates.last_name = data.lastName;
-    if (data.isStatsPublic !== undefined) updates.is_stats_public = data.isStatsPublic;
-    if (data.role) updates.role = data.role;
-
-    const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
-    if (error) throw new Error(error.message);
-    
-    setUser(prev => prev ? { ...prev, ...data } : null);
-  };
-
-  const changePassword = async (oldPw: string, newPw: string) => {
-     const { error } = await supabase.auth.updateUser({ password: newPw });
-     if (error) throw new Error(error.message);
-  };
-
-  const resetPassword = async (email: string) => {
-     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-         redirectTo: window.location.origin, 
-     });
-     if (error) throw new Error(error.message);
-  };
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setIsRecoveryMode(false);
-  };
-
-  const completeRecovery = () => {
-      setIsRecoveryMode(false);
-      window.history.replaceState(null, '', window.location.pathname);
-  };
-
+  const logout = async () => { await supabase.auth.signOut(); setUser(null); };
   const dismissAdminNotification = () => setAdminNotification(null);
 
   return (
     <AuthContext.Provider value={{ 
-        user, 
-        login, 
-        register, 
-        logout, 
-        updateProfile, 
-        changePassword, 
-        resetPassword, 
-        isAuthenticated: !!user, 
-        isLoading: loading, 
-        getAllUsers: () => allUsers, 
-        isRecoveryMode,
-        completeRecovery,
-        adminNotification,
-        dismissAdminNotification
+        user, login, register, logout, 
+        updateProfile: async (d) => { await supabase.from('profiles').update(d).eq('id', user?.id); setUser(prev => prev ? {...prev, ...d} : null); }, 
+        changePassword: async (o, n) => { await supabase.auth.updateUser({ password: n }); },
+        resetPassword: async (e) => { await supabase.auth.resetPasswordForEmail(e); },
+        isAuthenticated: !!user, isLoading: loading, getAllUsers: () => allUsers, 
+        isRecoveryMode, completeRecovery: () => setIsRecoveryMode(false),
+        adminNotification, dismissAdminNotification
     }}>
       {children}
     </AuthContext.Provider>
@@ -313,7 +200,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
-  return context;
+    const context = useContext(AuthContext);
+    if (!context) throw new Error("useAuth must be used within AuthProvider");
+    return context;
 };

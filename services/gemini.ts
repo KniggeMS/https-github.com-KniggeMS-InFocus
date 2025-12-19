@@ -16,7 +16,7 @@ const cleanJsonString = (text: string): string => {
 // --- CLIENT FACTORY ---
 // Fixed: Gemini API key must be obtained exclusively from process.env.API_KEY
 const getAiClient = () => {
-    return new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+    return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 // --- CACHING UTILS ---
