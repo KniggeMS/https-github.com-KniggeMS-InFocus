@@ -234,9 +234,11 @@ export default function App() {
                             <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-3 transition-colors"><UserIcon size={16} className="text-slate-500" /> {t('profile')}</button>
                             <button onClick={() => { navigate('/guide'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-3 transition-colors"><BookOpen size={16} className="text-slate-500" /> {t('handbuch')}</button>
                             {isAdmin && (
-                                <button onClick={() => { navigate('/users'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-3 transition-colors"><Shield size={16} className="text-cyan-500" /> {t('user_management')}</button>
+                                <>
+                                    <button onClick={() => { navigate('/users'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-3 transition-colors"><Shield size={16} className="text-cyan-500" /> {t('user_management')}</button>
+                                    <button onClick={() => { setIsSettingsOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-3 transition-colors"><Settings size={16} className="text-slate-500" /> {t('settings')}</button>
+                                </>
                             )}
-                            <button onClick={() => { setIsSettingsOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-3 transition-colors"><Settings size={16} className="text-slate-500" /> {t('settings')}</button>
                             <div className="h-px bg-white/5 my-1"></div>
                             <button onClick={() => { logout(); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-3 transition-colors"><LogOut size={16} /> {t('logout')}</button>
                         </div>
@@ -288,7 +290,9 @@ export default function App() {
             </main>
         </div>
 
+        {/* FAB AI Button for Mobile (Fixed bottom left) */}
         <AiRecommendationButton items={items.filter(i => i.userId === user.id)} onAdd={handleAdd} apiKey={tmdbKey} />
+        
         <ChatBot items={items.filter(i => i.userId === user.id)} />
         <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} onUpdateApiKey={(key) => { localStorage.setItem('tmdb_api_key', key); setTmdbKey(key); }} />
         <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} tmdbKey={tmdbKey} omdbKey={omdbKey} onSave={handleSaveSettings} />
