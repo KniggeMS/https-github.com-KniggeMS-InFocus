@@ -1,25 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  X, Heart, Star, Play, Clock, Check, Share2, Film, User, Calendar, Zap, Sparkles
+  X, Heart, Play, Clock, Share2, Film, User, Calendar, Zap, Sparkles
 } from 'lucide-react';
-import { MediaItem, SearchResult, WatchStatus, MediaType, PublicReview } from '../types';
+import { MediaItem, SearchResult, WatchStatus, MediaType } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 import { analyzeMovieContext } from '../services/gemini';
-import { fetchPublicReviews } from '../services/db';
 import { useTranslation } from '../contexts/LanguageContext';
-import { useAuth } from '../contexts/AuthContext';
 
 interface DetailViewProps {
   item: MediaItem | SearchResult;
   isExisting: boolean;
   onClose: () => void;
   apiKey: string;
-  omdbApiKey?: string;
   onUpdateStatus?: (id: string, status: WatchStatus) => void;
   onToggleFavorite?: (id: string) => void;
   onUpdateNotes?: (id: string, notes: string) => void;
-  onUpdateRtScore?: (id: string, score: string) => void;
   onAdd?: (item: SearchResult, status: WatchStatus, isFav: boolean) => void;
 }
 
@@ -28,7 +24,6 @@ export const DetailView: React.FC<DetailViewProps> = ({
     onUpdateStatus, onToggleFavorite, onUpdateNotes, onAdd 
 }) => {
     const { t } = useTranslation();
-    const { user } = useAuth();
     const [details, setDetails] = useState<Partial<MediaItem>>({});
     const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
     const [loadingAi, setLoadingAi] = useState(false);
@@ -91,13 +86,12 @@ export const DetailView: React.FC<DetailViewProps> = ({
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0B0E14]/95 backdrop-blur-md animate-in fade-in duration-300 p-4 md:p-8">
             <div className="bg-[#0B0E14] w-full max-w-5xl h-full md:h-auto md:max-h-[85vh] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,1)] border border-white/5 flex flex-col md:flex-row overflow-hidden relative">
                 
-                {/* Close Button */}
-                <button onClick={onClose} className="absolute top-6 right-6 z-[100] p-2 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-md border border-white/10 transition-all active:scale-90 shadow-2xl">
+                <button onClick={onClose} className="absolute top-6 right-6 z-[100] p-2 bg-white/5 hover:bg-white/10 text-white rounded-full backdrop-blur-md border border-white/10 transition-all active:scale-90">
                     <X size={20} />
                 </button>
 
-                {/* LINKE SPALTE: POSTER & LOCAL TRAILER */}
-                <div className="w-full md:w-[360px] shrink-0 bg-black relative flex items-center justify-center overflow-hidden">
+                {/* LINKE SPALTE: POSTER & TRAILER */}
+                <div className="w-full md:w-[340px] shrink-0 bg-black relative flex items-center justify-center overflow-hidden">
                     {!showTrailer && backgroundTrailerUrl && (
                         <div className="absolute inset-0 opacity-30 grayscale-[0.4]">
                              <iframe src={backgroundTrailerUrl} className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2 pointer-events-none" allow="autoplay; encrypted-media" />
@@ -105,7 +99,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                     )}
                     {!showTrailer && (
                         <div className="relative z-10 p-10 w-full">
-                            <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10 group">
+                            <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10">
                                 {posterUrl ? <img src={posterUrl} className="w-full h-full object-cover" alt=""/> : <div className="w-full h-full bg-slate-800 flex items-center justify-center"><Film size={48}/></div>}
                                 {trailerUrl && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-black/10 cursor-pointer" onClick={() => setShowTrailer(true)}>
@@ -118,7 +112,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                         </div>
                     )}
                     {showTrailer && trailerUrl && (
-                        <div className="absolute inset-0 z-30 bg-black animate-in fade-in duration-300">
+                        <div className="absolute inset-0 z-30 bg-black">
                             <iframe src={trailerUrl} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
                             <button onClick={() => setShowTrailer(false)} className="absolute top-4 left-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-xl border border-white/10">
                                 <X size={18} />
@@ -127,14 +121,14 @@ export const DetailView: React.FC<DetailViewProps> = ({
                     )}
                 </div>
 
-                {/* RECHTE SPALTE: DETAILS */}
+                {/* RECHTE SPALTE */}
                 <div className="flex-grow flex flex-col overflow-hidden bg-gradient-to-br from-[#0B0E14] to-[#121620]">
                     <div className="p-8 md:p-10 pb-0">
                         <div className="flex flex-wrap gap-2 mb-3">
                             <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[9px] font-black uppercase tracking-widest border border-cyan-500/20">{displayItem.type}</span>
                             {displayItem.status && <span className="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 text-[9px] font-black uppercase tracking-widest border border-orange-500/20">{t(displayItem.status.toLowerCase())}</span>}
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-black text-white leading-tight mb-5 tracking-tight">{displayItem.title}</h1>
+                        <h1 className="text-3xl md:text-5xl font-black text-white leading-tight mb-5 tracking-tight">{displayItem.title}</h1>
                         <div className="flex flex-wrap items-center gap-5 text-slate-400 font-bold text-xs mb-6">
                             <span className="flex items-center gap-2"><Calendar size={14} /> {displayItem.year}</span>
                             {displayItem.runtime && <span className="flex items-center gap-2"><Clock size={14} /> {Math.floor(displayItem.runtime/60)}h {displayItem.runtime%60}m</span>}
