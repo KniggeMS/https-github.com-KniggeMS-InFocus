@@ -73,12 +73,6 @@ export default function App() {
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   
-  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-      setToast({ message, type });
-      setTimeout(() => setToast(null), 4000);
-  };
-
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const [tmdbKey, setTmdbKey] = useState(() => localStorage.getItem('tmdb_api_key') || '');
   const [omdbKey, setOmdbKey] = useState(() => localStorage.getItem('omdb_api_key') || '');
@@ -102,8 +96,7 @@ export default function App() {
   const handleUpdateStatus = useCallback(async (id: string, status: WatchStatus) => {
       await updateMediaItemStatus(id, status);
       setItems(prev => prev.map(i => i.id === id ? { ...i, status } : i));
-      showToast(t('status_updated'));
-  }, [t]);
+  }, []);
 
   const handleRate = useCallback(async (id: string, rating: number) => {
       await updateMediaItemRating(id, rating);
@@ -116,7 +109,6 @@ export default function App() {
           if (item) {
               const newFav = !item.isFavorite;
               toggleMediaItemFavorite(id, newFav);
-              showToast(newFav ? 'Zu Favoriten hinzugefügt' : 'Aus Favoriten entfernt');
               return prev.map(i => i.id === id ? { ...i, isFavorite: newFav } : i);
           }
           return prev;
@@ -124,9 +116,9 @@ export default function App() {
   }, []);
 
   const handleDelete = useCallback(async (id: string) => {
+      if (!confirm("Eintrag wirklich löschen?")) return;
       await deleteMediaItem(id);
       setItems(prev => prev.filter(i => i.id !== id));
-      showToast('Eintrag gelöscht', 'info');
   }, []);
 
   const handleUpdateNotes = useCallback(async (id: string, notes: string) => {
@@ -140,13 +132,12 @@ export default function App() {
   }, []);
 
   const handleRefreshMetadata = useCallback(async (item: MediaItem) => {
-      if (!tmdbKey) return showToast("API Key fehlt", "error");
+      if (!tmdbKey) return alert("TMDB API Key fehlt");
       try {
           const details = await getMediaDetails({ tmdbId: item.tmdbId, title: item.title, type: item.type, year: item.year, genre: item.genre, plot: item.plot, rating: item.rating }, tmdbKey);
           await updateMediaItemDetails(item.id, details);
           setItems(prev => prev.map(i => i.id === item.id ? { ...i, ...details } : i));
-          showToast("Daten erfolgreich aktualisiert");
-      } catch (e) { showToast("Aktualisierung fehlgeschlagen", "error"); }
+      } catch (e) { alert("Aktualisierung fehlgeschlagen"); }
   }, [tmdbKey]);
 
   const handleAddToList = useCallback(async (listId: string, itemId: string) => {
@@ -158,7 +149,6 @@ export default function App() {
           if (exists) newItems = newItems.filter(i => i !== itemId);
           else newItems = [...newItems, itemId];
           updateCustomListItems(listId, newItems);
-          showToast(exists ? 'Von Liste entfernt' : 'Zur Liste hinzugefügt');
           return prev.map(l => l.id === listId ? { ...l, items: newItems } : l);
       });
   }, []);
@@ -166,7 +156,7 @@ export default function App() {
   const handleAdd = async (result: SearchResult, status: WatchStatus = WatchStatus.TO_WATCH, isFav: boolean = false) => {
     if (!user) return;
     const existing = items.find(i => i.tmdbId === result.tmdbId && i.userId === user.id);
-    if (existing) return showToast("Bereits in deiner Sammlung", "info");
+    if (existing) return;
     
     let details: Partial<MediaItem> = {};
     if (tmdbKey) try { details = await getMediaDetails(result, tmdbKey); } catch(e) {}
@@ -178,32 +168,26 @@ export default function App() {
     const saved = await addMediaItem(newItem, user.id);
     if (saved) {
         setItems(prev => [saved, ...prev]);
-        showToast(`"${result.title}" hinzugefügt`);
     }
   };
 
   const handleImport = async (results: SearchResult[]) => {
-    let count = 0;
     for (const res of results) {
         await handleAdd(res);
-        count++;
     }
-    showToast(`${count} Titel importiert`);
   };
 
   const handleCreateList = useCallback(async (name: string) => {
       if (!user) return;
       const newList: CustomList = { id: crypto.randomUUID(), name, ownerId: user.id, createdAt: Date.now(), items: [], sharedWith: [] };
       const saved = await createCustomList(newList, user.id);
-      if (saved) { setCustomLists(prev => [...prev, saved]); showToast("Liste erstellt"); }
+      if (saved) { setCustomLists(prev => [...prev, saved]); }
   }, [user]);
 
   if (isRecoveryMode) return <RecoveryPage />;
   if (!user) return <AuthPage />;
 
   const displayedItems = items.filter(i => i.userId === user.id && (typeFilter === 'ALL' || i.type === typeFilter));
-  
-  // Prüfen ob ausgewähltes Item bereits in der Library ist (für DetailView Logic)
   const isSelectedItemExisting = selectedItem && 'id' in selectedItem && items.some(i => i.id === (selectedItem as MediaItem).id);
 
   const renderGrid = (statusFilter?: WatchStatus, listId?: string) => {
@@ -217,10 +201,6 @@ export default function App() {
           <div className="flex flex-col items-center justify-center py-24 text-slate-500 animate-in fade-in duration-500">
               <Clapperboard size={64} className="mb-6 opacity-10" />
               <p className="text-lg font-medium">{t('empty_state')}</p>
-              <div className="flex gap-4 mt-6">
-                  <button onClick={() => setIsSearchOpen(true)} className="flex items-center gap-2 bg-cyan-600/20 text-cyan-400 px-4 py-2 rounded-xl hover:bg-cyan-600/30 transition-colors border border-cyan-500/20"><Search size={18}/> {t('empty_action')}</button>
-                  <button onClick={() => setIsImportOpen(true)} className="flex items-center gap-2 bg-slate-800 text-slate-400 px-4 py-2 rounded-xl hover:bg-slate-700 transition-colors border border-white/5"><Download size={18}/> Bulk Import</button>
-              </div>
           </div>
       );
       
@@ -234,20 +214,11 @@ export default function App() {
              <div className="absolute bottom-[-10%] left-[-10%] w-[1200px] h-[1200px] bg-purple-600/25 rounded-full blur-[160px]"></div>
         </div>
 
-        {toast && (
-            <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
-                <div className={`px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-xl border border-white/10 ${toast.type === 'error' ? 'bg-red-500/20 text-red-200' : toast.type === 'info' ? 'bg-slate-800 text-slate-200' : 'bg-cyan-600/20 text-cyan-100'}`}>
-                    {toast.type === 'error' ? <AlertCircle size={18}/> : <CheckCircle2 size={18} className="text-cyan-400" />}
-                    <span className="text-sm font-bold">{toast.message}</span>
-                </div>
-            </div>
-        )}
-
         {adminNotification && (
             <div className="fixed top-20 right-4 z-[100] animate-in slide-in-from-right-10 duration-300">
                 <div onClick={dismissAdminNotification} className={`cursor-pointer px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 backdrop-blur-xl border ${adminNotification.type === 'register' ? 'bg-purple-600/20 border-purple-500/40' : 'bg-cyan-600/20 border-cyan-500/40'}`}>
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${adminNotification.type === 'register' ? 'bg-purple-500 text-white' : 'bg-cyan-500 text-white'}`}><UserPlus size={20}/></div>
-                    <div><p className="text-white font-bold text-sm">{adminNotification.message}</p><p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">System-Monitor</p></div>
+                    <div><p className="text-white font-bold text-sm">{adminNotification.message}</p></div>
                     <X size={14} className="text-slate-500 ml-4"/>
                 </div>
             </div>
@@ -275,16 +246,8 @@ export default function App() {
                     </button>
                     {isProfileMenuOpen && (
                         <div className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-200">
-                            <div className="px-4 py-3 border-b border-white/5 mb-1"><p className="text-sm font-bold text-white truncate">{user.username}</p><p className="text-xs text-slate-500 truncate">{user.email}</p></div>
-                            <button onClick={() => { setIsInstallModalOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-cyan-400 hover:bg-white/5 flex items-center gap-2 font-bold"><Download size={16} /> App installieren</button>
-                            <div className="h-px bg-white/5 my-1"></div>
                             <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><UserIcon size={16} /> {t('profile')}</button>
-                            {user.role === UserRole.ADMIN && <button onClick={() => { navigate('/design-lab'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-purple-400 hover:bg-purple-500/10 flex items-center gap-2"><Palette size={16} /> 🎨 Design Lab</button>}
-                            {(user.role === UserRole.ADMIN || user.role === UserRole.MANAGER) && <button onClick={() => { navigate('/users'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><ShieldAlert size={16} /> {t('user_management')}</button>}
                             <button onClick={() => { setIsSettingsOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><Settings size={16} /> {t('settings')}</button>
-                            <button onClick={() => { setIsImportOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><Download size={16} /> {t('smart_import')}</button>
-                            <button onClick={() => { setIsGuideOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><BookOpen size={16} /> Handbuch</button>
-                            <div className="h-px bg-white/5 my-1"></div>
                             <button onClick={() => { logout(); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2"><LogOut size={16} /> {t('logout')}</button>
                         </div>
                     )}
@@ -305,12 +268,10 @@ export default function App() {
                                 <div key={l.id} className="group flex items-center justify-between pr-2 rounded-lg hover:bg-white/5 transition-colors">
                                     <button onClick={() => navigate(`/list/${l.id}`)} className={`flex-grow text-left px-3 py-2 text-sm font-medium truncate ${location.pathname === `/list/${l.id}` ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>{l.name}</button>
                                     <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
-                                        <button onClick={() => setSharingList(l)} className="p-1 text-slate-500 hover:text-cyan-400"><LayoutDashboard size={12}/></button>
-                                        <button onClick={() => deleteCustomList(l.id).then(() => { setCustomLists(prev => prev.filter(x => x.id !== l.id)); showToast("Liste gelöscht", "info"); })} className="p-1 text-slate-500 hover:text-red-400"><X size={12}/></button>
+                                        <button onClick={() => deleteCustomList(l.id).then(() => { setCustomLists(prev => prev.filter(x => x.id !== l.id)); })} className="p-1 text-slate-500 hover:text-red-400"><X size={12}/></button>
                                     </div>
                                 </div>
                             ))}
-                            <button onClick={() => setIsCreateListOpen(true)} className="w-full text-left px-3 py-2 text-sm text-cyan-500 hover:text-cyan-400 font-medium flex items-center gap-2 mt-2 transition-colors"><Plus size={14} /> {t('create_list')}</button>
                         </div>
                     </div>
                 </div>
@@ -331,14 +292,11 @@ export default function App() {
             </main>
         </div>
         <ChatBot items={items.filter(i => i.userId === user.id)} />
-        <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} onUpdateApiKey={(key) => { localStorage.setItem('tmdb_api_key', key); setTmdbKey(key); showToast("TMDB Key gespeichert"); }} />
+        <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} onUpdateApiKey={(key) => { localStorage.setItem('tmdb_api_key', key); setTmdbKey(key); }} />
         <ImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImport={handleImport} apiKey={tmdbKey} omdbApiKey={omdbKey} />
         <CreateListModal isOpen={isCreateListOpen} onClose={() => setIsCreateListOpen(false)} onCreate={handleCreateList} />
-        <BottomSheet isOpen={isListsMenuOpen} onClose={() => setIsListsMenuOpen(false)} title={t('custom_lists')} actions={[{ label: t('create_list'), icon: <Plus size={20} />, onClick: () => setIsCreateListOpen(true), variant: 'accent' }]} sections={myLists.length > 0 ? [{ title: t('my_lists'), actions: myLists.map(l => ({ label: l.name, icon: <FolderOpen size={20} />, onClick: () => navigate(`/list/${l.id}`) })) }] : []} />
-        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} tmdbKey={tmdbKey} omdbKey={omdbKey} onSave={(keys) => { localStorage.setItem('tmdb_api_key', keys.tmdb); localStorage.setItem('omdb_api_key', keys.omdb); setTmdbKey(keys.tmdb); setOmdbKey(keys.omdb); showToast("Einstellungen gespeichert"); }} />
-        <InstallPwaModal isOpen={isInstallModalOpen} onClose={() => setIsInstallModalOpen(false)} installPrompt={deferredPrompt} />
+        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} tmdbKey={tmdbKey} omdbKey={omdbKey} onSave={(keys) => { localStorage.setItem('tmdb_api_key', keys.tmdb); localStorage.setItem('omdb_api_key', keys.omdb); setTmdbKey(keys.tmdb); setOmdbKey(keys.omdb); }} />
         
-        {/* DETAIL VIEW: Korrigierte isExisting Logic */}
         {selectedItem && (
             <DetailView 
                 item={selectedItem} 

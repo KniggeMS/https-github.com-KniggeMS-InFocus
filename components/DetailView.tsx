@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   X, Heart, Star, Play, Clock, Check, Share2, AlertCircle, 
@@ -30,7 +29,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
     onUpdateStatus, onToggleFavorite, onUpdateNotes, onUpdateRtScore, onAdd 
 }) => {
     const { t } = useTranslation();
-    const { user } = useAuth();
+    // Fixed: Corrected typo 'userAuth' to 'useAuth' and removed incorrect conditional hook call
+    const { user } = useAuth(); // Safe access
     const [details, setDetails] = useState<Partial<MediaItem>>({});
     const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
     const [loadingAi, setLoadingAi] = useState(false);
@@ -51,14 +51,12 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 const extended = await getMediaDetails(initialItem, apiKey);
                 setDetails(extended);
                 
-                // Trailer Logic - FIX: Use initialItem key if already exists
                 const finalTrailerKey = (initialItem as any).trailerKey || extended.trailerKey;
 
                 if (finalTrailerKey) {
                     const origin = window.location.origin;
                     setTrailerUrl(`https://www.youtube-nocookie.com/embed/${finalTrailerKey}?autoplay=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(origin)}`);
                     
-                    // FIXED: Playlist param is REQUIRED for loop=1 to work
                     const bgParams = new URLSearchParams({
                         autoplay: '1',
                         mute: '1',
@@ -69,7 +67,6 @@ export const DetailView: React.FC<DetailViewProps> = ({
                         showinfo: '0',
                         enablejsapi: '1',
                         origin: origin,
-                        widgetid: '1'
                     }).toString();
                     
                     setBackgroundTrailerUrl(`https://www.youtube.com/embed/${finalTrailerKey}?${bgParams}`);
@@ -103,7 +100,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
             } catch (e) { console.error("Detail load error", e); }
         };
         loadDetails();
-    }, [initialItem, apiKey, omdbApiKey]);
+    }, [initialItem, apiKey, omdbApiKey, user?.id]);
     
     const handleShare = async () => {
         const url = `https://www.themoviedb.org/${initialItem.type === MediaType.MOVIE ? 'movie' : 'tv'}/${initialItem.tmdbId}`;
@@ -133,11 +130,10 @@ export const DetailView: React.FC<DetailViewProps> = ({
             {/* FULLSCREEN BACKGROUND LAYER */}
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                 {backgroundTrailerUrl ? (
-                    <div className="absolute inset-0 w-full h-full scale-125">
-                         {/* Massive Oversize to force cover behavior */}
+                    <div className="absolute inset-0 w-full h-full scale-[1.35]">
                          <iframe 
                             src={backgroundTrailerUrl} 
-                            className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2 opacity-[0.4] pointer-events-none" 
+                            className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2 opacity-[0.35] pointer-events-none" 
                             title="Ambient Background"
                             allow="autoplay; encrypted-media"
                         />
@@ -145,9 +141,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 ) : backdropUrl && (
                     <img src={backdropUrl} className="w-full h-full object-cover opacity-30 blur-sm" alt="" />
                 )}
-                {/* Vignette & Gradients */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-transparent to-[#0B0E14]/80" />
-                <div className="absolute inset-0 bg-radial-vignette opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-[#0B0E14]/40 to-[#0B0E14]/80" />
             </div>
 
             {/* FLOATING UI CONTAINER */}
@@ -161,10 +155,10 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 {/* POSTER & MAIN INFO BOX */}
                 <div className="w-full flex flex-col md:flex-row gap-10 items-center md:items-start mb-12">
                     
-                    {/* Poster with Play Trigger */}
+                    {/* Poster */}
                     <div className="relative group w-64 md:w-80 shrink-0 animate-in slide-in-from-bottom-8 duration-500">
                         <div className="absolute -inset-4 bg-cyan-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                        <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] border border-white/10">
+                        <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.9)] border border-white/10">
                              {posterUrl ? <img src={posterUrl} className="w-full h-full object-cover" alt=""/> : <div className="w-full h-full bg-slate-800 flex items-center justify-center"><Film size={64}/></div>}
                              
                              {trailerUrl && (
@@ -181,7 +175,6 @@ export const DetailView: React.FC<DetailViewProps> = ({
                     <div className="flex-grow text-center md:text-left pt-4 animate-in fade-in slide-in-from-right-4 duration-500 delay-150">
                         <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
                             <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-black uppercase tracking-widest border border-cyan-500/30">{displayItem.type}</span>
-                            {displayItem.status && <span className="px-3 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-widest border border-white/10">{t(displayItem.status.toLowerCase())}</span>}
                         </div>
 
                         <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-4 drop-shadow-2xl">
@@ -189,8 +182,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
                         </h1>
 
                         <div className="flex flex-wrap justify-center md:justify-start items-center gap-6 text-slate-300 font-bold mb-8">
-                            <span className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/5"><Calendar size={16} className="text-cyan-400"/> {displayItem.year}</span>
-                            {displayItem.runtime && <span className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/5"><Clock size={16} className="text-purple-400"/> {Math.floor(displayItem.runtime/60)}h {displayItem.runtime%60}m</span>}
+                            <span className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5"><Calendar size={16} className="text-cyan-400"/> {displayItem.year}</span>
+                            {displayItem.runtime && <span className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5"><Clock size={16} className="text-purple-400"/> {Math.floor(displayItem.runtime/60)}h {displayItem.runtime%60}m</span>}
                             
                             <div className="flex items-center gap-3">
                                 <div className="bg-[#0d253f] px-3 py-1.5 rounded-xl border border-[#01b4e4]/30 flex items-center gap-2">
@@ -232,7 +225,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 </div>
 
                 {/* TABS & DETAILS PANELS */}
-                <div className="w-full glass-panel rounded-[2rem] p-8 md:p-12 mb-20 animate-in slide-in-from-bottom-12 duration-700 delay-300">
+                <div className="w-full glass-panel rounded-[2.5rem] p-8 md:p-12 mb-20 animate-in slide-in-from-bottom-12 duration-700 delay-300">
                     <div className="flex gap-8 border-b border-white/5 mb-8">
                         {['overview', 'cast', 'watch', 'reviews'].map((tab) => (
                             <button 
@@ -251,7 +244,6 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                 <p className="text-xl text-slate-200 leading-relaxed font-medium">{displayItem.plot}</p>
                                 <div className="bg-gradient-to-br from-purple-900/40 to-slate-900/40 p-6 rounded-3xl border border-purple-500/20 relative overflow-hidden">
                                      <h3 className="text-purple-400 text-[10px] font-black uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        {/* Added missing Sparkles import below */}
                                         {loadingAi ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} {t('ai_insight')}
                                      </h3>
                                      <p className="text-purple-100 italic text-lg leading-relaxed">{aiAnalysis || "Analysiere Inhalt..."}</p>
@@ -309,14 +301,14 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                             <p className="text-slate-300 italic">"{rev.content}"</p>
                                         </div>
                                     </div>
-                                )) : <div className="text-slate-500 italic">Noch keine Community-Stimmen. Sei der Erste!</div>}
+                                )) : <div className="text-slate-500 italic">Noch keine Community-Stimmen.</div>}
                             </div>
                         )}
                     </div>
                 </div>
             </div>
 
-            {/* FULLSCREEN TRAILER OVERLAY (YOUTUBE LAYER) */}
+            {/* FULLSCREEN TRAILER OVERLAY */}
             {showTrailer && trailerUrl && (
                 <div className="fixed inset-0 z-[100] bg-black animate-in fade-in zoom-in-95 duration-500">
                     <iframe src={trailerUrl} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Trailer" />
