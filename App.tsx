@@ -33,9 +33,11 @@ import { getOmdbRatings } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
 import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Download, Plus, X, ChevronDown, Palette, ShieldAlert, BookOpen, Share2, FolderOpen } from 'lucide-react';
 
+// SECURITY: Hardcoded Fallbacks removed for public deployment.
+// Keys should be set via Environment Variables (Vercel/Netlify) or User Settings.
 const FALLBACK_KEYS = {
-    TMDB: "4115939bdc412c5f7b0c4598fcf29b77", 
-    OMDB: "33df5dc9"
+    TMDB: "", 
+    OMDB: ""
 };
 
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
@@ -83,6 +85,7 @@ export default function App() {
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  // Fix: Added missing const declaration for profileMenuRef
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const [tmdbKey, setTmdbKey] = useState(() => localStorage.getItem('tmdb_api_key') || process.env.VITE_TMDB_API_KEY || FALLBACK_KEYS.TMDB || '');
