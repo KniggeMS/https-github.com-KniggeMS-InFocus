@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
@@ -17,10 +18,6 @@ import { ShareModal } from './components/ShareModal';
 import { CreateListModal } from './components/CreateListModal';
 import { ImportModal } from './components/ImportModal';
 import { RecoveryPage } from './components/RecoveryPage';
-import { PublicProfileModal } from './components/PublicProfileModal';
-import { SettingsModal } from './components/SettingsModal';
-import { GuidePage } from './components/GuidePage';
-import { InstallPwaModal } from './components/InstallPwaModal';
 import { LogoShowcase } from './components/LogoShowcase';
 import { BottomSheet } from './components/BottomSheet';
 import { 
@@ -31,7 +28,7 @@ import {
 import { getMediaDetails } from './services/tmdb';
 import { getOmdbRatings } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
-import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Download, Plus, X, ChevronDown, Palette, ShieldAlert, BookOpen, Share2, FolderOpen, Sparkles, UserPlus } from 'lucide-react';
+import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Download, Plus, X, ChevronDown, Palette, ShieldAlert, BookOpen, FolderOpen, UserPlus } from 'lucide-react';
 
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
     const { id } = useParams();
@@ -53,7 +50,6 @@ const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], ren
 export default function App() {
   const { user, logout, isRecoveryMode, adminNotification, dismissAdminNotification } = useAuth();
   const { t } = useTranslation();
-  const { theme, setTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -68,9 +64,6 @@ export default function App() {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
-  const [viewingProfile, setViewingProfile] = useState<User | null>(null);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -81,12 +74,6 @@ export default function App() {
   const sharedLists = user ? customLists.filter(l => l.sharedWith.includes(user.id)) : [];
 
   useEffect(() => { if (user) loadData(); }, [user]);
-
-  useEffect(() => {
-    const handler = (e: any) => { e.preventDefault(); setDeferredPrompt(e); };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
 
   useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -117,7 +104,7 @@ export default function App() {
           const item = prev.find(i => i.id === id);
           if (item) {
               toggleMediaItemFavorite(id, !item.isFavorite);
-              return prev.map(i => i.id === id ? { ...i, isFavorite: !i.isFavorite } : i);
+              return prev.map(i => i.id === id ? { ...i, isFavorite: !item.isFavorite } : i);
           }
           return prev;
       });
@@ -175,24 +162,13 @@ export default function App() {
     if (saved) setItems(prev => [saved, ...prev]);
   };
 
-  // Fixed: Added handleImport function to process bulk results
   const handleImport = async (results: SearchResult[]) => {
-    for (const res of results) {
-        await handleAdd(res);
-    }
+    for (const res of results) { await handleAdd(res); }
   };
 
-  // Fixed: Added handleCreateList function to handle list creation logic
   const handleCreateList = useCallback(async (name: string) => {
       if (!user) return;
-      const newList: CustomList = {
-          id: crypto.randomUUID(),
-          name,
-          ownerId: user.id,
-          createdAt: Date.now(),
-          items: [],
-          sharedWith: []
-      };
+      const newList: CustomList = { id: crypto.randomUUID(), name, ownerId: user.id, createdAt: Date.now(), items: [], sharedWith: [] };
       const saved = await createCustomList(newList, user.id);
       if (saved) setCustomLists(prev => [...prev, saved]);
   }, [user]);
@@ -219,23 +195,16 @@ export default function App() {
              <div className="absolute bottom-[-10%] left-[-10%] w-[1200px] h-[1200px] bg-purple-600/35 rounded-full blur-[160px]"></div>
         </div>
 
-        {/* ADMIN NOTIFICATION TOAST */}
         {adminNotification && (
             <div className="fixed top-20 right-4 z-[100] animate-in slide-in-from-right-10 duration-300">
                 <div onClick={dismissAdminNotification} className={`cursor-pointer px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 backdrop-blur-xl border ${adminNotification.type === 'register' ? 'bg-purple-600/20 border-purple-500/40' : 'bg-cyan-600/20 border-cyan-500/40'}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${adminNotification.type === 'register' ? 'bg-purple-500 text-white' : 'bg-cyan-500 text-white'}`}>
-                        {adminNotification.type === 'register' ? <UserPlus size={20}/> : <ShieldAlert size={20}/>}
-                    </div>
-                    <div>
-                        <p className="text-white font-bold text-sm">{adminNotification.message}</p>
-                        <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">System-Monitor</p>
-                    </div>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${adminNotification.type === 'register' ? 'bg-purple-500 text-white' : 'bg-cyan-500 text-white'}`}><UserPlus size={20}/></div>
+                    <div><p className="text-white font-bold text-sm">{adminNotification.message}</p><p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">System-Monitor</p></div>
                     <X size={14} className="text-slate-500 ml-4"/>
                 </div>
             </div>
         )}
 
-        {/* HEADER */}
         {location.pathname !== '/design-lab' && (
         <header className="sticky top-0 z-30 bg-[#0B0E14]/80 backdrop-blur-md border-b border-white/5 px-4 md:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-6">
@@ -259,15 +228,9 @@ export default function App() {
                     {isProfileMenuOpen && (
                         <div className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-200">
                             <div className="px-4 py-3 border-b border-white/5 mb-1"><p className="text-sm font-bold text-white truncate">{user.username}</p><p className="text-xs text-slate-500 truncate">{user.email}</p></div>
-                            <button onClick={() => { setIsInstallModalOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-cyan-400 hover:bg-white/5 flex items-center gap-2 font-bold"><Download size={16} /> App installieren</button>
-                            <div className="h-px bg-white/5 my-1"></div>
                             <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><UserIcon size={16} /> {t('profile')}</button>
-                            {user.role === UserRole.ADMIN && <button onClick={() => { navigate('/design-lab'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-purple-400 hover:bg-purple-500/10 flex items-center gap-2"><Palette size={16} /> 🎨 Design Lab</button>}
                             {(user.role === UserRole.ADMIN || user.role === UserRole.MANAGER) && <button onClick={() => { navigate('/users'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><List size={16} /> {t('user_management')}</button>}
                             <button onClick={() => { setIsSettingsOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><Settings size={16} /> {t('settings')}</button>
-                            <button onClick={() => { setIsImportOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><Download size={16} /> {t('smart_import')}</button>
-                            <button onClick={() => { setIsGuideOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><BookOpen size={16} /> Handbuch</button>
-                            <div className="h-px bg-white/5 my-1"></div>
                             <button onClick={() => { logout(); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2"><LogOut size={16} /> {t('logout')}</button>
                         </div>
                     )}
@@ -288,7 +251,6 @@ export default function App() {
                                 <div key={l.id} className="group flex items-center justify-between pr-2 rounded-lg hover:bg-white/5 transition-colors">
                                     <button onClick={() => navigate(`/list/${l.id}`)} className={`flex-grow text-left px-3 py-2 text-sm font-medium truncate ${location.pathname === `/list/${l.id}` ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>{l.name}</button>
                                     <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-                                        <button onClick={() => setSharingList(l)} className="p-1 text-slate-500 hover:text-cyan-400"><LayoutDashboard size={12}/></button>
                                         <button onClick={() => deleteCustomList(l.id).then(() => setCustomLists(prev => prev.filter(x => x.id !== l.id)))} className="p-1 text-slate-500 hover:text-red-400"><X size={12}/></button>
                                     </div>
                                 </div>
@@ -296,6 +258,16 @@ export default function App() {
                             <button onClick={() => setIsCreateListOpen(true)} className="w-full text-left px-3 py-2 text-sm text-cyan-500 hover:text-cyan-400 font-medium flex items-center gap-2 mt-2"><Plus size={14} /> {t('create_list')}</button>
                         </div>
                     </div>
+                    {sharedLists.length > 0 && (
+                        <div className="mb-6">
+                            <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mb-2">Geteilte Listen</h3>
+                            <div className="space-y-1">
+                                {sharedLists.map(l => (
+                                    <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
                 <AiRecommendationButton items={items} onAdd={handleAdd} apiKey={tmdbKey} />
             </aside>
@@ -315,10 +287,8 @@ export default function App() {
         </div>
         <ChatBot items={items.filter(i => i.userId === user.id)} />
         <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} onUpdateApiKey={(key) => { localStorage.setItem('tmdb_api_key', key); setTmdbKey(key); }} />
-        <ImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImport={handleImport} apiKey={tmdbKey} omdbApiKey={omdbKey} />
-        <CreateListModal isOpen={isCreateListOpen} onClose={() => setIsCreateListOpen(false)} onCreate={handleCreateList} />
-        <BottomSheet isOpen={isListsMenuOpen} onClose={() => setIsListsMenuOpen(false)} title={t('custom_lists')} actions={[{ label: t('create_list'), icon: <Plus size={20} />, onClick: () => setIsCreateListOpen(true), variant: 'accent' }]} sections={myLists.length > 0 ? [{ title: t('my_lists'), actions: myLists.map(l => ({ label: l.name, icon: <FolderOpen size={20} />, onClick: () => navigate(`/list/${l.id}`) })) }] : []} />
-        {selectedItem && <DetailView item={selectedItem} isExisting={true} onClose={() => setSelectedItem(null)} apiKey={tmdbKey} omdbApiKey={omdbKey} onUpdateStatus={handleUpdateStatus} onToggleFavorite={handleToggleFavorite} onUpdateNotes={handleUpdateNotes} onUpdateRtScore={handleUpdateRtScore} />}
+        <DetailView item={selectedItem!} isExisting={true} onClose={() => setSelectedItem(null)} apiKey={tmdbKey} omdbApiKey={omdbKey} onUpdateStatus={handleUpdateStatus} onToggleFavorite={handleToggleFavorite} onUpdateNotes={handleUpdateNotes} onUpdateRtScore={handleUpdateRtScore} />
+        {sharingList && <ShareModal isOpen={!!sharingList} onClose={() => setSharingList(null)} list={sharingList} onShare={async (id, users) => { await shareCustomList(id, users); setCustomLists(prev => prev.map(l => l.id === id ? {...l, sharedWith: users} : l)); }} />}
         <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsListsMenuOpen(true)} />
     </div>
   );
