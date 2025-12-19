@@ -22,6 +22,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { GuidePage } from './components/GuidePage';
 import { InstallPwaModal } from './components/InstallPwaModal';
 import { LogoShowcase } from './components/LogoShowcase';
+import { BottomSheet } from './components/BottomSheet';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes, updateMediaItemRtScore, updateMediaItemDetails,
@@ -30,7 +31,7 @@ import {
 import { getMediaDetails } from './services/tmdb';
 import { getOmdbRatings } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
-import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Download, Plus, X, ChevronDown, Palette, ShieldAlert, BookOpen } from 'lucide-react';
+import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Download, Plus, X, ChevronDown, Palette, ShieldAlert, BookOpen, Share2, FolderOpen } from 'lucide-react';
 
 const FALLBACK_KEYS = {
     TMDB: "4115939bdc412c5f7b0c4598fcf29b77", 
@@ -70,6 +71,7 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
+  const [isListsMenuOpen, setIsListsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
@@ -357,6 +359,21 @@ export default function App() {
       );
   };
 
+  // MOBILE LIST MENU ACTIONS
+  const mobileListActions = [
+      { label: t('create_list'), icon: <Plus size={20} />, onClick: () => setIsCreateListOpen(true), variant: 'accent' as const }
+  ];
+
+  const mobileListSections = myLists.length > 0 ? [
+      {
+          title: t('my_lists'),
+          actions: myLists.flatMap(l => [
+              { label: l.name, icon: <FolderOpen size={20} />, onClick: () => navigate(`/list/${l.id}`) },
+              { label: `${l.name} teilen`, icon: <Share2 size={16} className="text-cyan-400" />, onClick: () => setSharingList(l), variant: 'default' as const }
+          ])
+      }
+  ] : [];
+
   return (
     <div className={`min-h-screen bg-[#0B0E14] text-slate-200 pb-20 md:pb-0 font-sans selection:bg-cyan-500/30 relative overflow-hidden`}>
         {/* REINFORCED Ambient Background Glow - High Visibility (v1.9.40) */}
@@ -596,7 +613,7 @@ export default function App() {
             <>
                 <ChatBot items={items.filter(i => i.userId === user.id)} />
                 <AiRecommendationButton items={items} onAdd={handleAdd} apiKey={tmdbKey} mobileFabOnly={true} />
-                <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsCreateListOpen(true)} />
+                <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsListsMenuOpen(true)} />
             </>
         )}
 
@@ -623,6 +640,15 @@ export default function App() {
             isOpen={isCreateListOpen} 
             onClose={() => setIsCreateListOpen(false)} 
             onCreate={handleCreateList} 
+        />
+        
+        {/* MOBILE LISTS OVERVIEW MENU */}
+        <BottomSheet 
+            isOpen={isListsMenuOpen} 
+            onClose={() => setIsListsMenuOpen(false)}
+            title={t('custom_lists')}
+            actions={mobileListActions}
+            sections={mobileListSections}
         />
         
         {sharingList && (
