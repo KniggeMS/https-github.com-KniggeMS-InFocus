@@ -33,8 +33,11 @@ export interface User {
   firstName?: string;
   lastName?: string;
   createdAt: number;
-  role: UserRole; // New: RBAC
-  isStatsPublic: boolean; // New: Privacy Setting
+  role: UserRole; // RBAC
+  isStatsPublic: boolean; // Privacy Setting
+  // NEW: Login Tracking
+  loginCount?: number;
+  lastLoginAt?: number;
 }
 
 export interface StreamingProvider {
@@ -52,9 +55,9 @@ export interface CastMember {
 
 export interface MediaItem {
   id: string;
-  userId?: string; // New: Owner ID for separation
+  userId?: string; // Owner ID for separation
   tmdbId?: number;
-  imdbId?: string; // New: Link to IMDb
+  imdbId?: string; // Link to IMDb
   title: string;
   originalTitle?: string;
   year: number;
@@ -109,7 +112,7 @@ export interface CustomList {
 
 export interface SearchResult {
   tmdbId?: number;
-  imdbId?: string; // New: Support for OMDb matches
+  imdbId?: string; // Support for OMDb matches
   title: string;
   originalTitle?: string; // Added: For mapping to MediaItem
   year: number;

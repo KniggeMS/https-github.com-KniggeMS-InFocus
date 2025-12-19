@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
 import { fetchAllProfiles, updateUserRole, deleteUserProfile } from '../services/db';
 import { User, UserRole } from '../types';
-import { Shield, ShieldAlert, Search, Trash2, Check, User as UserIcon, Loader2, AlertCircle } from 'lucide-react';
+import { Shield, Search, Trash2, Check, User as UserIcon, Loader2, AlertCircle, Clock, Hash } from 'lucide-react';
 
 export const UserManagementPage: React.FC = () => {
     const { user: currentUser } = useAuth();
@@ -14,7 +14,7 @@ export const UserManagementPage: React.FC = () => {
     const [search, setSearch] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [actionLoading, setActionLoading] = useState<string | null>(null); // userId of loading action
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     const canManage = currentUser?.role === UserRole.ADMIN || currentUser?.role === UserRole.MANAGER;
 
@@ -38,21 +38,15 @@ export const UserManagementPage: React.FC = () => {
 
     const handleRoleChange = async (targetUserId: string, newRole: UserRole) => {
         if (!currentUser) return;
-        
-        // Safety Checks
         if (targetUserId === currentUser.id) {
             setError(t('cant_edit_self'));
             return;
         }
-
-        // Manager cannot edit Admins
         const targetUser = users.find(u => u.id === targetUserId);
         if (currentUser.role === UserRole.MANAGER && targetUser?.role === UserRole.ADMIN) {
             setError(t('cant_edit_admin'));
             return;
         }
-        
-        // Manager cannot promote to Admin
         if (currentUser.role === UserRole.MANAGER && newRole === UserRole.ADMIN) {
              setError(t('access_denied'));
              return;
@@ -76,21 +70,15 @@ export const UserManagementPage: React.FC = () => {
 
     const handleDelete = async (targetUserId: string) => {
         if (!currentUser) return;
-
-        // Safety Checks
         if (targetUserId === currentUser.id) return;
-        
         const targetUser = users.find(u => u.id === targetUserId);
         if (currentUser.role === UserRole.MANAGER && targetUser?.role === UserRole.ADMIN) {
              setError(t('cant_edit_admin'));
              return;
         }
-
         if (!window.confirm(t('delete_user_confirm'))) return;
-
         setActionLoading(targetUserId);
         setError('');
-
         try {
             await deleteUserProfile(targetUserId);
             setUsers(prev => prev.filter(u => u.id !== targetUserId));
@@ -103,6 +91,17 @@ export const UserManagementPage: React.FC = () => {
         }
     };
 
+    const formatDate = (timestamp?: number) => {
+        if (!timestamp) return 'Nie';
+        return new Intl.DateTimeFormat('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }).format(new Date(timestamp));
+    };
+
     const filteredUsers = users.filter(u => 
         u.username.toLowerCase().includes(search.toLowerCase()) || 
         u.email.toLowerCase().includes(search.toLowerCase())
@@ -111,13 +110,13 @@ export const UserManagementPage: React.FC = () => {
     if (!canManage) return <div className="p-10 text-center text-red-500">{t('access_denied')}</div>;
 
     return (
-        <div className="max-w-6xl mx-auto pb-20">
+        <div className="max-w-7xl mx-auto pb-20 px-4">
             <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                         <Shield className="text-cyan-400" /> {t('user_management')}
                     </h1>
-                    <p className="text-slate-400 mt-1">{users.length} {t('users_count')}</p>
+                    <p className="text-slate-400 mt-1">{users.length} registrierte Benutzer</p>
                 </div>
 
                 <div className="relative w-full md:w-auto">
@@ -150,12 +149,13 @@ export const UserManagementPage: React.FC = () => {
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider font-semibold">
+                            <thead className="bg-slate-900/50 text-slate-400 text-[10px] uppercase tracking-wider font-bold">
                                 <tr>
                                     <th className="p-4 pl-6">Benutzer</th>
                                     <th className="p-4">Rolle</th>
-                                    <th className="p-4">Beigetreten</th>
-                                    <th className="p-4 text-right pr-6">{t('actions')}</th>
+                                    <th className="p-4"><div className="flex items-center gap-1"><Hash size={12}/> Logins</div></th>
+                                    <th className="p-4"><div className="flex items-center gap-1"><Clock size={12}/> Letzter Login</div></th>
+                                    <th className="p-4 text-right pr-6">Aktionen</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-700">
@@ -193,8 +193,15 @@ export const UserManagementPage: React.FC = () => {
                                                 </select>
                                             )}
                                         </td>
-                                        <td className="p-4 text-sm text-slate-400">
-                                            {new Date(u.createdAt).toLocaleDateString()}
+                                        <td className="p-4">
+                                            <div className="text-sm font-mono text-slate-300 bg-slate-900/50 inline-block px-2 py-0.5 rounded">
+                                                {u.loginCount || 0}
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="text-xs text-slate-400 font-medium">
+                                                {formatDate(u.lastLoginAt)}
+                                            </div>
                                         </td>
                                         <td className="p-4 text-right pr-6">
                                             {u.id !== currentUser.id && !(currentUser.role === UserRole.MANAGER && u.role === UserRole.ADMIN) && (
@@ -202,7 +209,6 @@ export const UserManagementPage: React.FC = () => {
                                                     onClick={() => handleDelete(u.id)}
                                                     disabled={actionLoading === u.id}
                                                     className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                    title={t('delete_user')}
                                                 >
                                                     {actionLoading === u.id ? <Loader2 size={18} className="animate-spin"/> : <Trash2 size={18} />}
                                                 </button>

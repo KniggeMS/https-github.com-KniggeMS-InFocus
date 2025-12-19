@@ -15,10 +15,9 @@ export const fetchMediaItems = async (): Promise<MediaItem[]> => {
     return [];
   }
 
-  // Map DB snake_case to TS camelCase
   return data.map((item: any) => ({
     id: item.id,
-    userId: item.user_id, // MAPPED HERE
+    userId: item.user_id,
     tmdbId: item.tmdb_id,
     imdbId: item.imdb_id,
     title: item.title,
@@ -28,7 +27,7 @@ export const fetchMediaItems = async (): Promise<MediaItem[]> => {
     genre: item.genre || [],
     plot: item.plot,
     rating: item.rating,
-    rtScore: item.rt_score, // Added mapping
+    rtScore: item.rt_score,
     posterPath: item.poster_path,
     backdropPath: item.backdrop_path,
     status: item.status,
@@ -48,9 +47,7 @@ export const fetchMediaItems = async (): Promise<MediaItem[]> => {
   }));
 };
 
-// NEW: Fetch reviews from OTHER users for a specific movie
 export const fetchPublicReviews = async (tmdbId: number): Promise<PublicReview[]> => {
-    // We select user_notes (the review), rating, and join the profiles table to get username/avatar
     const { data, error } = await supabase
         .from('media_items')
         .select(`
@@ -61,8 +58,8 @@ export const fetchPublicReviews = async (tmdbId: number): Promise<PublicReview[]
             profiles (username, avatar, is_stats_public)
         `)
         .eq('tmdb_id', tmdbId)
-        .neq('user_notes', null) // Only where notes exist
-        .neq('user_notes', '')   // And aren't empty
+        .neq('user_notes', null)
+        .neq('user_notes', '')
         .limit(20);
 
     if (error) {
@@ -92,7 +89,7 @@ export const addMediaItem = async (item: MediaItem, userId: string): Promise<Med
     genre: item.genre,
     plot: item.plot,
     rating: item.rating,
-    rt_score: item.rtScore, // Added mapping
+    rt_score: item.rtScore,
     poster_path: item.posterPath,
     backdrop_path: item.backdropPath,
     status: item.status,
@@ -117,11 +114,8 @@ export const addMediaItem = async (item: MediaItem, userId: string): Promise<Med
     .select()
     .single();
 
-  if (error) {
-    console.error('Error adding item:', error);
-    return null;
-  }
-  return { ...item, id: data.id, userId: data.user_id }; // Return with new UUID
+  if (error) return null;
+  return { ...item, id: data.id, userId: data.user_id };
 };
 
 export const updateMediaItemStatus = async (id: string, status: WatchStatus) => {
@@ -144,7 +138,6 @@ export const updateMediaItemRtScore = async (id: string, score: string) => {
   await supabase.from('media_items').update({ rt_score: score }).eq('id', id);
 };
 
-// NEW: Update full details (Metadata refresh)
 export const updateMediaItemDetails = async (id: string, details: Partial<MediaItem>) => {
   const dbUpdates: any = {};
   if (details.runtime) dbUpdates.runtime = details.runtime;
@@ -167,10 +160,7 @@ export const fetchCustomLists = async (): Promise<CustomList[]> => {
     .from('custom_lists')
     .select('*');
 
-  if (error) {
-    console.error('Error fetching lists:', error);
-    return [];
-  }
+  if (error) return [];
 
   return data.map((l: any) => ({
     id: l.id,
@@ -218,7 +208,7 @@ export const shareCustomList = async (listId: string, userIds: string[]) => {
     await supabase.from('custom_lists').update({ shared_with: userIds }).eq('id', listId);
 };
 
-// --- USER MANAGEMENT (ADMIN/MANAGER) ---
+// --- USER MANAGEMENT ---
 
 export const fetchAllProfiles = async (): Promise<User[]> => {
     const { data, error } = await supabase
@@ -237,7 +227,10 @@ export const fetchAllProfiles = async (): Promise<User[]> => {
         lastName: p.last_name,
         role: p.role as UserRole,
         isStatsPublic: p.is_stats_public,
-        createdAt: new Date(p.created_at).getTime()
+        createdAt: new Date(p.created_at).getTime(),
+        // NEW FIELDS
+        loginCount: p.login_count || 0,
+        lastLoginAt: p.last_login_at ? new Date(p.last_login_at).getTime() : undefined
     }));
 };
 
@@ -251,19 +244,8 @@ export const updateUserRole = async (userId: string, newRole: UserRole) => {
 };
 
 export const deleteUserProfile = async (userId: string) => {
-    // Note: This deletes the profile row. In a full backend system,
-    // this should also trigger deletion from auth.users via a Postgres trigger or Edge Function.
-    // Client-side, we can only clean up the public data tables.
-    
-    // 1. Delete associated data (if not handled by cascade)
     await supabase.from('media_items').delete().eq('user_id', userId);
     await supabase.from('custom_lists').delete().eq('owner_id', userId);
-    
-    // 2. Delete Profile
-    const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
     if (error) throw error;
 };
