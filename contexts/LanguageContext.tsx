@@ -57,6 +57,11 @@ const dictionary: Translations = {
     "locked": "Gesperrt",
     "reviews_written": "Rezensionen verfasst",
     
+    // Status
+    "to_watch": "Geplant",
+    "watching": "Dabei",
+    "watched": "Gesehen",
+
     // Privacy & Roles
     "privacy_settings": "Privatsphäre",
     "public_stats": "Statistiken öffentlich sichtbar",
@@ -84,7 +89,7 @@ const dictionary: Translations = {
 
     // Achievement Titles (DE)
     "ach_first_blood_title": "Erster Schritt",
-    "ach_first_blood_desc": "Markiere deinen ersten Film als gesehen.",
+    "ach_first_blood_desc": "Markiere deinen ersten film als gesehen.",
     "ach_collector_novice_title": "Sammler",
     "ach_collector_novice_desc": "Habe 10 Items in deiner Sammlung.",
     "ach_binge_master_title": "Binge Master",
@@ -102,8 +107,6 @@ const dictionary: Translations = {
     "overview": "Übersicht",
     "my_lists": "Meine Listen",
     "planned": "Geplant",
-    "watching": "Dabei",
-    "seen": "Gesehen",
     "favorites": "Favoriten",
     "add_button": "Hinzufügen",
     "settings": "Einstellungen",
@@ -261,6 +264,11 @@ const dictionary: Translations = {
     "locked": "Locked",
     "reviews_written": "Reviews Written",
     
+    // Status
+    "to_watch": "Planned",
+    "watching": "Watching",
+    "watched": "Watched",
+
     // Privacy & Roles
     "privacy_settings": "Privacy",
     "public_stats": "Public Statistics",
@@ -306,7 +314,6 @@ const dictionary: Translations = {
     "overview": "Overview",
     "my_lists": "My Lists",
     "planned": "Planned",
-    "watching": "Watching",
     "seen": "Watched",
     "favorites": "Favorites",
     "add_button": "Add New",
