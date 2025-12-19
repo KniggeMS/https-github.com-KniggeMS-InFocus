@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, useLocation, useNavigate, useParams, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
@@ -32,7 +31,7 @@ import {
 import { getMediaDetails } from './services/tmdb';
 import { getOmdbRatings } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
-import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Download, Plus, X, ChevronDown, Palette, ShieldAlert, BookOpen, Share2, FolderOpen, Sparkles, UserPlus, CheckCircle2, AlertCircle } from 'lucide-react';
+import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, LayoutDashboard, Download, Plus, X, ChevronDown, Palette, ShieldAlert, BookOpen, Share2, FolderOpen, Sparkles, UserPlus } from 'lucide-react';
 
 const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
     const { id } = useParams();
@@ -68,16 +67,18 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
-  const [selectedItem, setSelectedItem] = useState<MediaItem | SearchResult | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
+  const [viewingProfile, setViewingProfile] = useState<User | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
   const [tmdbKey, setTmdbKey] = useState(() => localStorage.getItem('tmdb_api_key') || '');
   const [omdbKey, setOmdbKey] = useState(() => localStorage.getItem('omdb_api_key') || '');
 
   const myLists = user ? customLists.filter(l => l.ownerId === user.id) : [];
+  const sharedLists = user ? customLists.filter(l => l.sharedWith.includes(user.id)) : [];
 
   useEffect(() => { if (user) loadData(); }, [user]);
 
@@ -85,6 +86,14 @@ export default function App() {
     const handler = (e: any) => { e.preventDefault(); setDeferredPrompt(e); };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+          if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) setIsProfileMenuOpen(false);
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const loadData = async () => {
@@ -107,16 +116,15 @@ export default function App() {
       setItems(prev => {
           const item = prev.find(i => i.id === id);
           if (item) {
-              const newFav = !item.isFavorite;
-              toggleMediaItemFavorite(id, newFav);
-              return prev.map(i => i.id === id ? { ...i, isFavorite: newFav } : i);
+              toggleMediaItemFavorite(id, !item.isFavorite);
+              return prev.map(i => i.id === id ? { ...i, isFavorite: !i.isFavorite } : i);
           }
           return prev;
       });
   }, []);
 
   const handleDelete = useCallback(async (id: string) => {
-      if (!confirm("Eintrag wirklich löschen?")) return;
+      if (!confirm("Wirklich löschen?")) return;
       await deleteMediaItem(id);
       setItems(prev => prev.filter(i => i.id !== id));
   }, []);
@@ -132,12 +140,13 @@ export default function App() {
   }, []);
 
   const handleRefreshMetadata = useCallback(async (item: MediaItem) => {
-      if (!tmdbKey) return alert("TMDB API Key fehlt");
+      if (!tmdbKey) return alert("Kein TMDB Key gefunden.");
       try {
           const details = await getMediaDetails({ tmdbId: item.tmdbId, title: item.title, type: item.type, year: item.year, genre: item.genre, plot: item.plot, rating: item.rating }, tmdbKey);
           await updateMediaItemDetails(item.id, details);
           setItems(prev => prev.map(i => i.id === item.id ? { ...i, ...details } : i));
-      } catch (e) { alert("Aktualisierung fehlgeschlagen"); }
+          alert("Daten aktualisiert!");
+      } catch (e) { alert("Fehler!"); }
   }, [tmdbKey]);
 
   const handleAddToList = useCallback(async (listId: string, itemId: string) => {
@@ -145,8 +154,7 @@ export default function App() {
           const list = prev.find(l => l.id === listId);
           if (!list) return prev;
           let newItems = list.items || [];
-          const exists = newItems.includes(itemId);
-          if (exists) newItems = newItems.filter(i => i !== itemId);
+          if (newItems.includes(itemId)) newItems = newItems.filter(i => i !== itemId);
           else newItems = [...newItems, itemId];
           updateCustomListItems(listId, newItems);
           return prev.map(l => l.id === listId ? { ...l, items: newItems } : l);
@@ -156,39 +164,43 @@ export default function App() {
   const handleAdd = async (result: SearchResult, status: WatchStatus = WatchStatus.TO_WATCH, isFav: boolean = false) => {
     if (!user) return;
     const existing = items.find(i => i.tmdbId === result.tmdbId && i.userId === user.id);
-    if (existing) return;
-    
+    if (existing) return alert("Bereits vorhanden!");
     let details: Partial<MediaItem> = {};
     if (tmdbKey) try { details = await getMediaDetails(result, tmdbKey); } catch(e) {}
     let rtScore = undefined;
     const imdbId = result.imdbId || details.imdbId;
     if (omdbKey && imdbId) try { rtScore = await getOmdbRatings(imdbId, omdbKey) || undefined; } catch(e) {}
-    
     const newItem: MediaItem = { id: crypto.randomUUID(), userId: user.id, tmdbId: result.tmdbId, imdbId: result.imdbId || details.imdbId, title: result.title, originalTitle: result.originalTitle, year: result.year, type: result.type, genre: result.genre, plot: result.plot, rating: result.rating, posterPath: result.posterPath, backdropPath: result.backdropPath, status: status, addedAt: Date.now(), isFavorite: isFav, userRating: 0, userNotes: result.customNotes || '', runtime: details.runtime, seasons: details.seasons, episodes: details.episodes, certification: details.certification, trailerKey: details.trailerKey, credits: details.credits || [], providers: details.providers || [], rtScore: rtScore };
     const saved = await addMediaItem(newItem, user.id);
-    if (saved) {
-        setItems(prev => [saved, ...prev]);
-    }
+    if (saved) setItems(prev => [saved, ...prev]);
   };
 
+  // Fixed: Added handleImport function to process bulk results
   const handleImport = async (results: SearchResult[]) => {
     for (const res of results) {
         await handleAdd(res);
     }
   };
 
+  // Fixed: Added handleCreateList function to handle list creation logic
   const handleCreateList = useCallback(async (name: string) => {
       if (!user) return;
-      const newList: CustomList = { id: crypto.randomUUID(), name, ownerId: user.id, createdAt: Date.now(), items: [], sharedWith: [] };
+      const newList: CustomList = {
+          id: crypto.randomUUID(),
+          name,
+          ownerId: user.id,
+          createdAt: Date.now(),
+          items: [],
+          sharedWith: []
+      };
       const saved = await createCustomList(newList, user.id);
-      if (saved) { setCustomLists(prev => [...prev, saved]); }
+      if (saved) setCustomLists(prev => [...prev, saved]);
   }, [user]);
 
   if (isRecoveryMode) return <RecoveryPage />;
   if (!user) return <AuthPage />;
 
   const displayedItems = items.filter(i => i.userId === user.id && (typeFilter === 'ALL' || i.type === typeFilter));
-  const isSelectedItemExisting = selectedItem && 'id' in selectedItem && items.some(i => i.id === (selectedItem as MediaItem).id);
 
   const renderGrid = (statusFilter?: WatchStatus, listId?: string) => {
       let filtered = displayedItems;
@@ -196,58 +208,66 @@ export default function App() {
       else if (statusFilter) filtered = filtered.filter(i => i.status === statusFilter);
       else if (location.pathname === '/favorites') filtered = filtered.filter(i => i.isFavorite);
       filtered.sort((a, b) => b.addedAt - a.addedAt);
-      
-      if (filtered.length === 0) return (
-          <div className="flex flex-col items-center justify-center py-24 text-slate-500 animate-in fade-in duration-500">
-              <Clapperboard size={64} className="mb-6 opacity-10" />
-              <p className="text-lg font-medium">{t('empty_state')}</p>
-          </div>
-      );
-      
+      if (filtered.length === 0) return <div className="flex flex-col items-center justify-center py-20 text-slate-500"><Clapperboard size={48} className="mb-4 opacity-20" /><p>{t('empty_state')}</p><button onClick={() => setIsSearchOpen(true)} className="mt-4 text-cyan-500 hover:underline">{t('empty_action')}</button></div>;
       return <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 relative z-10">{filtered.map(item => <MediaCard key={item.id} item={item} onStatusChange={handleUpdateStatus} onDelete={handleDelete} onToggleFavorite={handleToggleFavorite} onRate={handleRate} onClick={setSelectedItem} onRefreshMetadata={handleRefreshMetadata} customLists={myLists} onAddToList={handleAddToList} />)}</div>;
   };
 
   return (
     <div className={`min-h-screen bg-[#0B0E14] text-slate-200 pb-20 md:pb-0 font-sans selection:bg-cyan-500/30 relative overflow-hidden`}>
         <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-             <div className="absolute top-[-10%] right-[-10%] w-[1300px] h-[1300px] bg-blue-600/30 rounded-full blur-[160px]"></div>
-             <div className="absolute bottom-[-10%] left-[-10%] w-[1200px] h-[1200px] bg-purple-600/25 rounded-full blur-[160px]"></div>
+             <div className="absolute top-[-10%] right-[-10%] w-[1300px] h-[1300px] bg-blue-600/40 rounded-full blur-[160px]"></div>
+             <div className="absolute bottom-[-10%] left-[-10%] w-[1200px] h-[1200px] bg-purple-600/35 rounded-full blur-[160px]"></div>
         </div>
 
+        {/* ADMIN NOTIFICATION TOAST */}
         {adminNotification && (
             <div className="fixed top-20 right-4 z-[100] animate-in slide-in-from-right-10 duration-300">
                 <div onClick={dismissAdminNotification} className={`cursor-pointer px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 backdrop-blur-xl border ${adminNotification.type === 'register' ? 'bg-purple-600/20 border-purple-500/40' : 'bg-cyan-600/20 border-cyan-500/40'}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${adminNotification.type === 'register' ? 'bg-purple-500 text-white' : 'bg-cyan-500 text-white'}`}><UserPlus size={20}/></div>
-                    <div><p className="text-white font-bold text-sm">{adminNotification.message}</p></div>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${adminNotification.type === 'register' ? 'bg-purple-500 text-white' : 'bg-cyan-500 text-white'}`}>
+                        {adminNotification.type === 'register' ? <UserPlus size={20}/> : <ShieldAlert size={20}/>}
+                    </div>
+                    <div>
+                        <p className="text-white font-bold text-sm">{adminNotification.message}</p>
+                        <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">System-Monitor</p>
+                    </div>
                     <X size={14} className="text-slate-500 ml-4"/>
                 </div>
             </div>
         )}
 
+        {/* HEADER */}
         {location.pathname !== '/design-lab' && (
         <header className="sticky top-0 z-30 bg-[#0B0E14]/80 backdrop-blur-md border-b border-white/5 px-4 md:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-6">
                 <div onClick={() => navigate('/')} className="flex items-center gap-2 cursor-pointer group">
-                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:scale-110"><Clapperboard size={18} className="text-white" /></div>
+                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg"><Clapperboard size={18} className="text-white" /></div>
                     <span className="font-bold text-xl tracking-tight text-white block">InFocus <span className="text-cyan-400">CineLog</span></span>
                 </div>
                 <nav className="hidden md:flex items-center gap-1">
-                    <button onClick={() => navigate('/')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('overview')}</button>
-                    <button onClick={() => navigate('/watchlist')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/watchlist' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('watchlist')}</button>
-                    <button onClick={() => navigate('/favorites')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/favorites' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('favorites')}</button>
+                    <button onClick={() => navigate('/')} className={`px-4 py-1.5 rounded-full text-sm font-medium ${location.pathname === '/' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('overview')}</button>
+                    <button onClick={() => navigate('/watchlist')} className={`px-4 py-1.5 rounded-full text-sm font-medium ${location.pathname === '/watchlist' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('watchlist')}</button>
+                    <button onClick={() => navigate('/favorites')} className={`px-4 py-1.5 rounded-full text-sm font-medium ${location.pathname === '/favorites' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('favorites')}</button>
                 </nav>
             </div>
             <div className="flex items-center gap-3">
                 <button onClick={() => setIsSearchOpen(true)} className="p-2 rounded-full hover:bg-white/5 text-slate-400 hover:text-white transition-colors"><Search size={20} /></button>
                 <div className="relative" ref={profileMenuRef}>
-                    <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10 transition-all">
+                    <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10">
                         <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden border border-slate-600">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon size={16} className="text-slate-400 m-auto mt-2"/>}</div>
                         <ChevronDown size={14} className="text-slate-500 mr-1" />
                     </button>
                     {isProfileMenuOpen && (
                         <div className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="px-4 py-3 border-b border-white/5 mb-1"><p className="text-sm font-bold text-white truncate">{user.username}</p><p className="text-xs text-slate-500 truncate">{user.email}</p></div>
+                            <button onClick={() => { setIsInstallModalOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-cyan-400 hover:bg-white/5 flex items-center gap-2 font-bold"><Download size={16} /> App installieren</button>
+                            <div className="h-px bg-white/5 my-1"></div>
                             <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><UserIcon size={16} /> {t('profile')}</button>
+                            {user.role === UserRole.ADMIN && <button onClick={() => { navigate('/design-lab'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-purple-400 hover:bg-purple-500/10 flex items-center gap-2"><Palette size={16} /> 🎨 Design Lab</button>}
+                            {(user.role === UserRole.ADMIN || user.role === UserRole.MANAGER) && <button onClick={() => { navigate('/users'); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><List size={16} /> {t('user_management')}</button>}
                             <button onClick={() => { setIsSettingsOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><Settings size={16} /> {t('settings')}</button>
+                            <button onClick={() => { setIsImportOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><Download size={16} /> {t('smart_import')}</button>
+                            <button onClick={() => { setIsGuideOpen(true); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-white/5 flex items-center gap-2"><BookOpen size={16} /> Handbuch</button>
+                            <div className="h-px bg-white/5 my-1"></div>
                             <button onClick={() => { logout(); setIsProfileMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2"><LogOut size={16} /> {t('logout')}</button>
                         </div>
                     )}
@@ -260,18 +280,20 @@ export default function App() {
             {location.pathname !== '/design-lab' && (
             <aside className="hidden md:flex w-64 flex-col fixed left-0 top-16 bottom-0 border-r border-white/5 bg-[#0B0E14]/50 backdrop-blur-sm overflow-y-auto">
                 <div className="p-4">
-                    <button onClick={() => setIsSearchOpen(true)} className="w-full flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-lg shadow-cyan-900/20 mb-6 group"><Plus size={20} className="transition-transform group-hover:rotate-90" /> {t('add_button')}</button>
+                    <button onClick={() => setIsSearchOpen(true)} className="w-full flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-lg shadow-cyan-900/20 mb-6"><Plus size={20} /> {t('add_button')}</button>
                     <div className="mb-6">
-                        <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mb-2 tracking-widest">{t('my_lists')}</h3>
+                        <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mb-2">{t('my_lists')}</h3>
                         <div className="space-y-1">
                             {myLists.map(l => (
                                 <div key={l.id} className="group flex items-center justify-between pr-2 rounded-lg hover:bg-white/5 transition-colors">
                                     <button onClick={() => navigate(`/list/${l.id}`)} className={`flex-grow text-left px-3 py-2 text-sm font-medium truncate ${location.pathname === `/list/${l.id}` ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>{l.name}</button>
-                                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
-                                        <button onClick={() => deleteCustomList(l.id).then(() => { setCustomLists(prev => prev.filter(x => x.id !== l.id)); })} className="p-1 text-slate-500 hover:text-red-400"><X size={12}/></button>
+                                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
+                                        <button onClick={() => setSharingList(l)} className="p-1 text-slate-500 hover:text-cyan-400"><LayoutDashboard size={12}/></button>
+                                        <button onClick={() => deleteCustomList(l.id).then(() => setCustomLists(prev => prev.filter(x => x.id !== l.id)))} className="p-1 text-slate-500 hover:text-red-400"><X size={12}/></button>
                                     </div>
                                 </div>
                             ))}
+                            <button onClick={() => setIsCreateListOpen(true)} className="w-full text-left px-3 py-2 text-sm text-cyan-500 hover:text-cyan-400 font-medium flex items-center gap-2 mt-2"><Plus size={14} /> {t('create_list')}</button>
                         </div>
                     </div>
                 </div>
@@ -295,22 +317,8 @@ export default function App() {
         <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} onUpdateApiKey={(key) => { localStorage.setItem('tmdb_api_key', key); setTmdbKey(key); }} />
         <ImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onImport={handleImport} apiKey={tmdbKey} omdbApiKey={omdbKey} />
         <CreateListModal isOpen={isCreateListOpen} onClose={() => setIsCreateListOpen(false)} onCreate={handleCreateList} />
-        <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} tmdbKey={tmdbKey} omdbKey={omdbKey} onSave={(keys) => { localStorage.setItem('tmdb_api_key', keys.tmdb); localStorage.setItem('omdb_api_key', keys.omdb); setTmdbKey(keys.tmdb); setOmdbKey(keys.omdb); }} />
-        
-        {selectedItem && (
-            <DetailView 
-                item={selectedItem} 
-                isExisting={isSelectedItemExisting || false} 
-                onClose={() => setSelectedItem(null)} 
-                apiKey={tmdbKey} 
-                omdbApiKey={omdbKey} 
-                onUpdateStatus={handleUpdateStatus} 
-                onToggleFavorite={handleToggleFavorite} 
-                onUpdateNotes={handleUpdateNotes} 
-                onUpdateRtScore={handleUpdateRtScore} 
-                onAdd={handleAdd}
-            />
-        )}
+        <BottomSheet isOpen={isListsMenuOpen} onClose={() => setIsListsMenuOpen(false)} title={t('custom_lists')} actions={[{ label: t('create_list'), icon: <Plus size={20} />, onClick: () => setIsCreateListOpen(true), variant: 'accent' }]} sections={myLists.length > 0 ? [{ title: t('my_lists'), actions: myLists.map(l => ({ label: l.name, icon: <FolderOpen size={20} />, onClick: () => navigate(`/list/${l.id}`) })) }] : []} />
+        {selectedItem && <DetailView item={selectedItem} isExisting={true} onClose={() => setSelectedItem(null)} apiKey={tmdbKey} omdbApiKey={omdbKey} onUpdateStatus={handleUpdateStatus} onToggleFavorite={handleToggleFavorite} onUpdateNotes={handleUpdateNotes} onUpdateRtScore={handleUpdateRtScore} />}
         <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsListsMenuOpen(true)} />
     </div>
   );

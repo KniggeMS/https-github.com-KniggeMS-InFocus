@@ -28,9 +28,7 @@ export const UserManagementPage: React.FC = () => {
         setLoading(true);
         try {
             const data = await fetchAllProfiles();
-            // Sort by createdAt descending (newest first) by default
-            const sorted = [...data].sort((a, b) => b.createdAt - a.createdAt);
-            setUsers(sorted);
+            setUsers(data);
         } catch (e) {
             setError("Fehler beim Laden der Benutzer.");
         } finally {
@@ -117,7 +115,7 @@ export const UserManagementPage: React.FC = () => {
                     <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                         <Shield className="text-cyan-400" /> {t('user_management')}
                     </h1>
-                    <p className="text-slate-400 mt-1">{users.length} registrierte Benutzer • Sortiert nach Neuesten</p>
+                    <p className="text-slate-400 mt-1">{users.length} registrierte Benutzer</p>
                 </div>
 
                 <div className="relative w-full md:w-auto">
@@ -127,26 +125,26 @@ export const UserManagementPage: React.FC = () => {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder={t('search_user')}
-                        className="w-full md:w-64 bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-white focus:outline-none focus:border-cyan-500 transition-colors"
+                        className="w-full md:w-64 bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-white focus:outline-none focus:border-cyan-500"
                     />
                 </div>
             </div>
 
             {error && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-center gap-2 animate-in slide-in-from-top-2 duration-300">
+                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-center gap-2">
                     <AlertCircle size={20} /> {error}
                 </div>
             )}
             
             {success && (
-                <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl flex items-center gap-2 animate-in slide-in-from-top-2 duration-300">
+                <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl flex items-center gap-2">
                     <Check size={20} /> {success}
                 </div>
             )}
 
             <div className="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
                 {loading ? (
-                    <div className="p-20 flex justify-center"><Loader2 size={40} className="animate-spin text-cyan-500"/></div>
+                    <div className="p-10 flex justify-center"><Loader2 size={32} className="animate-spin text-cyan-500"/></div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
@@ -165,13 +163,13 @@ export const UserManagementPage: React.FC = () => {
                                     <tr key={u.id} className="hover:bg-slate-700/30 transition-colors group">
                                         <td className="p-4 pl-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0 border border-white/5">
+                                                <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
                                                     {u.avatar ? <img src={u.avatar} alt="" className="w-full h-full object-cover"/> : <UserIcon size={20} className="text-slate-500"/>}
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-white flex items-center gap-2">
                                                         {u.username}
-                                                        {u.id === currentUser.id && <span className="text-[10px] bg-cyan-900 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20">DU</span>}
+                                                        {u.id === currentUser.id && <span className="text-[10px] bg-cyan-900 text-cyan-400 px-1.5 py-0.5 rounded">DU</span>}
                                                     </div>
                                                     <div className="text-xs text-slate-500">{u.email}</div>
                                                 </div>
@@ -187,7 +185,7 @@ export const UserManagementPage: React.FC = () => {
                                                     value={u.role} 
                                                     onChange={(e) => handleRoleChange(u.id, e.target.value as UserRole)}
                                                     disabled={actionLoading === u.id}
-                                                    className={`bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs font-bold focus:outline-none focus:border-cyan-500 transition-colors ${u.role === UserRole.ADMIN ? 'text-red-400' : u.role === UserRole.MANAGER ? 'text-orange-400' : 'text-slate-300'}`}
+                                                    className={`bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs font-bold focus:outline-none focus:border-cyan-500 ${u.role === UserRole.ADMIN ? 'text-red-400' : u.role === UserRole.MANAGER ? 'text-orange-400' : 'text-slate-300'}`}
                                                 >
                                                     <option value={UserRole.USER}>USER</option>
                                                     <option value={UserRole.MANAGER}>MANAGER</option>
@@ -215,7 +213,7 @@ export const UserManagementPage: React.FC = () => {
                                                 <button 
                                                     onClick={() => handleDelete(u.id)}
                                                     disabled={actionLoading === u.id}
-                                                    className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all active:scale-90"
+                                                    className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                                                 >
                                                     {actionLoading === u.id ? <Loader2 size={18} className="animate-spin"/> : <Trash2 size={18} />}
                                                 </button>
