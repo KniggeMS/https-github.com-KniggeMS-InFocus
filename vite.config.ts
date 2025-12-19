@@ -1,4 +1,3 @@
-
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -36,7 +35,7 @@ export default defineConfig(({ mode }) => {
           ]
         },
         devOptions: {
-           enabled: true // Allows testing PWA in dev mode
+           enabled: true 
         }
       })
     ],
@@ -44,6 +43,18 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          // Splitting large libraries into separate chunks for better caching and smaller main file
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-ui': ['lucide-react', 'recharts'],
+            'vendor-ai': ['@google/genai'],
+            'vendor-db': ['@supabase/supabase-js']
+          }
+        }
+      },
+      chunkSizeWarningLimit: 1000 // Slightly increased limit as we now use clean chunks
     },
     server: {
       host: '0.0.0.0',
@@ -53,8 +64,6 @@ export default defineConfig(({ mode }) => {
       }
     },
     define: {
-      // INJECTION: We explicitly inject these keys into the client bundle.
-      // This allows the app to work out-of-the-box for testers on Vercel without manual entry.
       'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
       'process.env.VITE_TMDB_API_KEY': JSON.stringify(env.VITE_TMDB_API_KEY || ''),
       'process.env.VITE_OMDB_API_KEY': JSON.stringify(env.VITE_OMDB_API_KEY || ''),

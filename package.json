@@ -1,7 +1,7 @@
-
 {
   "name": "cinelog-infocus",
   "version": "1.0.3",
+  "type": "module",
   "description": "CineLog - Die ultimative AI-Watchlist PWA",
   "main": "index.tsx",
   "scripts": {
