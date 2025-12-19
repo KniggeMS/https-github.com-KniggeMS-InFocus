@@ -68,12 +68,11 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [sharingList, setSharingList] = useState<CustomList | null>(null);
-  const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MediaItem | SearchResult | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   
-  // Toast System
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
       setToast({ message, type });
@@ -94,14 +93,6 @@ export default function App() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-          if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) setIsProfileMenuOpen(false);
-      };
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const loadData = async () => {
     const [fetchedItems, fetchedLists] = await Promise.all([ fetchMediaItems(), fetchCustomLists() ]);
     setItems(fetchedItems);
@@ -111,7 +102,7 @@ export default function App() {
   const handleUpdateStatus = useCallback(async (id: string, status: WatchStatus) => {
       await updateMediaItemStatus(id, status);
       setItems(prev => prev.map(i => i.id === id ? { ...i, status } : i));
-      showToast(t('status_updated') || 'Status aktualisiert');
+      showToast(t('status_updated'));
   }, [t]);
 
   const handleRate = useCallback(async (id: string, rating: number) => {
@@ -202,25 +193,18 @@ export default function App() {
 
   const handleCreateList = useCallback(async (name: string) => {
       if (!user) return;
-      const newList: CustomList = {
-          id: crypto.randomUUID(),
-          name,
-          ownerId: user.id,
-          createdAt: Date.now(),
-          items: [],
-          sharedWith: []
-      };
+      const newList: CustomList = { id: crypto.randomUUID(), name, ownerId: user.id, createdAt: Date.now(), items: [], sharedWith: [] };
       const saved = await createCustomList(newList, user.id);
-      if (saved) {
-          setCustomLists(prev => [...prev, saved]);
-          showToast("Liste erstellt");
-      }
+      if (saved) { setCustomLists(prev => [...prev, saved]); showToast("Liste erstellt"); }
   }, [user]);
 
   if (isRecoveryMode) return <RecoveryPage />;
   if (!user) return <AuthPage />;
 
   const displayedItems = items.filter(i => i.userId === user.id && (typeFilter === 'ALL' || i.type === typeFilter));
+  
+  // Prüfen ob ausgewähltes Item bereits in der Library ist (für DetailView Logic)
+  const isSelectedItemExisting = selectedItem && 'id' in selectedItem && items.some(i => i.id === (selectedItem as MediaItem).id);
 
   const renderGrid = (statusFilter?: WatchStatus, listId?: string) => {
       let filtered = displayedItems;
@@ -250,7 +234,6 @@ export default function App() {
              <div className="absolute bottom-[-10%] left-[-10%] w-[1200px] h-[1200px] bg-purple-600/25 rounded-full blur-[160px]"></div>
         </div>
 
-        {/* NOTIFICATION TOAST SYSTEM */}
         {toast && (
             <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
                 <div className={`px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-xl border border-white/10 ${toast.type === 'error' ? 'bg-red-500/20 text-red-200' : toast.type === 'info' ? 'bg-slate-800 text-slate-200' : 'bg-cyan-600/20 text-cyan-100'}`}>
@@ -260,23 +243,16 @@ export default function App() {
             </div>
         )}
 
-        {/* ADMIN BROADCAST NOTIFICATION */}
         {adminNotification && (
             <div className="fixed top-20 right-4 z-[100] animate-in slide-in-from-right-10 duration-300">
                 <div onClick={dismissAdminNotification} className={`cursor-pointer px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 backdrop-blur-xl border ${adminNotification.type === 'register' ? 'bg-purple-600/20 border-purple-500/40' : 'bg-cyan-600/20 border-cyan-500/40'}`}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${adminNotification.type === 'register' ? 'bg-purple-500 text-white' : 'bg-cyan-500 text-white'}`}>
-                        {adminNotification.type === 'register' ? <UserPlus size={20}/> : <ShieldAlert size={20}/>}
-                    </div>
-                    <div>
-                        <p className="text-white font-bold text-sm">{adminNotification.message}</p>
-                        <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">System-Monitor</p>
-                    </div>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${adminNotification.type === 'register' ? 'bg-purple-500 text-white' : 'bg-cyan-500 text-white'}`}><UserPlus size={20}/></div>
+                    <div><p className="text-white font-bold text-sm">{adminNotification.message}</p><p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">System-Monitor</p></div>
                     <X size={14} className="text-slate-500 ml-4"/>
                 </div>
             </div>
         )}
 
-        {/* HEADER */}
         {location.pathname !== '/design-lab' && (
         <header className="sticky top-0 z-30 bg-[#0B0E14]/80 backdrop-blur-md border-b border-white/5 px-4 md:px-8 h-16 flex items-center justify-between">
             <div className="flex items-center gap-6">
@@ -361,7 +337,22 @@ export default function App() {
         <BottomSheet isOpen={isListsMenuOpen} onClose={() => setIsListsMenuOpen(false)} title={t('custom_lists')} actions={[{ label: t('create_list'), icon: <Plus size={20} />, onClick: () => setIsCreateListOpen(true), variant: 'accent' }]} sections={myLists.length > 0 ? [{ title: t('my_lists'), actions: myLists.map(l => ({ label: l.name, icon: <FolderOpen size={20} />, onClick: () => navigate(`/list/${l.id}`) })) }] : []} />
         <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} tmdbKey={tmdbKey} omdbKey={omdbKey} onSave={(keys) => { localStorage.setItem('tmdb_api_key', keys.tmdb); localStorage.setItem('omdb_api_key', keys.omdb); setTmdbKey(keys.tmdb); setOmdbKey(keys.omdb); showToast("Einstellungen gespeichert"); }} />
         <InstallPwaModal isOpen={isInstallModalOpen} onClose={() => setIsInstallModalOpen(false)} installPrompt={deferredPrompt} />
-        {selectedItem && <DetailView item={selectedItem} isExisting={true} onClose={() => setSelectedItem(null)} apiKey={tmdbKey} omdbApiKey={omdbKey} onUpdateStatus={handleUpdateStatus} onToggleFavorite={handleToggleFavorite} onUpdateNotes={handleUpdateNotes} onUpdateRtScore={handleUpdateRtScore} />}
+        
+        {/* DETAIL VIEW: Korrigierte isExisting Logic */}
+        {selectedItem && (
+            <DetailView 
+                item={selectedItem} 
+                isExisting={isSelectedItemExisting || false} 
+                onClose={() => setSelectedItem(null)} 
+                apiKey={tmdbKey} 
+                omdbApiKey={omdbKey} 
+                onUpdateStatus={handleUpdateStatus} 
+                onToggleFavorite={handleToggleFavorite} 
+                onUpdateNotes={handleUpdateNotes} 
+                onUpdateRtScore={handleUpdateRtScore} 
+                onAdd={handleAdd}
+            />
+        )}
         <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsListsMenuOpen(true)} />
     </div>
   );

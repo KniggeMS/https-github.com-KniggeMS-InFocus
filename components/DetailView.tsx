@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   X, Heart, Star, Play, Clock, Check, Share2, AlertCircle, 
-  Loader2, Film, User, Calendar, Tv, Zap, Users, MonitorPlay, MessageSquare
+  Loader2, Film, User, Calendar, Tv, Zap, Users, MonitorPlay, MessageSquare, ChevronDown, Sparkles
 } from 'lucide-react';
 import { MediaItem, SearchResult, WatchStatus, MediaType, PublicReview } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, BACKDROP_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
@@ -17,12 +18,10 @@ interface DetailViewProps {
   onClose: () => void;
   apiKey: string;
   omdbApiKey?: string;
-  
   onUpdateStatus?: (id: string, status: WatchStatus) => void;
   onToggleFavorite?: (id: string) => void;
   onUpdateNotes?: (id: string, notes: string) => void;
   onUpdateRtScore?: (id: string, score: string) => void;
-  
   onAdd?: (item: SearchResult, status: WatchStatus, isFav: boolean) => void;
 }
 
@@ -52,29 +51,28 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 const extended = await getMediaDetails(initialItem, apiKey);
                 setDetails(extended);
                 
-                if (extended.trailerKey) {
+                // Trailer Logic - FIX: Use initialItem key if already exists
+                const finalTrailerKey = (initialItem as any).trailerKey || extended.trailerKey;
+
+                if (finalTrailerKey) {
                     const origin = window.location.origin;
+                    setTrailerUrl(`https://www.youtube-nocookie.com/embed/${finalTrailerKey}?autoplay=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(origin)}`);
                     
-                    // Standard Trailer URL (Direct Play)
-                    setTrailerUrl(`https://www.youtube-nocookie.com/embed/${extended.trailerKey}?autoplay=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(origin)}`);
-                    
-                    // FIXED: Ambient Background Trailer URL for Desktop Web
-                    // Using www.youtube.com and specific parameters to signal a non-automated embed
+                    // FIXED: Playlist param is REQUIRED for loop=1 to work
                     const bgParams = new URLSearchParams({
                         autoplay: '1',
                         mute: '1',
                         controls: '0',
                         loop: '1',
-                        playlist: extended.trailerKey,
+                        playlist: finalTrailerKey,
                         rel: '0',
                         showinfo: '0',
                         enablejsapi: '1',
                         origin: origin,
-                        widgetid: '1',
-                        version: '3'
+                        widgetid: '1'
                     }).toString();
                     
-                    setBackgroundTrailerUrl(`https://www.youtube.com/embed/${extended.trailerKey}?${bgParams}`);
+                    setBackgroundTrailerUrl(`https://www.youtube.com/embed/${finalTrailerKey}?${bgParams}`);
                 }
 
                 const imdbId = initialItem.imdbId || extended.imdbId;
@@ -102,10 +100,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                         setPublicReviews(othersReviews);
                     });
                 }
-
-            } catch (e) {
-                console.error("Detail load error", e);
-            }
+            } catch (e) { console.error("Detail load error", e); }
         };
         loadDetails();
     }, [initialItem, apiKey, omdbApiKey]);
@@ -113,15 +108,9 @@ export const DetailView: React.FC<DetailViewProps> = ({
     const handleShare = async () => {
         const url = `https://www.themoviedb.org/${initialItem.type === MediaType.MOVIE ? 'movie' : 'tv'}/${initialItem.tmdbId}`;
         const text = `Check out "${initialItem.title}" (${initialItem.year})! ${url}`;
-        
         try {
-            if (navigator.share) {
-                await navigator.share({ title: initialItem.title, text: text, url: url });
-            } else {
-                await navigator.clipboard.writeText(text);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            }
+            if (navigator.share) await navigator.share({ title: initialItem.title, text: text, url: url });
+            else { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }
         } catch (err) { console.error(err); }
     };
 
@@ -129,334 +118,213 @@ export const DetailView: React.FC<DetailViewProps> = ({
         if (isExisting && onUpdateNotes && (initialItem as MediaItem).id) {
             onUpdateNotes((initialItem as MediaItem).id, notes);
             setLoadingAi(true);
-            analyzeMovieContext({ ...initialItem, userNotes: notes } as MediaItem, notes)
-                .then(text => setAiAnalysis(text))
-                .catch(() => {})
-                .finally(() => setLoadingAi(false));
+            analyzeMovieContext({ ...initialItem, userNotes: notes } as MediaItem, notes).then(text => setAiAnalysis(text)).finally(() => setLoadingAi(false));
         }
-    };
-
-    const handleAddClick = (status: WatchStatus) => {
-        if (onAdd) onAdd(initialItem as SearchResult, status, isFav);
-    };
-
-    // Helpers
-    const formatRuntime = (mins?: number) => {
-        if (!mins) return null;
-        const h = Math.floor(mins / 60);
-        const m = mins % 60;
-        return `${h}h ${m}m`;
-    };
-
-    const getRtState = (scoreStr?: string) => {
-        if (!scoreStr) return null;
-        const score = parseInt(scoreStr);
-        if (isNaN(score)) return null;
-        return score >= 60 ? 'fresh' : 'rotten';
     };
 
     const displayItem = { ...initialItem, ...details };
     const posterUrl = displayItem.posterPath ? `${IMAGE_BASE_URL}${displayItem.posterPath}` : null;
     const backdropUrl = displayItem.backdropPath ? `${BACKDROP_BASE_URL}${displayItem.backdropPath}` : null;
-    const rtState = getRtState(displayItem.rtScore);
+    const rtState = displayItem.rtScore ? (parseInt(displayItem.rtScore) >= 60 ? 'fresh' : 'rotten') : null;
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-0 md:p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-200">
-             <div className="bg-slate-900 w-full h-full md:h-auto md:max-h-[90vh] md:max-w-5xl md:rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden relative group">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/95 animate-in fade-in duration-300 overflow-y-auto">
+            
+            {/* FULLSCREEN BACKGROUND LAYER */}
+            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+                {backgroundTrailerUrl ? (
+                    <div className="absolute inset-0 w-full h-full scale-125">
+                         {/* Massive Oversize to force cover behavior */}
+                         <iframe 
+                            src={backgroundTrailerUrl} 
+                            className="absolute top-1/2 left-1/2 w-[300%] h-[300%] -translate-x-1/2 -translate-y-1/2 opacity-[0.4] pointer-events-none" 
+                            title="Ambient Background"
+                            allow="autoplay; encrypted-media"
+                        />
+                    </div>
+                ) : backdropUrl && (
+                    <img src={backdropUrl} className="w-full h-full object-cover opacity-30 blur-sm" alt="" />
+                )}
+                {/* Vignette & Gradients */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-transparent to-[#0B0E14]/80" />
+                <div className="absolute inset-0 bg-radial-vignette opacity-60" />
+            </div>
+
+            {/* FLOATING UI CONTAINER */}
+            <div className="relative z-10 w-full max-w-5xl mx-auto px-4 py-12 flex flex-col items-center">
                 
-                <button onClick={onClose} className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-colors">
-                    <X size={24} />
+                {/* Close Button */}
+                <button onClick={onClose} className="fixed top-6 right-6 z-[70] p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-xl transition-all active:scale-90 border border-white/10">
+                    <X size={28} />
                 </button>
 
-                {/* LEFT: VISUALS */}
-                <div className="w-full md:w-2/5 relative bg-black flex-shrink-0 min-h-[250px] md:min-h-full overflow-hidden">
-                    {/* Active Trailer Overlay */}
-                    {showTrailer && trailerUrl ? (
-                         <div className="absolute inset-0 z-30 bg-black animate-in fade-in duration-500">
-                            <iframe 
-                                src={trailerUrl} 
-                                title="Trailer Player" 
-                                className="w-full h-full" 
-                                allow="autoplay; encrypted-media" 
-                                allowFullScreen 
-                            />
-                            <button onClick={() => setShowTrailer(false)} className="absolute top-4 left-4 bg-black/60 text-white px-3 py-1 rounded-full text-xs font-bold border border-white/20 backdrop-blur-md">
-                                {t('close_trailer')}
-                            </button>
-                         </div>
-                    ) : (
-                        <>
-                            {/* Cinematic Background Layer */}
-                            <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950">
-                                {backgroundTrailerUrl ? (
-                                    <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-                                        {/* FIXED: Massive Oversize & Absolute Center to force "object-cover" on any screen */}
-                                        <iframe 
-                                            src={backgroundTrailerUrl} 
-                                            className="absolute top-1/2 left-1/2 w-[400%] h-[400%] -translate-x-1/2 -translate-y-1/2 opacity-[0.65] pointer-events-none" 
-                                            title="Ambient Trailer Background"
-                                            allow="autoplay; encrypted-media"
-                                            tabIndex={-1}
-                                            referrerPolicy="strict-origin-when-cross-origin"
-                                        />
-                                        {/* Cinematic Overlays */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-black/60 md:bg-gradient-to-r md:from-transparent md:to-slate-900" />
+                {/* POSTER & MAIN INFO BOX */}
+                <div className="w-full flex flex-col md:flex-row gap-10 items-center md:items-start mb-12">
+                    
+                    {/* Poster with Play Trigger */}
+                    <div className="relative group w-64 md:w-80 shrink-0 animate-in slide-in-from-bottom-8 duration-500">
+                        <div className="absolute -inset-4 bg-cyan-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                        <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] border border-white/10">
+                             {posterUrl ? <img src={posterUrl} className="w-full h-full object-cover" alt=""/> : <div className="w-full h-full bg-slate-800 flex items-center justify-center"><Film size={64}/></div>}
+                             
+                             {trailerUrl && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20" onClick={() => setShowTrailer(true)}>
+                                    <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center text-white shadow-2xl hover:scale-110 transition-transform">
+                                        <Play size={32} fill="currentColor" className="ml-1" />
                                     </div>
-                                ) : (
-                                    backdropUrl && (
-                                        <>
-                                            <img src={backdropUrl} className="w-full h-full object-cover opacity-60" alt="" />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-slate-900" />
-                                        </>
-                                    )
+                                </div>
+                             )}
+                        </div>
+                    </div>
+
+                    {/* TEXT CONTENT */}
+                    <div className="flex-grow text-center md:text-left pt-4 animate-in fade-in slide-in-from-right-4 duration-500 delay-150">
+                        <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
+                            <span className="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 text-[10px] font-black uppercase tracking-widest border border-cyan-500/30">{displayItem.type}</span>
+                            {displayItem.status && <span className="px-3 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-widest border border-white/10">{t(displayItem.status.toLowerCase())}</span>}
+                        </div>
+
+                        <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-4 drop-shadow-2xl">
+                            {displayItem.title}
+                        </h1>
+
+                        <div className="flex flex-wrap justify-center md:justify-start items-center gap-6 text-slate-300 font-bold mb-8">
+                            <span className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/5"><Calendar size={16} className="text-cyan-400"/> {displayItem.year}</span>
+                            {displayItem.runtime && <span className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/5"><Clock size={16} className="text-purple-400"/> {Math.floor(displayItem.runtime/60)}h {displayItem.runtime%60}m</span>}
+                            
+                            <div className="flex items-center gap-3">
+                                <div className="bg-[#0d253f] px-3 py-1.5 rounded-xl border border-[#01b4e4]/30 flex items-center gap-2">
+                                    <span className="text-[10px] font-black text-[#01b4e4] tracking-tighter">TMDB</span>
+                                    <span className="text-white font-black">{displayItem.rating?.toFixed(1)}</span>
+                                </div>
+                                {rtState && (
+                                    <div className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 ${rtState === 'fresh' ? 'bg-[#fa320a]/20 border-[#fa320a]/30' : 'bg-green-600/20 border-green-600/30'} text-white`}>
+                                        <Zap size={14} fill="currentColor" className={rtState === 'fresh' ? 'text-[#fa320a]' : 'text-green-500'} />
+                                        <span className="font-black">{displayItem.rtScore}</span>
+                                    </div>
                                 )}
                             </div>
-                            
-                            {/* Poster Floating Layer */}
-                            <div className="absolute inset-0 flex items-center justify-center p-8 z-10 pointer-events-auto">
-                                <div className="relative w-40 md:w-48 shadow-2xl rounded-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform duration-500">
-                                    {posterUrl ? (
-                                        <img src={posterUrl} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-64 bg-slate-800 flex items-center justify-center text-slate-500"><Film size={48} /></div>
-                                    )}
-                                    {trailerUrl && (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors cursor-pointer" onClick={() => setShowTrailer(true)}>
-                                            <div className="w-16 h-16 bg-red-600/90 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-red-500 hover:scale-110 transition-all backdrop-blur-sm">
-                                                <Play size={28} fill="currentColor" className="ml-1" />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                {/* RIGHT: DETAILS */}
-                <div className="flex-grow flex flex-col bg-slate-900 overflow-hidden relative z-10">
-                    
-                    {/* Header Area */}
-                    <div className="p-6 md:p-8 pb-0">
-                        <div className="flex flex-wrap gap-2 mb-3">
-                            {displayItem.type === MediaType.MOVIE ? (
-                                <span className="px-2 py-0.5 rounded-md bg-cyan-900/30 text-cyan-400 text-[10px] font-bold uppercase tracking-wider border border-cyan-900/50">Movie</span>
-                            ) : (
-                                <span className="px-2 py-0.5 rounded-md bg-purple-900/30 text-purple-400 text-[10px] font-bold uppercase tracking-wider border border-purple-900/50">Series</span>
-                            )}
-                            {displayItem.status && (
-                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                                    displayItem.status === WatchStatus.WATCHED ? 'bg-green-900/30 text-green-400 border-green-900/50' : 
-                                    displayItem.status === WatchStatus.WATCHING ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 
-                                    'bg-yellow-900/30 text-yellow-400 border-yellow-900/50'
-                                }`}>
-                                    {t(displayItem.status === WatchStatus.TO_WATCH ? 'planned' : displayItem.status === WatchStatus.WATCHING ? 'watching' : 'seen')}
-                                </span>
-                            )}
                         </div>
 
-                        <h2 className="text-2xl md:text-4xl font-black text-white leading-tight mb-3">
-                            {displayItem.title}
-                        </h2>
-                        
-                        {/* METADATA ROW WITH ICONS */}
-                        <div className="flex flex-wrap items-center gap-4 text-slate-400 text-sm font-medium mb-6">
-                            <span className="flex items-center gap-1"><Calendar size={14}/> {displayItem.year}</span>
-                            
-                            {displayItem.runtime && (
-                                <span className="flex items-center gap-1 text-slate-300">
-                                    <Clock size={14} /> {formatRuntime(displayItem.runtime)}
-                                </span>
-                            )}
-
-                            {/* TMDB Badge */}
-                            <div className="flex items-center gap-1.5 bg-[#0d253f] px-2 py-0.5 rounded border border-[#01b4e4]/30" title="TMDB Score">
-                                <span className="font-black text-[9px] text-[#01b4e4] tracking-tighter">TMDB</span>
-                                <span className="text-[10px] font-bold text-white">{displayItem.rating.toFixed(1)}</span>
-                            </div>
-
-                            {/* Rotten Tomatoes Badge */}
-                            {rtState && (
-                                <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded border ${rtState === 'fresh' ? 'bg-[#fa320a]/10 border-[#fa320a]/30' : 'bg-green-600/10 border-green-600/30'}`} title="Rotten Tomatoes">
-                                    <Zap size={10} className={rtState === 'fresh' ? 'text-[#fa320a] fill-[#fa320a]' : 'text-green-500 fill-green-500'} />
-                                    <span className={`text-[10px] font-bold ${rtState === 'fresh' ? 'text-red-200' : 'text-green-200'}`}>{displayItem.rtScore}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* ACTIONS ROW */}
-                        <div className="flex flex-wrap items-center gap-3 mb-6">
+                        <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-10">
                             {isExisting ? (
                                 <button 
-                                    onClick={() => {
-                                        if (onToggleFavorite && (initialItem as MediaItem).id) {
-                                            onToggleFavorite((initialItem as MediaItem).id);
-                                            setIsFav(!isFav);
-                                        }
-                                    }}
-                                    className={`p-3 rounded-xl border transition-all flex items-center gap-2 font-bold text-sm ${isFav ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700'}`}
+                                    onClick={() => onToggleFavorite && (initialItem as MediaItem).id && onToggleFavorite((initialItem as MediaItem).id)}
+                                    className={`px-8 py-4 rounded-2xl font-black transition-all flex items-center gap-3 border shadow-xl ${isFav ? 'bg-red-500/20 border-red-500/50 text-red-400' : 'bg-white/10 border-white/10 text-white hover:bg-white/20'}`}
                                 >
-                                    <Heart size={18} fill={isFav ? "currentColor" : "none"} />
-                                    {isFav ? 'Favorit' : 'Favorisieren'}
+                                    <Heart size={20} fill={isFav ? "currentColor" : "none"} /> {isFav ? 'Favorit' : 'Favorisieren'}
                                 </button>
                             ) : (
                                 <>
-                                    <button onClick={() => handleAddClick(WatchStatus.TO_WATCH)} className="bg-cyan-600 hover:bg-cyan-500 text-white px-5 py-3 rounded-xl font-bold text-sm shadow-lg shadow-cyan-900/20 transition-all flex items-center gap-2">
-                                        <Clock size={18} /> {t('watchlist')}
+                                    <button onClick={() => onAdd && onAdd(initialItem as SearchResult, WatchStatus.TO_WATCH, isFav)} className="px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-2xl shadow-2xl shadow-cyan-900/50 transition-all hover:scale-105 flex items-center gap-3">
+                                        <Clock size={20} /> {t('watchlist')}
                                     </button>
-                                    <button onClick={() => handleAddClick(WatchStatus.WATCHED)} className="bg-slate-700 hover:bg-slate-600 text-white px-5 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
-                                        <Check size={18} /> {t('seen')}
+                                    <button onClick={() => onAdd && onAdd(initialItem as SearchResult, WatchStatus.WATCHED, isFav)} className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-2xl shadow-xl transition-all hover:scale-105 flex items-center gap-3">
+                                        <Check size={20} /> {t('seen')}
                                     </button>
                                 </>
                             )}
-                            <button onClick={handleShare} className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-3 border border-slate-700 shadow-sm transition-colors text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wide cursor-pointer ml-auto sm:ml-0">
-                                {copied ? <Check size={16} className="text-green-400" /> : <Share2 size={16} className="text-cyan-400" />}
-                                {copied ? 'Kopiert' : t('share')}
+                            <button onClick={handleShare} className="p-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 transition-all">
+                                {copied ? <Check className="text-green-400" /> : <Share2 />}
                             </button>
-                        </div>
-
-                        {/* TABS NAVIGATION */}
-                        <div className="flex gap-6 border-b border-slate-800 mb-0">
-                            <button onClick={() => setActiveTab('overview')} className={`pb-3 text-sm font-bold uppercase tracking-wide transition-colors border-b-2 ${activeTab === 'overview' ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
-                                Überblick
-                            </button>
-                            {displayItem.credits && displayItem.credits.length > 0 && (
-                                <button onClick={() => setActiveTab('cast')} className={`pb-3 text-sm font-bold uppercase tracking-wide transition-colors border-b-2 ${activeTab === 'cast' ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
-                                    Besetzung
-                                </button>
-                            )}
-                            <button onClick={() => setActiveTab('watch')} className={`pb-3 text-sm font-bold uppercase tracking-wide transition-colors border-b-2 ${activeTab === 'watch' ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
-                                Stream
-                            </button>
-                            {publicReviews.length > 0 && (
-                                <button onClick={() => setActiveTab('reviews')} className={`pb-3 text-sm font-bold uppercase tracking-wide transition-colors border-b-2 ${activeTab === 'reviews' ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
-                                    Community
-                                </button>
-                            )}
                         </div>
                     </div>
+                </div>
 
-                    {/* SCROLLABLE CONTENT AREA */}
-                    <div className="overflow-y-auto p-6 md:p-8 custom-scrollbar flex-grow">
-                        
-                        {/* TAB: OVERVIEW */}
+                {/* TABS & DETAILS PANELS */}
+                <div className="w-full glass-panel rounded-[2rem] p-8 md:p-12 mb-20 animate-in slide-in-from-bottom-12 duration-700 delay-300">
+                    <div className="flex gap-8 border-b border-white/5 mb-8">
+                        {['overview', 'cast', 'watch', 'reviews'].map((tab) => (
+                            <button 
+                                key={tab} 
+                                onClick={() => setActiveTab(tab as any)}
+                                className={`pb-4 text-xs font-black uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === tab ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}
+                            >
+                                {t(tab)}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="min-h-[250px]">
                         {activeTab === 'overview' && (
-                            <div className="space-y-6 animate-in fade-in duration-300">
-                                <div>
-                                    <h3 className="text-slate-500 text-xs font-bold uppercase mb-2">{t('plot')}</h3>
-                                    <p className="text-slate-300 leading-relaxed text-base">{displayItem.plot}</p>
+                            <div className="space-y-8 animate-in fade-in duration-500">
+                                <p className="text-xl text-slate-200 leading-relaxed font-medium">{displayItem.plot}</p>
+                                <div className="bg-gradient-to-br from-purple-900/40 to-slate-900/40 p-6 rounded-3xl border border-purple-500/20 relative overflow-hidden">
+                                     <h3 className="text-purple-400 text-[10px] font-black uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        {/* Added missing Sparkles import below */}
+                                        {loadingAi ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />} {t('ai_insight')}
+                                     </h3>
+                                     <p className="text-purple-100 italic text-lg leading-relaxed">{aiAnalysis || "Analysiere Inhalt..."}</p>
                                 </div>
-
-                                {/* AI Insight */}
-                                <div className="bg-gradient-to-br from-purple-900/20 to-slate-800 rounded-xl p-5 border border-purple-500/20 relative overflow-hidden">
-                                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
-                                    <h3 className="text-purple-400 text-xs font-bold uppercase mb-2 flex items-center gap-2">
-                                        <Loader2 size={12} className={loadingAi ? "animate-spin" : "hidden"} />
-                                        {t('ai_insight')}
-                                    </h3>
-                                    <p className="text-purple-100/90 text-sm italic relative z-10 leading-relaxed">
-                                        {aiAnalysis || "Analysiere Filminhalt und Rezensionen..."}
-                                    </p>
-                                </div>
-
                                 {isExisting && (
-                                    <div className="space-y-3 pt-4 border-t border-slate-800">
-                                        <div className="flex justify-between items-end">
-                                            <label className="text-slate-500 text-xs font-bold uppercase">{t('public_review')}</label>
-                                            <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30">{t('review_public_badge')}</span>
-                                        </div>
+                                    <div className="space-y-4 pt-6 border-t border-white/5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('public_review')}</label>
                                         <textarea 
                                             value={notes} 
-                                            onChange={(e) => setNotes(e.target.value)}
+                                            onChange={e => setNotes(e.target.value)} 
                                             onBlur={handleSaveNotes}
                                             placeholder={t('review_placeholder')}
-                                            className="w-full bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-sm text-white focus:border-cyan-500 focus:outline-none min-h-[100px] resize-none"
+                                            className="w-full bg-black/40 border border-white/5 rounded-2xl p-6 text-white text-lg focus:border-cyan-500 transition-colors min-h-[150px] resize-none"
                                         />
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* TAB: CAST */}
-                        {activeTab === 'cast' && displayItem.credits && (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 animate-in fade-in duration-300">
-                                {displayItem.credits.map(actor => (
-                                    <div key={actor.id} className="flex items-center gap-3 bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
-                                        <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden flex-shrink-0">
-                                            {actor.profilePath ? (
-                                                <img src={`${IMAGE_BASE_URL}${actor.profilePath}`} className="w-full h-full object-cover" alt={actor.name} />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-slate-500"><User size={16}/></div>
-                                            )}
+                        {activeTab === 'cast' && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 animate-in fade-in duration-500">
+                                {displayItem.credits?.slice(0, 10).map(actor => (
+                                    <div key={actor.id} className="text-center group">
+                                        <div className="aspect-square rounded-2xl overflow-hidden mb-3 border-2 border-transparent group-hover:border-cyan-500 transition-all duration-300">
+                                            {actor.profilePath ? <img src={`${IMAGE_BASE_URL}${actor.profilePath}`} className="w-full h-full object-cover" alt=""/> : <div className="w-full h-full bg-slate-800 flex items-center justify-center"><User size={32} className="text-slate-600"/></div>}
                                         </div>
-                                        <div className="min-w-0">
-                                            <div className="text-xs font-bold text-white truncate">{actor.name}</div>
-                                            <div className="text-[10px] text-slate-400 truncate">{actor.character}</div>
-                                        </div>
+                                        <div className="text-sm font-bold text-white truncate">{actor.name}</div>
+                                        <div className="text-[10px] text-slate-500 uppercase tracking-wider truncate">{actor.character}</div>
                                     </div>
                                 ))}
                             </div>
                         )}
 
-                        {/* TAB: STREAM */}
                         {activeTab === 'watch' && (
-                            <div className="animate-in fade-in duration-300">
-                                {displayItem.providers && displayItem.providers.length > 0 ? (
-                                    <div className="space-y-4">
-                                        <h3 className="text-slate-500 text-xs font-bold uppercase">Streaming Flatrate</h3>
-                                        <div className="flex flex-wrap gap-4">
-                                            {displayItem.providers.map(p => (
-                                                <div key={p.providerId} className="flex flex-col items-center gap-2">
-                                                    <img 
-                                                        src={`${LOGO_BASE_URL}${p.logoPath}`} 
-                                                        alt={p.providerName}
-                                                        className="w-12 h-12 rounded-xl shadow-lg border border-white/10" 
-                                                    />
-                                                    <span className="text-[10px] text-slate-400 max-w-[60px] text-center leading-tight">{p.providerName}</span>
-                                                </div>
-                                            ))}
-                                        </div>
+                            <div className="flex flex-wrap gap-8 justify-center py-10 animate-in fade-in duration-500">
+                                {displayItem.providers?.length ? displayItem.providers.map(p => (
+                                    <div key={p.providerId} className="flex flex-col items-center gap-3">
+                                        <img src={`${LOGO_BASE_URL}${p.logoPath}`} className="w-20 h-20 rounded-2xl shadow-2xl border border-white/10" alt=""/>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{p.providerName}</span>
                                     </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center py-12 text-slate-500 bg-slate-800/30 rounded-xl border border-slate-800">
-                                        <MonitorPlay size={32} className="mb-2 opacity-50"/>
-                                        <p className="text-sm">Keine Streaming-Informationen verfügbar.</p>
-                                    </div>
-                                )}
+                                )) : <div className="text-slate-500 italic">Keine Streaming-Infos gefunden.</div>}
                             </div>
                         )}
 
-                        {/* TAB: REVIEWS */}
                         {activeTab === 'reviews' && (
-                            <div className="space-y-4 animate-in fade-in duration-300">
-                                {publicReviews.map((rev, idx) => (
-                                    <div key={idx} className="bg-slate-800/30 p-4 rounded-xl border border-slate-700/50 flex gap-4">
-                                        <div className="flex-shrink-0">
-                                            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
-                                                {rev.avatar ? <img src={rev.avatar} alt={rev.username} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center"><User size={16} className="text-slate-500"/></div>}
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                {publicReviews.length ? publicReviews.map((rev, i) => (
+                                    <div key={i} className="bg-white/5 p-6 rounded-3xl border border-white/5 flex gap-6">
+                                        <div className="w-12 h-12 rounded-full bg-slate-700 shrink-0 overflow-hidden">{rev.avatar ? <img src={rev.avatar} className="w-full h-full object-cover"/> : <User className="m-auto mt-3 text-slate-500"/>}</div>
+                                        <div>
+                                            <div className="flex items-center gap-4 mb-2">
+                                                <span className="font-black text-white">{rev.username}</span>
+                                                <div className="flex text-yellow-500"><Star size={12} fill="currentColor"/> <span className="text-xs font-bold ml-1">{rev.rating}</span></div>
                                             </div>
-                                        </div>
-                                        <div className="flex-grow min-w-0">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <div>
-                                                    <span className="text-sm font-bold text-white block leading-tight">{rev.username}</span>
-                                                    <span className="text-[10px] text-slate-500">{new Date(rev.date).toLocaleDateString()}</span>
-                                                </div>
-                                                {rev.rating > 0 && (
-                                                    <div className="flex items-center gap-1 text-yellow-500 text-xs font-bold bg-yellow-500/10 px-2 py-0.5 rounded-full">
-                                                        <Star size={10} fill="currentColor"/> {rev.rating}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-slate-300 leading-relaxed break-words">"{rev.content}"</p>
+                                            <p className="text-slate-300 italic">"{rev.content}"</p>
                                         </div>
                                     </div>
-                                ))}
+                                )) : <div className="text-slate-500 italic">Noch keine Community-Stimmen. Sei der Erste!</div>}
                             </div>
                         )}
                     </div>
                 </div>
-             </div>
+            </div>
+
+            {/* FULLSCREEN TRAILER OVERLAY (YOUTUBE LAYER) */}
+            {showTrailer && trailerUrl && (
+                <div className="fixed inset-0 z-[100] bg-black animate-in fade-in zoom-in-95 duration-500">
+                    <iframe src={trailerUrl} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Trailer" />
+                    <button onClick={() => setShowTrailer(false)} className="absolute top-8 left-8 p-4 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-3xl border border-white/20">
+                        <X size={32} />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
