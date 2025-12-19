@@ -26,19 +26,33 @@ import {
 import { getMediaDetails } from './services/tmdb';
 import { getOmdbRatings } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, User, UserRole, MediaType } from './types';
-import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, Plus, X, ChevronDown, BookOpen, Shield } from 'lucide-react';
+import { LogOut, Search, Settings, User as UserIcon, List, Heart, Clapperboard, Plus, X, ChevronDown, BookOpen, Shield, Share2 } from 'lucide-react';
 
-const ListRoute = ({ customLists, renderGrid }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode }) => {
+const ListRoute = ({ customLists, renderGrid, onShare }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode, onShare: (list: CustomList) => void }) => {
     const { id } = useParams();
+    const { user } = useAuth();
     const list = customLists.find(l => l.id === id);
     if (!list) return <div className="p-8 text-center text-slate-500">Liste nicht gefunden</div>;
+    
+    const isOwner = user?.id === list.ownerId;
+
     return (
         <div>
-            <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <List size={24} className="text-purple-400" /> {list.name}
-                </h2>
-                {list.description && <p className="text-slate-400">{list.description}</p>}
+            <div className="mb-6 flex justify-between items-start">
+                <div>
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                        <List size={24} className="text-purple-400" /> {list.name}
+                    </h2>
+                    {list.description && <p className="text-slate-400">{list.description}</p>}
+                </div>
+                {isOwner && (
+                    <button 
+                        onClick={() => onShare(list)}
+                        className="p-2 bg-white/5 hover:bg-white/10 text-cyan-400 rounded-lg border border-white/10 transition-colors flex items-center gap-2 text-sm font-bold"
+                    >
+                        <Share2 size={18} /> Gliedern/Teilen
+                    </button>
+                )}
             </div>
             {renderGrid(undefined, id)}
         </div>
@@ -56,6 +70,8 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isMobileListsOpen, setIsMobileListsOpen] = useState(false);
+  const [sharingList, setSharingList] = useState<CustomList | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -129,6 +145,25 @@ export default function App() {
           return prev.map(l => l.id === listId ? { ...l, items: newItems } : l);
       });
   }, []);
+
+  const handleCreateList = async (name: string) => {
+      if (!user) return;
+      const newList: CustomList = {
+          id: crypto.randomUUID(),
+          name,
+          ownerId: user.id,
+          createdAt: Date.now(),
+          items: [],
+          sharedWith: []
+      };
+      const saved = await createCustomList(newList, user.id);
+      if (saved) setCustomLists(prev => [...prev, saved]);
+  };
+
+  const handleShareList = async (listId: string, userIds: string[]) => {
+      await shareCustomList(listId, userIds);
+      setCustomLists(prev => prev.map(l => l.id === listId ? { ...l, sharedWith: userIds } : l));
+  };
 
   const handleAdd = async (result: SearchResult, status: WatchStatus = WatchStatus.TO_WATCH, isFav: boolean = false) => {
     if (!user) return;
@@ -245,7 +280,7 @@ export default function App() {
                     <Route path="/" element={<div><div className="mb-6"><h2 className="text-2xl font-bold text-white">{t('collection')}</h2><p className="text-slate-400">{t('collection_sub')}</p></div>{renderGrid()}</div>} />
                     <Route path="/watchlist" element={<div><div className="mb-6"><h2 className="text-2xl font-bold text-white">{t('watchlist')}</h2></div>{renderGrid(WatchStatus.TO_WATCH)}</div>} />
                     <Route path="/favorites" element={<div><div className="mb-6"><h2 className="text-2xl font-bold text-white">{t('favorites')}</h2></div>{renderGrid()}</div>} />
-                    <Route path="/list/:id" element={<ListRoute customLists={customLists} renderGrid={renderGrid} />} />
+                    <Route path="/list/:id" element={<ListRoute customLists={customLists} renderGrid={renderGrid} onShare={setSharingList} />} />
                     <Route path="/profile" element={<ProfilePage items={items.filter(i => i.userId === user.id)} />} />
                     <Route path="/users" element={<UserManagementPage />} />
                     <Route path="/guide" element={<GuidePage />} />
@@ -253,9 +288,34 @@ export default function App() {
             </main>
         </div>
 
+        <AiRecommendationButton items={items.filter(i => i.userId === user.id)} onAdd={handleAdd} apiKey={tmdbKey} />
         <ChatBot items={items.filter(i => i.userId === user.id)} />
         <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} onUpdateApiKey={(key) => { localStorage.setItem('tmdb_api_key', key); setTmdbKey(key); }} />
         <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} tmdbKey={tmdbKey} omdbKey={omdbKey} onSave={handleSaveSettings} />
+        <CreateListModal isOpen={isCreateListOpen} onClose={() => setIsCreateListOpen(false)} onCreate={handleCreateList} />
+        
+        {sharingList && (
+            <ShareModal isOpen={true} onClose={() => setSharingList(null)} list={sharingList} onShare={handleShareList} />
+        )}
+
+        {isMobileListsOpen && (
+            <div className="fixed inset-0 z-[110] bg-[#0B0E14] p-6 animate-in slide-in-from-bottom duration-300 overflow-y-auto">
+                <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-2xl font-bold text-white">Meine Listen</h2>
+                    <button onClick={() => setIsMobileListsOpen(false)} className="p-2 text-slate-400"><X size={24} /></button>
+                </div>
+                <div className="space-y-4">
+                    <button onClick={() => { navigate('/'); setIsMobileListsOpen(false); }} className="w-full text-left p-4 bg-white/5 rounded-xl text-white font-bold border border-white/10">Alle Filme</button>
+                    {myLists.map(l => (
+                        <button key={l.id} onClick={() => { navigate(`/list/${l.id}`); setIsMobileListsOpen(false); }} className="w-full text-left p-4 bg-white/5 rounded-xl text-white font-bold border border-white/10">{l.name}</button>
+                    ))}
+                    {sharedLists.map(l => (
+                        <button key={l.id} onClick={() => { navigate(`/list/${l.id}`); setIsMobileListsOpen(false); }} className="w-full text-left p-4 bg-white/5 rounded-xl text-purple-300 font-bold border border-purple-500/20">{l.name} (Geteilt)</button>
+                    ))}
+                    <button onClick={() => { setIsCreateListOpen(true); setIsMobileListsOpen(false); }} className="w-full p-4 bg-cyan-600/20 text-cyan-400 rounded-xl font-bold border border-cyan-500/30 flex items-center justify-center gap-2"><Plus size={18}/> Neue Liste erstellen</button>
+                </div>
+            </div>
+        )}
         
         {selectedItem && (
             <DetailView 
@@ -269,7 +329,7 @@ export default function App() {
             />
         )}
         
-        <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsSearchOpen(true)} />
+        <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsMobileListsOpen(true)} />
     </div>
   );
 }
