@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -91,14 +90,27 @@ export const UserManagementPage: React.FC = () => {
         }
     };
 
-    const formatDate = (timestamp?: number, includeTime = true) => {
-        if (!timestamp) return 'Nie';
-        return new Intl.DateTimeFormat('de-DE', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            ...(includeTime ? { hour: '2-digit', minute: '2-digit' } : {})
-        }).format(new Date(timestamp));
+    /**
+     * @Sicherheitshinweis: Diese Funktion ist jetzt "defensiv" programmiert.
+     * Selbst wenn 'createdAt' kein gültiger Timestamp ist, stürzt die App nicht ab.
+     */
+    const formatDate = (timestamp?: any, includeTime = true) => {
+        if (!timestamp) return 'Unbekannt';
+        
+        try {
+            const date = new Date(timestamp);
+            // Check ob das Datum valide ist
+            if (isNaN(date.getTime())) return 'Ungültiges Datum';
+
+            return new Intl.DateTimeFormat('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                ...(includeTime ? { hour: '2-digit', minute: '2-digit' } : {})
+            }).format(date);
+        } catch (e) {
+            return 'Format Fehler';
+        }
     };
 
     const filteredUsers = users.filter(u => 
@@ -152,9 +164,21 @@ export const UserManagementPage: React.FC = () => {
                                 <tr>
                                     <th className="p-4 pl-6">Benutzer</th>
                                     <th className="p-4">Rolle</th>
-                                    <th className="p-4"><div className="flex items-center gap-1 text-emerald-400"><Calendar size={12}/> Registriert</div></th>
-                                    <th className="p-4"><div className="flex items-center gap-1 text-cyan-400"><Hash size={12}/> Logins</div></th>
-                                    <th className="p-4"><div className="flex items-center gap-1 text-cyan-400"><Clock size={12}/> Letzter Login</div></th>
+                                    <th className="p-4">
+                                        <div className="flex items-center gap-1 text-emerald-400">
+                                            <Calendar size={12}/> Registriert
+                                        </div>
+                                    </th>
+                                    <th className="p-4">
+                                        <div className="flex items-center gap-1 text-cyan-400">
+                                            <Hash size={12}/> Logins
+                                        </div>
+                                    </th>
+                                    <th className="p-4">
+                                        <div className="flex items-center gap-1 text-cyan-400">
+                                            <Clock size={12}/> Letzter Login
+                                        </div>
+                                    </th>
                                     <th className="p-4 text-right pr-6">Aktionen</th>
                                 </tr>
                             </thead>
@@ -195,6 +219,7 @@ export const UserManagementPage: React.FC = () => {
                                         </td>
                                         <td className="p-4">
                                             <div className="text-xs text-slate-400 font-medium">
+                                                {/* CRITICAL: u.createdAt muss ein Timestamp (Number) sein */}
                                                 {formatDate(u.createdAt, false)}
                                             </div>
                                         </td>
