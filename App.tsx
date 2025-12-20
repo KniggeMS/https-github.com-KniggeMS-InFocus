@@ -17,7 +17,7 @@ import { AiRecommendationButton } from './components/AiRecommendationButton';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes,
-  fetchCustomLists, updateCustomListItems
+  fetchCustomLists, updateCustomListItems, createCustomList // HIER IMPORTIERT
 } from './services/db';
 import { getMediaDetails, getEffectiveApiKey as getTmdbKey } from './services/tmdb';
 import { getOmdbRatings, getEffectiveOmdbKey } from './services/omdb';
@@ -84,9 +84,8 @@ export default function App() {
   const handleCreateList = async (name: string) => {
     if (!user) return;
     
-    const listId = crypto.randomUUID();
-    const newList: CustomList = {
-        id: listId,
+    const newListTemplate: CustomList = {
+        id: crypto.randomUUID(),
         ownerId: user.id,
         name: name,
         items: [],
@@ -94,18 +93,23 @@ export default function App() {
         createdAt: Date.now()
     };
     
-    // UI sofort aktualisieren (optimistisch)
-    setCustomLists(prev => [...prev, newList]);
+    // Optimistisches UI Update
+    setCustomLists(prev => [...prev, newListTemplate]);
     
     try {
-      // Speicherung triggern (Sicherstellen, dass db.ts die Liste hier persistent macht)
-      await updateCustomListItems(listId, []);
-      setIsCreateModalOpen(false);
-      await loadData(); 
+      // RICHTIGE FUNKTION: createCustomList statt update
+      const savedList = await createCustomList(newListTemplate, user.id);
+      
+      if (savedList) {
+          setIsCreateModalOpen(false);
+          await loadData(); 
+      } else {
+          throw new Error("Speichern fehlgeschlagen");
+      }
     } catch (e) {
-      console.error("Fehler beim Initialisieren der Liste:", e);
-      // Rollback bei Fehler
-      setCustomLists(prev => prev.filter(l => l.id !== listId));
+      console.error("Fehler beim Erstellen der Liste:", e);
+      setCustomLists(prev => prev.filter(l => l.id !== newListTemplate.id));
+      alert("Fehler beim Speichern der Liste.");
     }
   };
   
