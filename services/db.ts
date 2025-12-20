@@ -172,28 +172,34 @@ export const fetchCustomLists = async (): Promise<CustomList[]> => {
   }));
 };
 
-export const createCustomList = async (list: CustomList, userId: string): Promise<CustomList | null> => {
+/**
+ * KORREKTUR: Wir lassen die ID weg, damit Supabase sie generiert.
+ * Wir senden nur die absolut notwendigen Felder.
+ */
+export const createCustomList = async (name: string, userId: string): Promise<CustomList | null> => {
   const dbList = {
-    id: list.id, // Wir übergeben die generierte UUID
     owner_id: userId,
-    name: list.name,
-    description: list.description || '',
-    created_at: new Date(list.createdAt).toISOString(),
+    name: name,
     items: [],
     shared_with: []
   };
 
-  const { data, error } = await supabase.from('custom_lists').insert([dbList]).select().single();
+  const { data, error } = await supabase
+    .from('custom_lists')
+    .insert([dbList])
+    .select()
+    .single();
+
   if (error) {
-      console.error("DB Error creating list:", error);
-      return null;
+    console.error("DB Error creating list:", error);
+    return null;
   }
   
   return {
       id: data.id,
-      name: data.name,
       ownerId: data.owner_id,
-      createdAt: new Date(data.created_at).getTime(),
+      name: data.name,
+      createdAt: data.created_at,
       items: data.items || [],
       sharedWith: data.shared_with || []
   };
