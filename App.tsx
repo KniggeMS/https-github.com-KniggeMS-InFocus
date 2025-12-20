@@ -17,14 +17,13 @@ import { AiRecommendationButton } from './components/AiRecommendationButton';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes,
-  fetchCustomLists, updateCustomListItems
+  fetchCustomLists, updateCustomListItems, saveCustomList
 } from './services/db';
 import { getMediaDetails, getEffectiveApiKey as getTmdbKey } from './services/tmdb';
 import { getOmdbRatings, getEffectiveOmdbKey } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, UserRole, MediaType } from './types';
 import { Search, User as UserIcon, List, Clapperboard, Plus, Share2, LogOut } from 'lucide-react';
 
-// Route für die einzelnen Listen
 const ListRoute = ({ customLists, renderGrid, onShare }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode, onShare: (list: CustomList) => void }) => {
     const { id } = useParams();
     const { user } = useAuth();
@@ -88,9 +87,11 @@ export default function App() {
         sharedWith: [],
         createdAt: Date.now()
     };
-    // Hinweis: Hier wird die Liste lokal geupdated, db-Service sollte im Hintergrund speichern
+    
+    // Sofortige UI-Aktualisierung
     setCustomLists(prev => [...prev, newList]);
-    loadData(); // Sync mit DB
+    // Hintergrund-Speicherung
+    try { await saveCustomList(newList); } catch (e) { console.error("Fehler beim Speichern der Liste:", e); }
   };
   
   const handleUpdateStatus = useCallback(async (id: string, status: WatchStatus) => {
@@ -168,7 +169,7 @@ export default function App() {
 
         <div className="max-w-[1600px] mx-auto flex relative z-10">
             <aside className="hidden md:flex w-64 flex-col sticky top-16 h-[calc(100vh-64px)] border-r border-white/5 bg-[#0B0E14]/40 backdrop-blur-md overflow-y-auto shrink-0">
-                <div className="pl-6 pr-4 py-8"> {/* Padding Fix: pl-6 sorgt für Abstand links */}
+                <div className="pl-6 pr-4 py-8">
                     <button onClick={() => setIsSearchOpen(true)} className="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-3 rounded-xl font-bold transition-all mb-8 shadow-lg shadow-cyan-900/20">
                         <Plus size={20} /> {t('add_button')}
                     </button>
@@ -176,12 +177,11 @@ export default function App() {
                     <div className="mb-6">
                         <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">{t('my_lists')}</h3>
                         
-                        {/* WIEDERHERGESTELLTER BUTTON ZUM ANLEGEN VON LISTEN */}
                         <button 
                             onClick={() => setIsCreateModalOpen(true)}
                             className="w-full flex items-center gap-2 px-3 py-2 text-cyan-400 hover:bg-cyan-400/10 rounded-lg transition-all text-sm mb-4 font-bold"
                         >
-                            <Plus size={16} /> Neue Liste
+                            <Plus size={16} /> {t('create_list')}
                         </button>
 
                         <div className="space-y-1">
@@ -189,6 +189,18 @@ export default function App() {
                                 <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
                             ))}
                         </div>
+
+                        {/* SEKTION FÜR GETEILTE LISTEN */}
+                        {customLists.some(l => l.sharedWith?.includes(user.id)) && (
+                          <>
+                            <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mt-8 mb-4 tracking-widest">Geteilt mit mir</h3>
+                            <div className="space-y-1">
+                                {customLists.filter(l => l.sharedWith?.includes(user.id)).map(l => (
+                                    <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
+                                ))}
+                            </div>
+                          </>
+                        )}
                     </div>
                 </div>
                 <AiRecommendationButton items={displayedItems} onAdd={handleAdd} apiKey={tmdbKey} />
