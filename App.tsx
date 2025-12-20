@@ -17,7 +17,7 @@ import { AiRecommendationButton } from './components/AiRecommendationButton';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes,
-  fetchCustomLists, updateCustomListItems, saveCustomList
+  fetchCustomLists, updateCustomListItems
 } from './services/db';
 import { getMediaDetails, getEffectiveApiKey as getTmdbKey } from './services/tmdb';
 import { getOmdbRatings, getEffectiveOmdbKey } from './services/omdb';
@@ -73,8 +73,8 @@ export default function App() {
 
   const loadData = async () => {
     const [fetchedItems, fetchedLists] = await Promise.all([ fetchMediaItems(), fetchCustomLists() ]);
-    setItems(fetchedItems);
-    setCustomLists(fetchedLists);
+    setItems(fetchedItems || []);
+    setCustomLists(fetchedLists || []);
   };
 
   const handleCreateList = async (name: string) => {
@@ -88,10 +88,9 @@ export default function App() {
         createdAt: Date.now()
     };
     
-    // Sofortige UI-Aktualisierung
     setCustomLists(prev => [...prev, newList]);
-    // Hintergrund-Speicherung
-    try { await saveCustomList(newList); } catch (e) { console.error("Fehler beim Speichern der Liste:", e); }
+    // FIX: Wir nutzen hier die existierende update-Funktion, um die Liste zu initialisieren
+    try { await updateCustomListItems(newList.id, []); } catch (e) { console.error(e); }
   };
   
   const handleUpdateStatus = useCallback(async (id: string, status: WatchStatus) => {
@@ -185,17 +184,17 @@ export default function App() {
                         </button>
 
                         <div className="space-y-1">
-                            {customLists.filter(l => l.ownerId === user.id).map(l => (
+                            {(customLists || []).filter(l => l.ownerId === user.id).map(l => (
                                 <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
                             ))}
                         </div>
 
                         {/* SEKTION FÜR GETEILTE LISTEN */}
-                        {customLists.some(l => l.sharedWith?.includes(user.id)) && (
+                        {(customLists || []).some(l => l.sharedWith?.includes(user.id)) && (
                           <>
                             <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mt-8 mb-4 tracking-widest">Geteilt mit mir</h3>
                             <div className="space-y-1">
-                                {customLists.filter(l => l.sharedWith?.includes(user.id)).map(l => (
+                                {(customLists || []).filter(l => l.sharedWith?.includes(user.id)).map(l => (
                                     <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
                                 ))}
                             </div>
