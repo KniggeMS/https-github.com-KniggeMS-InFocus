@@ -12,6 +12,7 @@ import { ProfilePage } from './components/ProfilePage';
 import { UserManagementPage } from './components/UserManagementPage';
 import { GuidePage } from './components/GuidePage';
 import { ChatBot } from './components/ChatBot';
+import { CreateListModal } from './components/CreateListModal';
 import { AiRecommendationButton } from './components/AiRecommendationButton';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
@@ -21,15 +22,17 @@ import {
 import { getMediaDetails, getEffectiveApiKey as getTmdbKey } from './services/tmdb';
 import { getOmdbRatings, getEffectiveOmdbKey } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, UserRole, MediaType } from './types';
-// KORREKTUR: Import von lucide-react statt lucide-center
 import { Search, User as UserIcon, List, Clapperboard, Plus, Share2, LogOut } from 'lucide-react';
 
+// Route für die einzelnen Listen
 const ListRoute = ({ customLists, renderGrid, onShare }: { customLists: CustomList[], renderGrid: (s?: WatchStatus, l?: string) => React.ReactNode, onShare: (list: CustomList) => void }) => {
     const { id } = useParams();
     const { user } = useAuth();
+    const { t } = useTranslation();
     const list = customLists.find(l => l.id === id);
     if (!list) return <div className="p-8 text-center text-slate-500">Liste nicht gefunden</div>;
     const isOwner = user?.id === list.ownerId;
+    
     return (
         <div>
             <div className="mb-6 flex justify-between items-start">
@@ -40,7 +43,9 @@ const ListRoute = ({ customLists, renderGrid, onShare }: { customLists: CustomLi
                     {list.description && <p className="text-slate-400">{list.description}</p>}
                 </div>
                 {isOwner && (
-                    <button onClick={() => onShare(list)} className="p-2 bg-white/5 hover:bg-white/10 text-cyan-400 rounded-lg border border-white/10 transition-colors flex items-center gap-2 text-sm font-bold"><Share2 size={18} /> Gliedern/Teilen</button>
+                    <button onClick={() => onShare(list)} className="p-2 bg-white/5 hover:bg-white/10 text-cyan-400 rounded-lg border border-white/10 transition-colors flex items-center gap-2 text-sm font-bold">
+                        <Share2 size={18} /> {t('share')}
+                    </button>
                 )}
             </div>
             {renderGrid(undefined, id)}
@@ -53,14 +58,15 @@ export default function App() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  
   const [items, setItems] = useState<MediaItem[]>([]);
   const [customLists, setCustomLists] = useState<CustomList[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   
-  // RFC-027: Hybrides Key-System
   const tmdbKey = getTmdbKey(localStorage.getItem('tmdb_api_key') || '');
   const omdbKey = getEffectiveOmdbKey(localStorage.getItem('omdb_api_key') || '');
 
@@ -70,6 +76,21 @@ export default function App() {
     const [fetchedItems, fetchedLists] = await Promise.all([ fetchMediaItems(), fetchCustomLists() ]);
     setItems(fetchedItems);
     setCustomLists(fetchedLists);
+  };
+
+  const handleCreateList = async (name: string) => {
+    if (!user) return;
+    const newList: CustomList = {
+        id: crypto.randomUUID(),
+        ownerId: user.id,
+        name: name,
+        items: [],
+        sharedWith: [],
+        createdAt: Date.now()
+    };
+    // Hinweis: Hier wird die Liste lokal geupdated, db-Service sollte im Hintergrund speichern
+    setCustomLists(prev => [...prev, newList]);
+    loadData(); // Sync mit DB
   };
   
   const handleUpdateStatus = useCallback(async (id: string, status: WatchStatus) => {
@@ -111,7 +132,6 @@ export default function App() {
 
   const displayedItems = items.filter(i => i.userId === user.id);
 
-  // KORREKTUR: renderGrid nutzt jetzt listId statt id
   const renderGrid = (statusFilter?: WatchStatus, listId?: string) => {
       let filtered = displayedItems;
       if (listId) { 
@@ -148,10 +168,22 @@ export default function App() {
 
         <div className="max-w-[1600px] mx-auto flex relative z-10">
             <aside className="hidden md:flex w-64 flex-col sticky top-16 h-[calc(100vh-64px)] border-r border-white/5 bg-[#0B0E14]/40 backdrop-blur-md overflow-y-auto shrink-0">
-                <div className="p-4">
-                    <button onClick={() => setIsSearchOpen(true)} className="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-3 rounded-xl font-bold transition-all mb-6 shadow-lg shadow-cyan-900/20"><Plus size={20} /> {t('add_button')}</button>
+                <div className="pl-6 pr-4 py-8"> {/* Padding Fix: pl-6 sorgt für Abstand links */}
+                    <button onClick={() => setIsSearchOpen(true)} className="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-3 rounded-xl font-bold transition-all mb-8 shadow-lg shadow-cyan-900/20">
+                        <Plus size={20} /> {t('add_button')}
+                    </button>
+                    
                     <div className="mb-6">
-                        <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mb-2 tracking-widest">{t('my_lists')}</h3>
+                        <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">{t('my_lists')}</h3>
+                        
+                        {/* WIEDERHERGESTELLTER BUTTON ZUM ANLEGEN VON LISTEN */}
+                        <button 
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-cyan-400 hover:bg-cyan-400/10 rounded-lg transition-all text-sm mb-4 font-bold"
+                        >
+                            <Plus size={16} /> Neue Liste
+                        </button>
+
                         <div className="space-y-1">
                             {customLists.filter(l => l.ownerId === user.id).map(l => (
                                 <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
@@ -159,7 +191,6 @@ export default function App() {
                         </div>
                     </div>
                 </div>
-                {/* RFC-021: AI Button Restoration */}
                 <AiRecommendationButton items={displayedItems} onAdd={handleAdd} apiKey={tmdbKey} />
             </aside>
 
@@ -178,6 +209,7 @@ export default function App() {
 
         <ChatBot items={displayedItems} />
         <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} onUpdateApiKey={(key) => { localStorage.setItem('tmdb_api_key', key); }} />
+        <CreateListModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onCreate={handleCreateList} />
         <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => {}} />
         {selectedItem && <DetailView item={selectedItem} isExisting={true} onClose={() => setSelectedItem(null)} apiKey={tmdbKey} onUpdateStatus={handleUpdateStatus} onToggleFavorite={handleToggleFavorite} />}
     </div>
