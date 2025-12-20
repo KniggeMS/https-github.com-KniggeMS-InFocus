@@ -45,16 +45,16 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       rollupOptions: {
         output: {
-          // Splitting large libraries into separate chunks for better caching and smaller main file
+          // KORREKTUR: Der Chunk-Name muss zum Paket in der package.json passen
           manualChunks: {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             'vendor-ui': ['lucide-react', 'recharts'],
-            'vendor-ai': ['@google/genai'],
+            'vendor-ai': ['@google/generative-ai'],
             'vendor-db': ['@supabase/supabase-js']
           }
         }
       },
-      chunkSizeWarningLimit: 1000 // Slightly increased limit as we now use clean chunks
+      chunkSizeWarningLimit: 1000 
     },
     server: {
       host: '0.0.0.0',
