@@ -17,7 +17,7 @@ import { AiRecommendationButton } from './components/AiRecommendationButton';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes,
-  fetchCustomLists, updateCustomListItems
+  fetchCustomLists, updateCustomListItems, saveCustomList
 } from './services/db';
 import { getMediaDetails, getEffectiveApiKey as getTmdbKey } from './services/tmdb';
 import { getOmdbRatings, getEffectiveOmdbKey } from './services/omdb';
@@ -72,13 +72,18 @@ export default function App() {
   useEffect(() => { if (user) loadData(); }, [user]);
 
   const loadData = async () => {
-    const [fetchedItems, fetchedLists] = await Promise.all([ fetchMediaItems(), fetchCustomLists() ]);
-    setItems(fetchedItems || []);
-    setCustomLists(fetchedLists || []);
+    try {
+      const [fetchedItems, fetchedLists] = await Promise.all([ fetchMediaItems(), fetchCustomLists() ]);
+      setItems(fetchedItems || []);
+      setCustomLists(fetchedLists || []);
+    } catch (error) {
+      console.error("Fehler beim Laden der Daten:", error);
+    }
   };
 
   const handleCreateList = async (name: string) => {
     if (!user) return;
+    
     const newList: CustomList = {
         id: crypto.randomUUID(),
         ownerId: user.id,
@@ -88,9 +93,19 @@ export default function App() {
         createdAt: Date.now()
     };
     
+    // 1. Lokalen State SOFORT aktualisieren
     setCustomLists(prev => [...prev, newList]);
-    // FIX: Wir nutzen hier die existierende update-Funktion, um die Liste zu initialisieren
-    try { await updateCustomListItems(newList.id, []); } catch (e) { console.error(e); }
+    
+    // 2. In Datenbank speichern und erst danach neu laden zur Verifizierung
+    try {
+      await saveCustomList(newList);
+      await loadData(); 
+    } catch (e) {
+      console.error("Fehler beim permanenten Speichern der Liste:", e);
+      // Fallback: Wenn DB fehlschlägt, aus lokalem State wieder entfernen
+      setCustomLists(prev => prev.filter(l => l.id !== newList.id));
+      alert("Fehler beim Speichern der Liste. Bitte erneut versuchen.");
+    }
   };
   
   const handleUpdateStatus = useCallback(async (id: string, status: WatchStatus) => {
@@ -142,7 +157,7 @@ export default function App() {
       else if (location.pathname === '/favorites') filtered = filtered.filter(i => i.isFavorite);
       filtered.sort((a, b) => b.addedAt - a.addedAt);
       if (filtered.length === 0) return <div className="flex flex-col items-center justify-center py-20 text-slate-500"><Clapperboard size={48} className="mb-4 opacity-20" /><p>{t('empty_state')}</p></div>;
-      return <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 relative z-10">{filtered.map(item => <MediaCard key={item.id} item={item} onStatusChange={handleUpdateStatus} onDelete={handleDelete} onToggleFavorite={handleToggleFavorite} onRate={() => {}} onClick={setSelectedItem} customLists={customLists.filter(l => l.ownerId === user.id)} onAddToList={(lid, iid) => { updateCustomListItems(lid, [...(customLists.find(cl => cl.id === lid)?.items || []), iid]); loadData(); }} />)}</div>;
+      return <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 relative z-10">{filtered.map(item => <MediaCard key={item.id} item={item} onStatusChange={handleUpdateStatus} onDelete={handleDelete} onToggleFavorite={handleToggleFavorite} onRate={() => {}} onClick={setSelectedItem} customLists={customLists.filter(l => l.ownerId === user.id)} onAddToList={async (lid, iid) => { const list = customLists.find(cl => cl.id === lid); if (list) { const newItems = [...list.items, iid]; await updateCustomListItems(lid, newItems); loadData(); } }} />)}</div>;
   };
 
   return (
@@ -184,17 +199,16 @@ export default function App() {
                         </button>
 
                         <div className="space-y-1">
-                            {(customLists || []).filter(l => l.ownerId === user.id).map(l => (
+                            {customLists.filter(l => l.ownerId === user.id).map(l => (
                                 <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
                             ))}
                         </div>
 
-                        {/* SEKTION FÜR GETEILTE LISTEN */}
-                        {(customLists || []).some(l => l.sharedWith?.includes(user.id)) && (
+                        {customLists.some(l => l.sharedWith?.includes(user.id)) && (
                           <>
                             <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mt-8 mb-4 tracking-widest">Geteilt mit mir</h3>
                             <div className="space-y-1">
-                                {(customLists || []).filter(l => l.sharedWith?.includes(user.id)).map(l => (
+                                {customLists.filter(l => l.sharedWith?.includes(user.id)).map(l => (
                                     <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
                                 ))}
                             </div>
