@@ -83,16 +83,15 @@ export default function App() {
     if (!user || !name.trim()) return;
     
     try {
-      // Nutzt die neue createCustomList Funktion aus db.ts
+      // KORREKTUR: Übergibt nur den 'name' (string) wie in db.ts gefordert
       const savedList = await createCustomList(name, user.id);
       if (savedList) {
         setCustomLists(prev => [...prev, savedList]);
         setIsCreateModalOpen(false);
-        // Navigiere optional direkt zur neuen Liste
         navigate(`/list/${savedList.id}`);
       }
     } catch (e) {
-      console.error("Fehler beim Erstellen der Liste:", e);
+      console.error("Fehler beim Erstellen:", e);
     }
   };
   
