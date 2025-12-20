@@ -1,4 +1,3 @@
-
 export enum WatchStatus {
   TO_WATCH = 'TO_WATCH',
   WATCHING = 'WATCHING',
@@ -29,13 +28,12 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  avatar?: string; // Base64 or URL
+  avatar?: string;
   firstName?: string;
   lastName?: string;
   createdAt: number;
-  role: UserRole; // RBAC
-  isStatsPublic: boolean; // Privacy Setting
-  // NEW: Login Tracking
+  role: UserRole;
+  isStatsPublic: boolean;
   loginCount?: number;
   lastLoginAt?: number;
 }
@@ -55,42 +53,37 @@ export interface CastMember {
 
 export interface MediaItem {
   id: string;
-  userId?: string; // Owner ID for separation
+  userId?: string;
   tmdbId?: number;
-  imdbId?: string; // Link to IMDb
+  imdbId?: string;
   title: string;
   originalTitle?: string;
   year: number;
   type: MediaType;
   genre: string[];
   plot: string;
-  rating: number; // 0-10
-  rtScore?: string; // Rotten Tomatoes Score (e.g. "85%")
-  posterColor?: string; // Fallback
+  rating: number;
+  rtScore?: string;
+  posterColor?: string;
   posterPath?: string | null;
   backdropPath?: string | null;
   status: WatchStatus;
   addedAt: number;
-  
-  // Extended Details
   seasons?: number;
   episodes?: number;
-  runtime?: number; // Minutes
-  certification?: string; // FSK e.g. "16"
-  trailerKey?: string; // YouTube ID
-  collectionName?: string; // Für Filme (z.B. "Avengers Collection")
-  collectionParts?: string[]; // Liste der anderen Teile
-  providers?: StreamingProvider[]; // Streaming Anbieter (Flatrate & Free)
-  creators?: string[]; // Created by names
-  credits?: CastMember[]; // Actors
-  
-  // User Interactions
+  runtime?: number;
+  certification?: string;
+  trailerKey?: string;
+  collectionName?: string;
+  collectionParts?: string[];
+  providers?: StreamingProvider[];
+  creators?: string[];
+  credits?: CastMember[];
   isFavorite?: boolean;
-  userRating?: number; // 1-5 User Rating
-  userNotes?: string; // Jetzt: Öffentliche Rezension
+  userRating?: number;
+  userNotes?: string;
 }
 
-// New: For displaying reviews from others
 export interface PublicReview {
     userId: string;
     username: string;
@@ -106,15 +99,15 @@ export interface CustomList {
   ownerId: string;
   description?: string;
   createdAt: number;
-  items: string[]; // Array of MediaItem IDs
-  sharedWith: string[]; // Array of User IDs
+  items: string[];
+  sharedWith: string[];
 }
 
 export interface SearchResult {
   tmdbId?: number;
-  imdbId?: string; // Support for OMDb matches
+  imdbId?: string;
   title: string;
-  originalTitle?: string; // Added: For mapping to MediaItem
+  originalTitle?: string;
   year: number;
   type: MediaType;
   genre: string[];
@@ -122,14 +115,8 @@ export interface SearchResult {
   rating: number;
   posterPath?: string | null;
   backdropPath?: string | null;
-  // Temporary fields for Import logic
   customNotes?: string;
   providers?: StreamingProvider[];
-}
-
-export interface GenreStat {
-  name: string;
-  value: number;
 }
 
 export interface ChatMessage {
@@ -139,13 +126,11 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-// --- GAMIFICATION TYPES ---
-
 export interface Achievement {
   id: string;
-  icon: string; // Lucide icon name or emoji
+  icon: string;
   unlocked: boolean;
-  progress: number; // 0-100
+  progress: number;
   currentValue: number;
   targetValue: number;
 }
@@ -155,7 +140,7 @@ export interface UserLevel {
   title: string;
   xp: number;
   nextLevelXp: number;
-  progress: number; // 0-100 for current level
+  progress: number;
 }
 
 export interface UserStats {
@@ -164,5 +149,5 @@ export interface UserStats {
   seriesWatched: number;
   totalRatings: number;
   favoritesCount: number;
-  writtenReviews: number; // New stat
+  writtenReviews: number;
 }

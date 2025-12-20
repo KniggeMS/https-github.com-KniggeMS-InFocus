@@ -1,8 +1,12 @@
 {
   "name": "InFocus CineLog",
-  "version": "2.0.0",
-  "description": "Die ultimative AI-Watchlist. Finaler stabiler Zustand mit Vision-Suche, Deep Content Analysis und optimiertem Mobile-Design.",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "version": "2.2.0",
+  "description": "Intelligenter Medien-Verwaltungsdienst mit AI-Analyse und Stitch-Design-System.",
+  "author": "KniggeMS",
+  "status": "Frozen Baseline",
+  "requirements": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "requestFramePermissions": []
 }
