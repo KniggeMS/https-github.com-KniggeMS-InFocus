@@ -91,17 +91,13 @@ export const UserManagementPage: React.FC = () => {
     };
 
     /**
-     * @Sicherheitshinweis: Diese Funktion ist jetzt "defensiv" programmiert.
-     * Selbst wenn 'createdAt' kein gültiger Timestamp ist, stürzt die App nicht ab.
+     * @Sicherheitshinweis: Defensives Formatieren für Zeitstempel.
      */
     const formatDate = (timestamp?: any, includeTime = true) => {
         if (!timestamp) return 'Unbekannt';
-        
         try {
             const date = new Date(timestamp);
-            // Check ob das Datum valide ist
             if (isNaN(date.getTime())) return 'Ungültiges Datum';
-
             return new Intl.DateTimeFormat('de-DE', {
                 day: '2-digit',
                 month: '2-digit',
@@ -158,27 +154,17 @@ export const UserManagementPage: React.FC = () => {
                 {loading ? (
                     <div className="p-10 flex justify-center"><Loader2 size={32} className="animate-spin text-cyan-500"/></div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
+                    /* RESPONSIVE FIX: overflow-x-auto erlaubt das Wischen auf dem Handy */
+                    <div className="overflow-x-auto w-full custom-scrollbar">
+                        {/* min-w-[900px] garantiert, dass die Spalten Platz haben und nicht gequetscht werden */}
+                        <table className="w-full text-left border-collapse min-w-[900px]">
                             <thead className="bg-slate-900/50 text-slate-400 text-[10px] uppercase tracking-wider font-bold">
                                 <tr>
                                     <th className="p-4 pl-6">Benutzer</th>
                                     <th className="p-4">Rolle</th>
-                                    <th className="p-4">
-                                        <div className="flex items-center gap-1 text-emerald-400">
-                                            <Calendar size={12}/> Registriert
-                                        </div>
-                                    </th>
-                                    <th className="p-4">
-                                        <div className="flex items-center gap-1 text-cyan-400">
-                                            <Hash size={12}/> Logins
-                                        </div>
-                                    </th>
-                                    <th className="p-4">
-                                        <div className="flex items-center gap-1 text-cyan-400">
-                                            <Clock size={12}/> Letzter Login
-                                        </div>
-                                    </th>
+                                    <th className="p-4"><div className="flex items-center gap-1 text-emerald-400"><Calendar size={12}/> Registriert</div></th>
+                                    <th className="p-4"><div className="flex items-center gap-1 text-cyan-400"><Hash size={12}/> Logins</div></th>
+                                    <th className="p-4"><div className="flex items-center gap-1 text-cyan-400"><Clock size={12}/> Letzter Login</div></th>
                                     <th className="p-4 text-right pr-6">Aktionen</th>
                                 </tr>
                             </thead>
@@ -190,12 +176,12 @@ export const UserManagementPage: React.FC = () => {
                                                 <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
                                                     {u.avatar ? <img src={u.avatar} alt="" className="w-full h-full object-cover"/> : <UserIcon size={20} className="text-slate-500"/>}
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-white flex items-center gap-2">
+                                                <div className="min-w-0">
+                                                    <div className="font-bold text-white flex items-center gap-2 truncate max-w-[150px] md:max-w-none">
                                                         {u.username}
                                                         {u.id === currentUser.id && <span className="text-[10px] bg-cyan-900 text-cyan-400 px-1.5 py-0.5 rounded">DU</span>}
                                                     </div>
-                                                    <div className="text-xs text-slate-500">{u.email}</div>
+                                                    <div className="text-xs text-slate-500 truncate max-w-[180px] md:max-w-none">{u.email}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -219,7 +205,6 @@ export const UserManagementPage: React.FC = () => {
                                         </td>
                                         <td className="p-4">
                                             <div className="text-xs text-slate-400 font-medium">
-                                                {/* CRITICAL: u.createdAt muss ein Timestamp (Number) sein */}
                                                 {formatDate(u.createdAt, false)}
                                             </div>
                                         </td>
