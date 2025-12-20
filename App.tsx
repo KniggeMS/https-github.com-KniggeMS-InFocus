@@ -39,7 +39,6 @@ const ListRoute = ({ customLists, renderGrid, onShare }: { customLists: CustomLi
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                         <List size={24} className="text-purple-400" /> {list.name}
                     </h2>
-                    {list.description && <p className="text-slate-400">{list.description}</p>}
                 </div>
                 {isOwner && (
                     <button onClick={() => onShare(list)} className="p-2 bg-white/5 hover:bg-white/10 text-cyan-400 rounded-lg border border-white/10 transition-colors flex items-center gap-2 text-sm font-bold">
@@ -53,7 +52,7 @@ const ListRoute = ({ customLists, renderGrid, onShare }: { customLists: CustomLi
 };
 
 export default function App() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -63,7 +62,6 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   
   const tmdbKey = getTmdbKey(localStorage.getItem('tmdb_api_key') || '');
@@ -77,34 +75,24 @@ export default function App() {
       setItems(fetchedItems || []);
       setCustomLists(fetchedLists || []);
     } catch (error) {
-      console.error("Fehler beim Laden der Daten:", error);
+      console.error("Ladefehler:", error);
     }
   };
 
   const handleCreateList = async (name: string) => {
-    if (!user) return;
-    
-    // Wir erstellen ein lokales Template ohne ID, da die DB diese meist selbst vergibt
-    const newListTemplate: any = {
-        ownerId: user.id,
-        name: name,
-        items: [],
-        sharedWith: [],
-        createdAt: Date.now()
-    };
+    if (!user || !name.trim()) return;
     
     try {
-      // Wir rufen die DB-Funktion auf und warten auf die echte ID von Supabase
-      const savedList = await createCustomList(newListTemplate as CustomList, user.id);
-      
+      // Nutzt die neue createCustomList Funktion aus db.ts
+      const savedList = await createCustomList(name, user.id);
       if (savedList) {
-          setCustomLists(prev => [...prev, savedList]);
-          setIsCreateModalOpen(false);
-          // Kein loadData() nötig, wenn wir savedList direkt ins State pushen
+        setCustomLists(prev => [...prev, savedList]);
+        setIsCreateModalOpen(false);
+        // Navigiere optional direkt zur neuen Liste
+        navigate(`/list/${savedList.id}`);
       }
     } catch (e) {
       console.error("Fehler beim Erstellen der Liste:", e);
-      // Hässliches Pop-up entfernt - stattdessen Log in der Konsole
     }
   };
   
@@ -133,7 +121,7 @@ export default function App() {
   const handleAdd = async (result: SearchResult, status: WatchStatus = WatchStatus.TO_WATCH, isFav: boolean = false) => {
     if (!user) return;
     const existing = items.find(i => i.tmdbId === result.tmdbId && i.userId === user.id);
-    if (existing) return; 
+    if (existing) return;
     let details: Partial<MediaItem> = {};
     if (tmdbKey) try { details = await getMediaDetails(result, tmdbKey); } catch(e) {}
     let rtScore = undefined;
@@ -168,16 +156,9 @@ export default function App() {
                     <Clapperboard size={24} className="text-cyan-400" />
                     <span className="font-bold text-xl tracking-tight text-white block">InFocus <span className="text-cyan-400">CineLog</span></span>
                 </div>
-                <nav className="hidden md:flex items-center gap-1">
-                    <button onClick={() => navigate('/')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('overview')}</button>
-                    <button onClick={() => navigate('/watchlist')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${location.pathname === '/watchlist' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}>{t('watchlist')}</button>
-                </nav>
             </div>
             <div className="flex items-center gap-3">
                 <button onClick={() => setIsSearchOpen(true)} className="p-2 rounded-full hover:bg-white/5 text-slate-400 hover:text-white transition-colors"><Search size={20} /></button>
-                <div className="relative" ref={profileMenuRef}>
-                    <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden border border-slate-600">{user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon size={16} className="text-slate-400 m-auto mt-2"/>}</button>
-                </div>
             </div>
         </header>
 
@@ -187,33 +168,14 @@ export default function App() {
                     <button onClick={() => setIsSearchOpen(true)} className="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-3 rounded-xl font-bold transition-all mb-8 shadow-lg shadow-cyan-900/20">
                         <Plus size={20} /> {t('add_button')}
                     </button>
-                    
                     <div className="mb-6">
                         <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">{t('my_lists')}</h3>
-                        
-                        <button 
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-cyan-400 hover:bg-cyan-400/10 rounded-lg transition-all text-sm mb-4 font-bold"
-                        >
-                            <Plus size={16} /> {t('create_list')}
-                        </button>
-
+                        <button onClick={() => setIsCreateModalOpen(true)} className="w-full flex items-center gap-2 px-3 py-2 text-cyan-400 hover:bg-cyan-400/10 rounded-lg transition-all text-sm mb-4 font-bold"><Plus size={16} /> {t('create_list')}</button>
                         <div className="space-y-1">
                             {(customLists || []).filter(l => l.ownerId === user.id).map(l => (
                                 <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
                             ))}
                         </div>
-
-                        {(customLists || []).some(l => l.sharedWith?.includes(user.id)) && (
-                          <>
-                            <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mt-8 mb-4 tracking-widest">Geteilt mit mir</h3>
-                            <div className="space-y-1">
-                                {(customLists || []).filter(l => l.sharedWith?.includes(user.id)).map(l => (
-                                    <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
-                                ))}
-                            </div>
-                          </>
-                        )}
                     </div>
                 </div>
                 <AiRecommendationButton items={displayedItems} onAdd={handleAdd} apiKey={tmdbKey} />
@@ -223,20 +185,13 @@ export default function App() {
                 <Routes>
                     <Route path="/" element={<div><Stats items={displayedItems} /><div className="mb-6"><h2 className="text-2xl font-bold text-white">{t('collection')}</h2></div>{renderGrid()}</div>} />
                     <Route path="/watchlist" element={<div><div className="mb-6"><h2 className="text-2xl font-bold text-white">{t('watchlist')}</h2></div>{renderGrid(WatchStatus.TO_WATCH)}</div>} />
-                    <Route path="/favorites" element={<div><div className="mb-6"><h2 className="text-2xl font-bold text-white">{t('favorites')}</h2></div>{renderGrid()}</div>} />
                     <Route path="/list/:id" element={<ListRoute customLists={customLists} renderGrid={renderGrid} onShare={() => {}} />} />
-                    <Route path="/profile" element={<ProfilePage items={displayedItems} />} />
-                    <Route path="/users" element={<UserManagementPage />} />
-                    <Route path="/guide" element={<GuidePage />} />
                 </Routes>
             </main>
         </div>
 
-        <ChatBot items={displayedItems} />
-        <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} onUpdateApiKey={(key) => { localStorage.setItem('tmdb_api_key', key); }} />
+        <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} />
         <CreateListModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onCreate={handleCreateList} />
-        <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => {}} />
-        {selectedItem && <DetailView item={selectedItem} isExisting={true} onClose={() => setSelectedItem(null)} apiKey={tmdbKey} onUpdateStatus={handleUpdateStatus} onToggleFavorite={handleToggleFavorite} />}
     </div>
   );
 }
