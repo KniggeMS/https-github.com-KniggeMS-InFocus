@@ -23,16 +23,13 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
     setRecommendation(null);
 
     try {
-      // 1. Hole Empfehlung (Gibt jetzt any[] zurück)
       const results = await getRecommendations(items);
       
       if (results && results.length > 0) {
         let bestPick = results[0] as any;
         
-        // 2. Hydrierung mit TMDB Daten
         if (apiKey && bestPick.title) {
             try {
-                // Nutzt unseren bereinigten searchTMDB Service
                 const tmdbResults = await searchTMDB(bestPick.title, apiKey);
                 const match = tmdbResults.find((r: any) => r.type === bestPick.type) || tmdbResults[0];
 
@@ -41,7 +38,7 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                    bestPick = {
                        ...match,
                        plot: bestPick.plot || match.plot,
-                       providers: details.genre // Wir nutzen hier die verfügbaren Daten
+                       providers: details.genre 
                    };
                 }
             } catch (e) {
@@ -80,7 +77,8 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                             {loading ? t('analyzing') : t('ai_tip')}
                         </p>
                         <p className="text-[10px] text-purple-300/80 uppercase tracking-wide font-medium">
-                            {loading ? "Gemini 1.5 Flash" : t('new_rec')}
+                            {/* Korrektur: t('NEW_REC') statt t('new_rec') */}
+                            {loading ? "Gemini 1.5 Flash" : t('NEW_REC')}
                         </p>
                         </div>
                     </button>
