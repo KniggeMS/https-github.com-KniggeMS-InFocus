@@ -1,7 +1,7 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/LanguageContext';
+// Import aus unserem stabilen Baseline-Service
 import { generateAvatar } from '../services/gemini';
 import { GuidePage } from './GuidePage';
 import { Clapperboard, Loader2, Sparkles, Languages, Eye, EyeOff, BookOpen, User, Mail, Lock } from 'lucide-react';
@@ -9,7 +9,7 @@ import { Clapperboard, Loader2, Sparkles, Languages, Eye, EyeOff, BookOpen, User
 type AuthView = 'login' | 'register' | 'forgot';
 
 export const AuthPage: React.FC = () => {
-  const { login, register, resetPassword, getAllUsers } = useAuth();
+  const { login, register, resetPassword } = useAuth();
   const { t, language, setLanguage } = useTranslation();
   
   const [view, setView] = useState<AuthView>('login');
@@ -70,6 +70,8 @@ export const AuthPage: React.FC = () => {
   const handleGenerateAvatar = async () => {
     if (!username) return;
     setIsGeneratingImg(true);
+    // Nutzt unseren Baseline-Dummy (gibt aktuell leeren String zurück)
+    // Dies verhindert den Absturz des Compilers
     const imgData = await generateAvatar(username);
     if (imgData) setAvatar(imgData);
     setIsGeneratingImg(false);
@@ -83,15 +85,15 @@ export const AuthPage: React.FC = () => {
         <div className="fixed bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
         <div className="absolute top-6 left-6 right-6 flex justify-between z-50">
-             <button onClick={() => setShowGuide(true)} className="glass-button flex items-center gap-2 px-4 py-2 rounded-full text-slate-400 hover:text-white text-xs font-medium">
+             <button onClick={() => setShowGuide(true)} className="px-4 py-2 rounded-full text-slate-400 hover:text-white text-xs font-medium border border-white/5 bg-white/5 backdrop-blur-md flex items-center gap-2">
                 <BookOpen size={14} /> Handbuch
             </button>
-            <button onClick={() => setLanguage(language === 'de' ? 'en' : 'de')} className="glass-button flex items-center gap-2 px-4 py-2 rounded-full text-slate-400 hover:text-white text-xs font-medium">
+            <button onClick={() => setLanguage(language === 'de' ? 'en' : 'de')} className="px-4 py-2 rounded-full text-slate-400 hover:text-white text-xs font-medium border border-white/5 bg-white/5 backdrop-blur-md flex items-center gap-2">
                 <Languages size={14} /> {language.toUpperCase()}
             </button>
         </div>
 
-        <div className="w-full max-w-md glass-panel p-8 rounded-3xl shadow-2xl relative z-10 animate-in zoom-in-95 duration-300 border border-white/10">
+        <div className="w-full max-w-md bg-white/5 backdrop-blur-xl p-8 rounded-3xl shadow-2xl relative z-10 animate-in zoom-in-95 duration-300 border border-white/10">
             <div className="flex justify-center mb-8">
                 <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-900/50 rotate-3">
                     <Clapperboard size={32} className="text-white" />
@@ -120,14 +122,7 @@ export const AuthPage: React.FC = () => {
                             <label className="text-xs font-bold text-slate-400 uppercase ml-1">E-Mail Adresse</label>
                             <div className="relative">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                <input 
-                                    type="email" 
-                                    value={email} 
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-[#1c212c] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-cyan-500 transition-colors"
-                                    placeholder="name@example.com"
-                                    required
-                                />
+                                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-[#1c212c] border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-cyan-500 transition-colors" placeholder="name@example.com" required />
                             </div>
                         </div>
                         <div className="space-y-1.5">
@@ -137,14 +132,7 @@ export const AuthPage: React.FC = () => {
                             </div>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                                <input 
-                                    type={showPassword ? "text" : "password"}
-                                    value={password} 
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-[#1c212c] border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white focus:border-cyan-500 transition-colors"
-                                    placeholder="••••••••"
-                                    required
-                                />
+                                <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-[#1c212c] border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white focus:border-cyan-500 transition-colors" placeholder="••••••••" required />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -201,7 +189,7 @@ export const AuthPage: React.FC = () => {
         </div>
 
         <div className="absolute bottom-4 text-[10px] text-slate-600 font-mono tracking-widest uppercase">
-            v2.0.0 • BASELINE STABLE
+            v2.2.0 • BASELINE STABLE
         </div>
     </div>
   );
