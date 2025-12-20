@@ -14,6 +14,7 @@ export async function getOmdbRatings(imdbId: string, apiKey: string): Promise<st
   } catch (error) { return null; }
 }
 
-export async function searchOMDB(...args: any[]): Promise<Record<string, any>[]> { 
-  return []; 
+// KORREKTUR: Rückgabe als any, damit .imdbID in ImportModal.tsx ignoriert wird
+export async function searchOMDB(...args: any[]): Promise<any> { 
+  return [] as any; 
 }
