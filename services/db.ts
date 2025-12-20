@@ -1,4 +1,3 @@
-
 import { supabase } from './supabase';
 import { MediaItem, CustomList, WatchStatus, User, UserRole, PublicReview } from '../types';
 
@@ -29,7 +28,7 @@ export const fetchMediaItems = async (): Promise<MediaItem[]> => {
     rating: item.rating,
     rtScore: item.rt_score,
     posterPath: item.poster_path,
-    backdropPath: item.backdrop_path,
+    backdrop_path: item.backdrop_path,
     status: item.status,
     addedAt: item.added_at,
     seasons: item.seasons,
@@ -175,24 +174,28 @@ export const fetchCustomLists = async (): Promise<CustomList[]> => {
 
 export const createCustomList = async (list: CustomList, userId: string): Promise<CustomList | null> => {
   const dbList = {
+    id: list.id, // Wir übergeben die generierte UUID
     owner_id: userId,
     name: list.name,
-    description: list.description,
-    created_at: list.createdAt,
+    description: list.description || '',
+    created_at: new Date(list.createdAt).toISOString(),
     items: [],
     shared_with: []
   };
 
   const { data, error } = await supabase.from('custom_lists').insert([dbList]).select().single();
-  if (error) return null;
+  if (error) {
+      console.error("DB Error creating list:", error);
+      return null;
+  }
   
   return {
       id: data.id,
       name: data.name,
       ownerId: data.owner_id,
-      createdAt: data.created_at,
-      items: [],
-      sharedWith: []
+      createdAt: new Date(data.created_at).getTime(),
+      items: data.items || [],
+      sharedWith: data.shared_with || []
   };
 };
 
@@ -228,7 +231,6 @@ export const fetchAllProfiles = async (): Promise<User[]> => {
         role: p.role as UserRole,
         isStatsPublic: p.is_stats_public,
         createdAt: new Date(p.created_at).getTime(),
-        // NEW FIELDS
         loginCount: p.login_count || 0,
         lastLoginAt: p.last_login_at ? new Date(p.last_login_at).getTime() : undefined
     }));
