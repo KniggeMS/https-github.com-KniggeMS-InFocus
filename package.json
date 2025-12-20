@@ -1,6 +1,6 @@
 {
   "name": "cinelog-infocus",
-  "version": "1.0.3",
+  "version": "2.2.0",
   "type": "module",
   "description": "CineLog - Die ultimative AI-Watchlist PWA",
   "main": "index.tsx",
@@ -19,7 +19,7 @@
   "author": "BigDaddy",
   "license": "MIT",
   "dependencies": {
-    "@google/genai": "^1.30.0",
+    "@google/generative-ai": "^0.21.0",
     "@supabase/supabase-js": "^2.39.0",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",

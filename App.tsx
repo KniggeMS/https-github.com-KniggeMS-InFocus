@@ -18,8 +18,8 @@ import {
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes,
   fetchCustomLists, updateCustomListItems
 } from './services/db';
-import { getMediaDetails, getEffectiveApiKey as getTmdbKey } from './services/tmdb'; // Korrekt importiert
-import { getOmdbRatings, getEffectiveOmdbKey } from './services/omdb'; // Korrekt importiert
+import { getMediaDetails, getEffectiveApiKey as getTmdbKey } from './services/tmdb';
+import { getOmdbRatings, getEffectiveOmdbKey } from './services/omdb';
 import { MediaItem, WatchStatus, SearchResult, CustomList, UserRole, MediaType } from './types';
 // KORREKTUR: Import von lucide-react statt lucide-center
 import { Search, User as UserIcon, List, Clapperboard, Plus, Share2, LogOut } from 'lucide-react';
@@ -60,7 +60,7 @@ export default function App() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   
-  // KORREKTUR: Nutzt jetzt die hybride Key-Logik aus den Services (RFC-025/RFC-027)
+  // RFC-027: Hybrides Key-System
   const tmdbKey = getTmdbKey(localStorage.getItem('tmdb_api_key') || '');
   const omdbKey = getEffectiveOmdbKey(localStorage.getItem('omdb_api_key') || '');
 
@@ -102,7 +102,7 @@ export default function App() {
     if (tmdbKey) try { details = await getMediaDetails(result, tmdbKey); } catch(e) {}
     let rtScore = undefined;
     if (omdbKey && (result.imdbId || details.imdbId)) try { rtScore = await getOmdbRatings(result.imdbId || details.imdbId!, omdbKey) || undefined; } catch(e) {}
-    const newItem: MediaItem = { id: crypto.randomUUID(), userId: user.id, tmdbId: result.tmdbId, imdbId: result.imdbId || details.imdbId, title: result.title, originalTitle: result.originalTitle, year: result.year, type: result.type, genre: result.genre, plot: result.plot, rating: result.rating, posterPath: result.posterPath, backdropPath: result.backdropPath, status: status, addedAt: Date.now(), isFavorite: isFav, userRating: 0, userNotes: result.customNotes || '', runtime: details.runtime, seasons: details.seasons, episodes: details.episodes, certification: details.certification, trailerKey: details.trailerKey, credits: details.credits || [], providers: details.providers || [], rtScore: rtScore };
+    const newItem: MediaItem = { id: crypto.randomUUID(), userId: user.id, tmdbId: result.tmdbId, imdbId: result.imdbId || details.imdbId, title: result.title, originalTitle: result.originalTitle, year: result.year, type: result.type, genre: details.genre || [], plot: result.plot, rating: result.rating, posterPath: result.posterPath, backdropPath: result.backdropPath, status: status, addedAt: Date.now(), isFavorite: isFav, userRating: 0, userNotes: result.customNotes || '', runtime: details.runtime, seasons: details.seasons, episodes: details.episodes, certification: details.certification, trailerKey: details.trailerKey, credits: details.credits || [], providers: details.providers || [], rtScore: rtScore };
     const saved = await addMediaItem(newItem, user.id);
     if (saved) setItems(prev => [saved, ...prev]);
   };
@@ -111,9 +111,13 @@ export default function App() {
 
   const displayedItems = items.filter(i => i.userId === user.id);
 
+  // KORREKTUR: renderGrid nutzt jetzt listId statt id
   const renderGrid = (statusFilter?: WatchStatus, listId?: string) => {
       let filtered = displayedItems;
-      if (listId) { const list = customLists.find(l => l.id === id); filtered = list ? items.filter(i => list.items.includes(i.id)) : []; }
+      if (listId) { 
+          const list = customLists.find(l => l.id === listId); 
+          filtered = list ? items.filter(i => list.items.includes(i.id)) : []; 
+      }
       else if (statusFilter) filtered = filtered.filter(i => i.status === statusFilter);
       else if (location.pathname === '/favorites') filtered = filtered.filter(i => i.isFavorite);
       filtered.sort((a, b) => b.addedAt - a.addedAt);
@@ -155,6 +159,7 @@ export default function App() {
                         </div>
                     </div>
                 </div>
+                {/* RFC-021: AI Button Restoration */}
                 <AiRecommendationButton items={displayedItems} onAdd={handleAdd} apiKey={tmdbKey} />
             </aside>
 
