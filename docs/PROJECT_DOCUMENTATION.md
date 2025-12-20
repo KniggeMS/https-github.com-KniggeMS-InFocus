@@ -2,13 +2,13 @@
 
 **Dokumentations-Standard:** ITIL v4 (Service Design)  
 **Status:** Frozen Baseline (Stabiler Zustand)  
-**Version:** 2.1.0 ("The Final Blueprint")  
-**Zuletzt aktualisiert:** 12.05.2024
+**Version:** 2.2.0 ("The Stability & Scale Release")  
+**Zuletzt aktualisiert:** 20.12.2025
 
 ---
 
 ## 1. Service-Beschreibung (Service Description)
-InFocus CineLog ist ein intelligenter Medien-Verwaltungsdienst, der AI-gestützte Analyse, Gamification und soziale Interaktion kombiniert, um das Verwalten von Watchlists zu revolutionieren.
+InFocus CineLog ist ein intelligenter Medien-Verwaltungsdienst, der AI-gestützte Analyse, Gamification und soziale Interaktion kombiniert.
 
 ### 1.1 Kernfunktionen
 - **Vision-Suche:** Identifikation von Medien über Kamera-Bilder (Gemini Flash Vision).
@@ -22,13 +22,15 @@ InFocus CineLog ist ein intelligenter Medien-Verwaltungsdienst, der AI-gestützt
 
 ### 2.1 Frontend & UI/UX
 - **Framework:** React 19 (Strict Mode) mit Vite 5.
-- **Design-System:** "Stitch & Glass Fusion" – Eine Kombination aus tiefem Navy (#0B0E14) und hocheffektiven Glassmorphism-Elementen.
-- **Interaktion:** Sentient Glass (Spotlight-Effekt auf Karten), Thumb-friendly Mobile-Navigation.
+- **Typisierung:** TypeScript 5.x mit expliziten Vite-Client-Typen (`vite-env.d.ts`).
+- **Design-System:** "Stitch & Glass Fusion" – Deep Navy (#0B0E14) mit hocheffektiven Glassmorphism-Elementen.
+- **Responsivität:** Mobile-First Design mit horizontal scrollbaren Daten-Tabellen und adaptiven Modals.
 
 ### 2.2 Backend & Schnittstellen (Integration Design)
 - **Database/Auth:** Supabase (PostgreSQL / GoTrue).
-- **Primary AI:** Google Gemini 3 Flash (API-Key via process.env.API_KEY).
-- **Media Meta-Data:** TMDB API v3 (Primär) & OMDb API (Fallback für Smart Import).
+- **Primary AI:** Google Gemini 3 Flash.
+- **Media Meta-Data:** TMDB API v3 & OMDb API.
+- **Environment Management:** Hybride Key-Erkennung (Vercel Managed Env > LocalStorage).
 
 ---
 
@@ -36,36 +38,37 @@ InFocus CineLog ist ein intelligenter Medien-Verwaltungsdienst, der AI-gestützt
 
 | ID | Status | Titel | Beschreibung |
 |:---|:---|:---|:---|
-| **RFC-001** | Done | Initial Setup | Deployment-Basis, Supabase Tabellen (Profiles, Media_Items). |
-| **RFC-010** | Done | AI Core | Integration von Gemini Flash für Empfehlungen und Vision-Suche. |
-| **RFC-012** | Done | Mobile Navigation | Einführung der schwebenden Such-Aktion und Bottom-Sheet Menüs. |
-| **RFC-015** | Done | Stitch Design | Umstellung auf Deep-Navy Theme mit Spotlight-Interaktion. |
-| **RFC-020** | Done | Shared Lists | Implementierung der Custom_Lists Tabelle und Share-Logik. |
-| **RFC-021** | **Active** | **Restoration Fix** | Wiederherstellung von: Web-Sharing, Mobile AI Button, Mobile List Switcher & Admin-Zutritt für Settings. |
+| **RFC-001** | Done | Initial Setup | Deployment-Basis, Supabase Tabellen. |
+| **RFC-010** | Done | AI Core | Integration von Gemini Flash. |
+| **RFC-012** | Done | Mobile Navigation | Einführung der schwebenden Such-Aktion & Bottom-Sheets. |
+| **RFC-021** | Done | Restoration Fix | Wiederherstellung Web-Sharing & Mobile AI Button. |
+| **RFC-025** | **Done** | **Build & Env Fix** | Einführung von `vite-env.d.ts` & Umstellung auf `import.meta.env`. |
+| **RFC-026** | **Done** | **Responsive Tables** | Einführung von `overflow-x-auto` für Mobile Benutzerverwaltung. |
+| **RFC-027** | **Done** | **Key-State Sync** | Grüne "VERCEL ACTIVE" Badges im UI bei Cloud-Keys. |
 
 ---
 
-## 4. Spezifikation des Frozen State v2.1.0 (Stability Guidelines)
+## 4. Spezifikation des Frozen State v2.2.0 (Stability Guidelines)
 
 ### 4.1 Rollenbasierte Zugriffskontrolle (RBAC)
-- **ADMIN/MANAGER:** Vollzugriff auf Benutzerverwaltung (`/users`) und System-Konfiguration (API-Keys).
-- **USER:** Zugriff auf Sammlung, Profil, Handbuch und Listen-Features.
-- **Security Rule:** Der Button "Einstellungen" (API-Keys) ist im Profil-Dropdown nur für Admins sichtbar.
+- **ADMIN/MANAGER:** Zugriff auf `/users` (Benutzerverwaltung) und System-Konfiguration.
+- **USER:** Zugriff auf Sammlung, Profil und Listen.
+- **Security Rule:** System-Settings (API-Keys) sind nur für privilegierte Rollen sichtbar.
 
-### 4.2 Web-spezifische Features
-- **Listen-Sharing:** In der `ListRoute` existiert ein permanenter Button "Gliedern/Teilen" neben dem Listennamen, sofern der User der Owner ist.
+### 4.2 Daten-Integrität & Anzeige
+- **Timestamp Protection:** Datums-Anzeigen (z.B. `createdAt`) werden durch eine defensive `formatDate`-Funktion geschützt, um Build-Abbrüche bei Nullwerten zu verhindern.
 
 ### 4.3 Mobile-spezifische Features
-- **AI Recommendation FAB:** Violetter Button fest fixiert unten links (z-index 50).
-- **Listen-Switcher:** Das Icon ganz rechts in der `MobileNav` öffnet das `MobileListsModal` zur Navigation zwischen "Alle Filme" und spezifischen Listen.
+- **Scrollable Tables:** Große Datenmengen werden mobil durch horizontalen Scrollbereich (`min-w` + `overflow-x`) zugänglich gemacht.
+- **Adaptive Modals:** Modals nutzen `flex-wrap` und `break-words`, um auf schmalen Screens nicht abzubrechen.
 
 ---
 
 ## 5. Wartungs-Checkliste (Operational Support)
 
-- **Daten-Integrität:** Bei jedem Item-Update muss `selectedItem` auf Nullwerte geprüft werden (Conditional Rendering).
-- **API Management:** System-Keys (Vercel) werden durch User-Keys (LocalStorage) überschrieben, falls vorhanden.
-- **Sprach-Erweiterung:** Neue Schlüssel müssen in `LanguageContext.tsx` synchron für `de` und `en` hinzugefügt werden.
+- **Deployment:** Bei Build-Fehlern bzgl. `import.meta` sicherstellen, dass `vite-env.d.ts` im Root-Verzeichnis existiert.
+- **API Management:** Die Funktion `getEffectiveApiKey` muss in allen Service-Calls (TMDB/OMDb) genutzt werden, um Vercel-Keys zu priorisieren.
+- **Sprach-Erweiterung:** Neue UI-Elemente müssen zwingend in `LanguageContext.tsx` unter `de` und `en` registriert werden.
 
 ---
-*Dokumentation nach ITIL v4 Standard archiviert am: 12.05.2024*
+*Dokumentation nach ITIL v4 Standard archiviert am: 20.12.2025*
