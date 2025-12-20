@@ -83,11 +83,7 @@ export default function App() {
     if (!user || !name.trim()) return;
     
     try {
-<<<<<<< HEAD
-      // KORREKTUR: Übergibt nur den 'name' (string) wie in db.ts gefordert
-=======
       // Nutzt die neue Signatur: Erwartet string, nicht Objekt
->>>>>>> a5ab347 (Fix: Synchronize db and app logic, fix type mismatches and restore missing exports)
       const savedList = await createCustomList(name, user.id);
       if (savedList) {
         setCustomLists(prev => [...prev, savedList]);
@@ -95,11 +91,7 @@ export default function App() {
         navigate(`/list/${savedList.id}`);
       }
     } catch (e) {
-<<<<<<< HEAD
-      console.error("Fehler beim Erstellen:", e);
-=======
       console.error("Fehler beim Erstellen der Liste:", e);
->>>>>>> a5ab347 (Fix: Synchronize db and app logic, fix type mismatches and restore missing exports)
     }
   };
   
@@ -193,6 +185,9 @@ export default function App() {
                     <Route path="/" element={<div><Stats items={displayedItems} /><div className="mb-6"><h2 className="text-2xl font-bold text-white">{t('collection')}</h2></div>{renderGrid()}</div>} />
                     <Route path="/watchlist" element={<div><div className="mb-6"><h2 className="text-2xl font-bold text-white">{t('watchlist')}</h2></div>{renderGrid(WatchStatus.TO_WATCH)}</div>} />
                     <Route path="/list/:id" element={<ListRoute customLists={customLists} renderGrid={renderGrid} onShare={() => {}} />} />
+                    <Route path="/profile" element={<ProfilePage items={displayedItems} />} />
+                    <Route path="/users" element={<UserManagementPage />} />
+                    <Route path="/guide" element={<GuidePage />} />
                 </Routes>
             </main>
         </div>
