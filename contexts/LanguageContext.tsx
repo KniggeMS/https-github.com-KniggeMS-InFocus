@@ -26,7 +26,8 @@ const translations: Translations = {
     besetzung: "Besetzung",
     überblick: "Überblick",
     ai_tip: "AI Tipp",
-    NEW_REC: "NEUE EMPFEHLUNG"
+    NEW_REC: "NEUE EMPFEHLUNG",
+    share_with_friends: "Mit Freunden teilen"
   },
   en: {
     overview: "Overview",
