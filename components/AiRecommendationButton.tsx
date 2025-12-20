@@ -23,11 +23,13 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
     setRecommendation(null);
 
     try {
+      // 1. Hole Empfehlung von Gemini
       const results = await getRecommendations(items);
       
       if (results && results.length > 0) {
         let bestPick = results[0] as any;
         
+        // 2. Hydrierung mit TMDB Daten für Poster und Details
         if (apiKey && bestPick.title) {
             try {
                 const tmdbResults = await searchTMDB(bestPick.title, apiKey);
@@ -77,7 +79,7 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                             {loading ? t('analyzing') : t('ai_tip')}
                         </p>
                         <p className="text-[10px] text-purple-300/80 uppercase tracking-wide font-medium">
-                            {/* Korrektur: t('NEW_REC') statt t('new_rec') */}
+                            {/* KORREKTUR: t('NEW_REC') muss großgeschrieben sein */}
                             {loading ? "Gemini 1.5 Flash" : t('NEW_REC')}
                         </p>
                         </div>
@@ -86,17 +88,25 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
             </div>
         )}
 
+        {/* Mobiler Floating Action Button */}
         <button onClick={getAiTip} disabled={loading} className={`md:hidden fixed bottom-24 left-4 z-50 w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-900/40 border-2 border-slate-900 active:scale-95 transition-transform ${!mobileFabOnly ? 'md:hidden' : ''}`}>
             {loading ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
         </button>
 
+        {/* Empfehlungs-Modal */}
         {recommendation && createPortal(
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
                 <div className="bg-slate-900 border border-purple-500/30 w-full max-w-md rounded-3xl shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh]">
-                    <button onClick={handleClose} className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-slate-400 hover:text-white rounded-full z-20"><X size={20} /></button>
+                    <button onClick={handleClose} className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-slate-400 hover:text-white rounded-full z-20">
+                      <X size={20} />
+                    </button>
                     <div className="p-6 text-center overflow-y-auto custom-scrollbar">
                         <div className="w-20 h-20 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl overflow-hidden border-2 border-purple-400/50">
-                             {recommendation.posterPath ? <img src={recommendation.posterPath} className="w-full h-full object-cover" alt="" /> : <Sparkles size={32} className="text-white" />}
+                             {recommendation.posterPath ? (
+                               <img src={recommendation.posterPath} className="w-full h-full object-cover" alt="" />
+                             ) : (
+                               <Sparkles size={32} className="text-white" />
+                             )}
                         </div>
                         <h3 className="text-2xl font-extrabold text-white mb-1">{recommendation.title}</h3>
                         <p className="text-slate-400 text-sm mb-4">({recommendation.year})</p>
@@ -105,8 +115,12 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                             <p className="text-slate-200 italic leading-relaxed pl-6 text-sm">{recommendation.plot}</p>
                         </div>
                         <div className="flex gap-3">
-                            <button onClick={handleClose} className="flex-1 py-3 bg-slate-800 text-slate-300 font-semibold rounded-xl">{t('cancel')}</button>
-                            <button onClick={handleAdd} className="flex-1 py-3 bg-purple-600 text-white font-bold rounded-xl shadow-lg shadow-purple-900/30 flex items-center justify-center gap-2"><Plus size={18} /> {t('to_list')}</button>
+                            <button onClick={handleClose} className="flex-1 py-3 bg-slate-800 text-slate-300 font-semibold rounded-xl">
+                              {t('cancel')}
+                            </button>
+                            <button onClick={handleAdd} className="flex-1 py-3 bg-purple-600 text-white font-bold rounded-xl shadow-lg shadow-purple-900/30 flex items-center justify-center gap-2">
+                              <Plus size={18} /> {t('add_button')}
+                            </button>
                         </div>
                     </div>
                 </div>
