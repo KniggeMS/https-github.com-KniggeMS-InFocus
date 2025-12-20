@@ -17,7 +17,7 @@ import { AiRecommendationButton } from './components/AiRecommendationButton';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes,
-  fetchCustomLists, updateCustomListItems, createCustomList // HIER IMPORTIERT
+  fetchCustomLists, updateCustomListItems, createCustomList 
 } from './services/db';
 import { getMediaDetails, getEffectiveApiKey as getTmdbKey } from './services/tmdb';
 import { getOmdbRatings, getEffectiveOmdbKey } from './services/omdb';
@@ -84,8 +84,8 @@ export default function App() {
   const handleCreateList = async (name: string) => {
     if (!user) return;
     
-    const newListTemplate: CustomList = {
-        id: crypto.randomUUID(),
+    // Wir erstellen ein lokales Template ohne ID, da die DB diese meist selbst vergibt
+    const newListTemplate: any = {
         ownerId: user.id,
         name: name,
         items: [],
@@ -93,23 +93,18 @@ export default function App() {
         createdAt: Date.now()
     };
     
-    // Optimistisches UI Update
-    setCustomLists(prev => [...prev, newListTemplate]);
-    
     try {
-      // RICHTIGE FUNKTION: createCustomList statt update
-      const savedList = await createCustomList(newListTemplate, user.id);
+      // Wir rufen die DB-Funktion auf und warten auf die echte ID von Supabase
+      const savedList = await createCustomList(newListTemplate as CustomList, user.id);
       
       if (savedList) {
+          setCustomLists(prev => [...prev, savedList]);
           setIsCreateModalOpen(false);
-          await loadData(); 
-      } else {
-          throw new Error("Speichern fehlgeschlagen");
+          // Kein loadData() nötig, wenn wir savedList direkt ins State pushen
       }
     } catch (e) {
       console.error("Fehler beim Erstellen der Liste:", e);
-      setCustomLists(prev => prev.filter(l => l.id !== newListTemplate.id));
-      alert("Fehler beim Speichern der Liste.");
+      // Hässliches Pop-up entfernt - stattdessen Log in der Konsole
     }
   };
   
@@ -138,7 +133,7 @@ export default function App() {
   const handleAdd = async (result: SearchResult, status: WatchStatus = WatchStatus.TO_WATCH, isFav: boolean = false) => {
     if (!user) return;
     const existing = items.find(i => i.tmdbId === result.tmdbId && i.userId === user.id);
-    if (existing) return alert("Bereits vorhanden!");
+    if (existing) return; 
     let details: Partial<MediaItem> = {};
     if (tmdbKey) try { details = await getMediaDetails(result, tmdbKey); } catch(e) {}
     let rtScore = undefined;
