@@ -24,7 +24,9 @@ const translations: Translations = {
     share_with_friends: "Mit Freunden teilen",
     collection: "Deine Sammlung",
     besetzung: "Besetzung",
-    überblick: "Überblick"
+    überblick: "Überblick",
+    ai_tip: "AI Tipp",
+    NEW_REC: "NEUE EMPFEHLUNG"
   },
   en: {
     overview: "Overview",
@@ -41,7 +43,9 @@ const translations: Translations = {
     share_with_friends: "Share with friends",
     collection: "Your Collection",
     besetzung: "Cast",
-    überblick: "Overview"
+    überblick: "Overview",
+    ai_tip: "AI Tip",
+    NEW_REC: "NEW REC"
   }
 };
 
