@@ -1,4 +1,3 @@
-
 /* InFocus CineLog Global Styles - Stitch & Glass Fusion */
 @tailwind base;
 @tailwind components;
@@ -19,10 +18,9 @@
   --accent-primary: #3b82f6; /* Electric Blue */
   
   /* Glass Defaults */
-  --glass-bg: rgba(21, 26, 35, 0.85);
-  --glass-bg-opaque: #151a23;
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-blur: blur(25px);
+  --glass-bg: rgba(21, 26, 35, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(20px);
 }
 
 body {
@@ -63,11 +61,6 @@ body {
   border: 1px solid var(--glass-border);
 }
 
-.glass-panel-opaque {
-  background: var(--glass-bg-opaque);
-  border: 1px solid var(--glass-border);
-}
-
 .glass-button {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
@@ -94,12 +87,3 @@ input:focus, textarea:focus, select:focus {
 /* Safe Areas */
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
 .pt-safe { padding-top: env(safe-area-inset-top, 20px); }
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
-}

@@ -1,42 +1,47 @@
-InFocus CineLog - Service Design Package (SDP)
+# InFocus CineLog - Service Design Package (SDP)
 
-Dokumentations-Standard: ITIL v4
-Status: Operational / Stable Baseline
-Version: 2.1.0 ("The Perfect State")
+**Dokumentations-Standard:** ITIL v4  
+**Status:** Live / In Operation  
+**Version:** 1.9.41
 
-1. Release Notes (v2.1.0)
-Dieser Zustand wurde als "perfekt" markiert und dient als Referenzpunkt für alle zukünftigen Entwicklungen.
+---
 
-1.1 Kritische Korrekturen (Stability Fixes)
-- Mobile Blue-Screen Fix: Das Rendering der DetailView in der App.tsx wurde auf "Conditional Rendering" umgestellt (selectedItem && ...). Dies verhindert Absturze beim App-Start auf Mobilgeräten.
-- Translation Keys: Korrektur der Status-Label und UI-Strings (forgot_password, email, etc.) zur Vermeidung von Platzhaltern in der Vorschau.
-- Sidebar Persistence: Die Sektion "Geteilte Listen" wurde fest in die Sidebar-Logik integriert.
+## 1. Service Strategy (Strategie)
 
-1.2 Design-Philosophie (Proportionen)
-- Container-Konzept: Die Detailansicht nutzt ein zentriertes Container-Layout (max-w-5xl) anstelle eines Fullscreen-Ansatzes, um die Lesbarkeit auf großen Monitoren zu wahren.
-- Kompakte Typografie: Überschriften wurden für eine edlere Ästhetik von 6xl auf 5xl (Desktop) und 3xl (Mobile) reduziert.
-- Trailer-Integrität: Der Trailer wird ausschließlich in der linken Poster-Säule gerendert, um den Lesefluss der Informationen rechts nicht zu unterbrechen.
+### 1.1 Business Case & Vision
+Das Ziel des Services **"InFocus CineLog"** ist die Bereitstellung einer hochverfügbaren, intelligenten Web-Applikation zur Verwaltung von Medienkonsum (Filme & Serien). Der Endnutzer soll eine "Zero-Config" Experience haben.
 
-2. Technische Architektur
-2.1 Frontend Stack
-- Framework: React 19 (Strict Mode)
-- Styling: Tailwind CSS (Stitch & Glass Fusion)
-- Icons: Lucide React
-- AI: Google Gemini 3 Flash (Text & Vision)
+### 1.2 Architektur-Entscheidung: Client-Side Direct via Env
+Die App nutzt Umgebungsvariablen, die während des Build-Vorgangs (z.B. bei Vercel) sicher injiziert werden. Dies verhindert, dass Nutzer eigene Keys benötigen.
 
-2.2 Datenhaltung (Supabase)
-- Profiles: Benutzerdaten & Rollen (RBAC)
-- Media_Items: Globale Liste aller Einträge mit User-Zuordnung.
-- Custom_Lists: Eigene Sammlungen mit Realtime-Sharing Funktionalität.
+---
 
-3. Wartung & API Management
-Die App nutzt eine hybride Key-Strategie:
-- System-Keys: Werden über Vercel Environment Variables (API_KEY, etc.) injiziert.
-- User-Overrides: Nutzer können in den Einstellungen eigene Keys hinterlegen, die im LocalStorage gespeichert werden.
+## 2. Vercel Deployment Guide (API Keys einrichten)
 
-Checkliste für Updates:
-1. Immer selectedItem auf Null-Werte prüfen.
-2. Neue Sprachschlüssel müssen in LanguageContext.tsx für DE und EN hinterlegt werden.
-3. CSS-Änderungen sollten die glass-panel Utility nutzen.
+Um die App ohne manuelle Key-Eingabe für Nutzer zu veröffentlichen, folge diesen Schritten im Vercel Dashboard:
 
-Dokumentation gesichert am: 12.05.2024
+1.  **Projekt auswählen** -> **Settings** -> **Environment Variables**.
+2.  Folgende Variablen anlegen (Typ: Plaintext):
+    | Variable | Zweck |
+    |:---|:---|
+    | `API_KEY` | Google Gemini AI (Empfehlungen & Chat) |
+    | `VITE_TMDB_API_KEY` | TMDB API (Suche, Bilder, Details) |
+    | `VITE_OMDB_API_KEY` | OMDb API (Rotten Tomatoes Scores & Import) |
+    | `VITE_SUPABASE_URL` | Deine Supabase Projekt URL |
+    | `VITE_SUPABASE_ANON_KEY` | Dein Supabase Anon Key |
+3.  Nach dem Speichern ein **Redeploy** durchführen.
+
+---
+
+## 3. Pre-Publication Security Checklist
+
+Vor einer breiten Veröffentlichung oder dem Hochladen in ein öffentliches Repository müssen folgende Punkte geprüft werden:
+
+1.  **[X] Hardcoded Keys:** In `App.tsx` (FALLBACK_KEYS) stehen keine echten Keys mehr.
+2.  **[ ] Vercel Envs:** Alle Keys sind im Vercel Dashboard hinterlegt.
+3.  **[ ] Supabase RLS:** Row Level Security ist aktiv (Nur Besitzer können eigene Daten lesen/schreiben).
+4.  **[ ] Build-Test:** App lokal bauen (`npm run build`) und prüfen, ob die Suche ohne manuelle Key-Eingabe funktioniert.
+
+---
+
+*Dokumentation aktualisiert: Version 1.9.41*

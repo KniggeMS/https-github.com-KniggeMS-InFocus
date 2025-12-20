@@ -1,7 +1,6 @@
 {
   "name": "InFocus CineLog",
-  "version": "2.0.0",
-  "description": "Die ultimative AI-Watchlist. Finaler stabiler Zustand mit Vision-Suche, Deep Content Analysis und optimiertem Mobile-Design.",
+  "description": "Die ultimative AI-Watchlist. Mit Vision-Suche, Deep Content Analysis, ChatBot und Familien-Sync. Powered by TMDB & Google Gemini.",
   "requestFramePermissions": [
     "camera"
   ]
