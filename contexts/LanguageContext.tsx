@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Language } from '../types';
 
@@ -53,7 +52,17 @@ const dictionary: Translations = {
     "chat_placeholder": "Frag mich etwas...",
     "analyzing": "Analysiere...",
     "ai_tip": "AI Tipp",
-    "new_rec": "Neu"
+    "new_rec": "Neu",
+    // NEUE KEYS HINZUGEFÜGT:
+    "add_title": "Titel hinzufügen",
+    "api_key_missing": "API Key fehlt",
+    "api_key_req": "Ein API Key ist erforderlich, um die Suche zu nutzen.",
+    "search_placeholder": "Filme oder Serien suchen...",
+    "search_button": "Suchen",
+    "save_changes": "Änderungen speichern",
+    "cancel": "Abbrechen",
+    "vision_search": "Bilderkennung nutzen",
+    "no_results": "Keine Ergebnisse gefunden."
   },
   en: {
     "welcome_back": "Welcome Back",
@@ -93,7 +102,17 @@ const dictionary: Translations = {
     "chat_placeholder": "Ask me anything...",
     "analyzing": "Analyzing...",
     "ai_tip": "AI Tip",
-    "new_rec": "New"
+    "new_rec": "New",
+    // NEUE KEYS HINZUGEFÜGT:
+    "add_title": "Add Title",
+    "api_key_missing": "API Key Missing",
+    "api_key_req": "An API key is required to use the search.",
+    "search_placeholder": "Search movies or series...",
+    "search_button": "Search",
+    "save_changes": "Save Changes",
+    "cancel": "Cancel",
+    "vision_search": "Use image recognition",
+    "no_results": "No results found."
   }
 };
 
