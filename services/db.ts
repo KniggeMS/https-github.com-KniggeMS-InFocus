@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import { MediaItem, CustomList, WatchStatus, User, UserRole, PublicReview } from '../types';
 
 // MEDIA ITEMS CRUD
+
 export const fetchMediaItems = async (): Promise<MediaItem[]> => {
   const { data, error } = await supabase
     .from('media_items')
@@ -100,8 +101,8 @@ export const addMediaItem = async (item: MediaItem, userId: string): Promise<Med
     collection_name: item.collectionName,
     creators: item.creators,
     is_favorite: item.isFavorite,
-    user_rating: item.userRating,
-    user_notes: item.userNotes,
+    user_rating: item.user_rating,
+    user_notes: item.user_notes,
     providers: item.providers,
     credits: item.credits
   };
@@ -130,6 +131,21 @@ export const toggleMediaItemFavorite = async (id: string, isFavorite: boolean) =
 
 export const updateMediaItemNotes = async (id: string, notes: string) => {
   await supabase.from('media_items').update({ user_notes: notes }).eq('id', id);
+};
+
+export const updateMediaItemRtScore = async (id: string, score: string) => {
+  await supabase.from('media_items').update({ rt_score: score }).eq('id', id);
+};
+
+export const updateMediaItemDetails = async (id: string, details: Partial<MediaItem>) => {
+  const dbUpdates: any = {};
+  if (details.runtime) dbUpdates.runtime = details.runtime;
+  if (details.certification) dbUpdates.certification = details.certification;
+  if (details.providers) dbUpdates.providers = details.providers;
+  if (details.credits) dbUpdates.credits = details.credits;
+  if (details.trailerKey) dbUpdates.trailer_key = details.trailerKey;
+  
+  await supabase.from('media_items').update(dbUpdates).eq('id', id);
 };
 
 export const deleteMediaItem = async (id: string) => {
@@ -193,6 +209,10 @@ export const deleteCustomList = async (listId: string) => {
     await supabase.from('custom_lists').delete().eq('id', listId);
 };
 
+export const shareCustomList = async (listId: string, userIds: string[]) => {
+    await supabase.from('custom_lists').update({ shared_with: userIds }).eq('id', listId);
+};
+
 // --- USER MANAGEMENT ---
 
 export const fetchAllProfiles = async (): Promise<User[]> => {
@@ -216,4 +236,20 @@ export const fetchAllProfiles = async (): Promise<User[]> => {
         loginCount: p.login_count || 0,
         lastLoginAt: p.last_login_at ? new Date(p.last_login_at).getTime() : undefined
     }));
+};
+
+export const updateUserRole = async (userId: string, newRole: UserRole) => {
+    const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userId);
+    
+    if (error) throw error;
+};
+
+export const deleteUserProfile = async (userId: string) => {
+    await supabase.from('media_items').delete().eq('user_id', userId);
+    await supabase.from('custom_lists').delete().eq('owner_id', userId);
+    const { error } = await supabase.from('profiles').delete().eq('id', userId);
+    if (error) throw error;
 };
