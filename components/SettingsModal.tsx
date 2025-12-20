@@ -5,10 +5,8 @@ import { useTranslation } from '../contexts/LanguageContext';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // Current values (from LocalStorage or Env)
   tmdbKey: string;
   omdbKey: string;
-  // Updaters
   onSave: (keys: { tmdb: string, omdb: string }) => void;
 }
 
@@ -39,8 +37,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
       onClose();
   };
 
-  const isTmdbEnvSet = !!process.env.VITE_TMDB_API_KEY;
-  const isOmdbEnvSet = !!process.env.VITE_OMDB_API_KEY;
+  // KORREKTUR: Nutze import.meta.env und die VITE_ Präfixe
+  const isTmdbEnvSet = !!import.meta.env.VITE_TMDB_API_KEY;
+  const isOmdbEnvSet = !!import.meta.env.VITE_OMDB_API_KEY;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -60,7 +59,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
             <div className="bg-cyan-500/10 p-4 rounded-xl border border-cyan-500/20 flex gap-3">
                 <Globe className="text-cyan-400 shrink-0" size={20} />
                 <p className="text-xs text-cyan-100 leading-relaxed">
-                    Die App ist für den <strong>vorkonfigurierten Modus (Vercel)</strong> optimiert. Manuelle API-Keys sind nur nötig, wenn du die Standard-Keys überschreiben möchtest.
+                    Die App ist für den <strong>vorkonfigurierten Modus (Vercel)</strong> optimiert. Manuelle API-Keys überschreiben die System-Einstellungen.
                 </p>
             </div>
 
@@ -70,17 +69,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
                         <Key size={12}/> TMDB API Key
                     </label>
-                    {isTmdbEnvSet && !localTmdb && (
-                        <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30 flex items-center gap-1 font-bold">
-                            <Check size={10}/> VERCEL MANAGED
+                    {/* Zeigt das grüne Badge nur, wenn wirklich der Vercel-Key aktiv ist */}
+                    {(isTmdbEnvSet && !localTmdb) ? (
+                        <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30 flex items-center gap-1 font-bold animate-pulse">
+                            <Check size={10}/> VERCEL ACTIVE
                         </span>
-                    )}
+                    ) : localTmdb ? (
+                        <span className="text-[10px] text-cyan-400 bg-cyan-900/20 px-2 py-0.5 rounded border border-cyan-900/30 flex items-center gap-1 font-bold">
+                            MANUAL OVERRIDE
+                        </span>
+                    ) : null}
                 </div>
                 <input 
                     type={showSecrets ? "text" : "password"}
                     value={localTmdb}
                     onChange={e => setLocalTmdb(e.target.value)}
-                    placeholder={isTmdbEnvSet ? "System-Key ist aktiv..." : "Key eingeben..."}
+                    placeholder={isTmdbEnvSet ? "System-Key wird verwendet..." : "Key eingeben..."}
                     className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none font-mono text-sm"
                 />
             </div>
@@ -91,17 +95,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
                         <Key size={12}/> OMDb API Key
                     </label>
-                    {isOmdbEnvSet && !localOmdb && (
-                        <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30 flex items-center gap-1 font-bold">
-                            <Check size={10}/> VERCEL MANAGED
+                    {(isOmdbEnvSet && !localOmdb) ? (
+                        <span className="text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30 flex items-center gap-1 font-bold animate-pulse">
+                            <Check size={10}/> VERCEL ACTIVE
                         </span>
-                    )}
+                    ) : localOmdb ? (
+                        <span className="text-[10px] text-cyan-400 bg-cyan-900/20 px-2 py-0.5 rounded border border-cyan-900/30 flex items-center gap-1 font-bold">
+                            MANUAL OVERRIDE
+                        </span>
+                    ) : null}
                 </div>
                 <input 
                     type={showSecrets ? "text" : "password"}
                     value={localOmdb}
                     onChange={e => setLocalOmdb(e.target.value)}
-                    placeholder={isOmdbEnvSet ? "System-Key ist aktiv..." : "Key eingeben..."}
+                    placeholder={isOmdbEnvSet ? "System-Key wird verwendet..." : "Key eingeben..."}
                     className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none font-mono text-sm"
                 />
             </div>
