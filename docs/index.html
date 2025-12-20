@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="de" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InFocus CineLog | Die AI Watchlist</title>
+    <title>InFocus CineLog | Die AI Watchlist v2.1.0</title>
     <meta name="description" content="Verwalte deine Filme & Serien mit AI-Support. Vision-Suche, Deep Content Analysis und Empfehlungen.">
     
     <!-- Fonts & Icons -->
@@ -19,6 +18,7 @@
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
                         slate: { 850: '#151e32', 950: '#020617' },
+                        navy: { 900: '#0B0E14', 800: '#11141d' },
                         cyan: { 450: '#00a8cc' }
                     },
                     animation: {
@@ -40,9 +40,9 @@
         }
     </script>
     <style>
-        body { background-color: #020617; color: #f8fafc; overflow-x: hidden; }
+        body { background-color: #0B0E14; color: #f8fafc; overflow-x: hidden; }
         .glass {
-            background: rgba(30, 41, 59, 0.4);
+            background: rgba(11, 14, 20, 0.7);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -63,8 +63,8 @@
 
     <!-- Background Elements -->
     <div class="fixed inset-0 pointer-events-none z-0">
-        <div class="absolute top-0 left-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]"></div>
+        <div class="absolute top-0 left-1/4 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px]"></div>
+        <div class="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[140px]"></div>
     </div>
 
     <!-- Navbar -->
@@ -88,12 +88,12 @@
     <!-- Hero Section -->
     <header class="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
         <div class="max-w-5xl mx-auto text-center relative z-10">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700 text-xs font-medium text-cyan-400 mb-6 animate-fade-in-up">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-navy-800 border border-slate-700 text-xs font-medium text-cyan-400 mb-6 animate-fade-in-up">
                 <span class="relative flex h-2 w-2">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                   <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
                 </span>
-                Jetzt mit Gemini 2.5 Flash Integration
+                Stable Baseline v2.1.0 (ITIL v4 Ready)
             </div>
             
             <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
@@ -102,16 +102,16 @@
             </h1>
             
             <p class="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Verwalte deine Filme und Serien mit der Power von Google Gemini.
+                Verwalte deine Filme und Serien mit der Power von <span class="text-white font-bold">Google Gemini 3 Flash</span>.
                 <span class="text-slate-200">Vision Search</span>, <span class="text-slate-200">Deep Content Analysis</span> und Freunde-Sync in einer App.
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <a href="https://infocus-cinelog.vercel.app/" target="_blank" class="px-8 py-4 bg-white text-slate-900 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-xl flex items-center gap-2">
+                <a href="https://infocus-cinelog.vercel.app/" target="_blank" class="px-8 py-4 bg-white text-navy-900 rounded-xl font-bold text-lg hover:scale-105 transition-transform shadow-xl flex items-center gap-2">
                     <i data-lucide="play-circle"></i> Loslegen
                 </a>
                 <a href="https://github.com/BigDaddy/cinelog-infocus" target="_blank" class="px-8 py-4 glass text-white rounded-xl font-bold text-lg hover:bg-white/5 transition-colors flex items-center gap-2">
-                    <i data-lucide="github"></i> GitHub
+                    <i data-lucide="github"></i> Repository
                 </a>
             </div>
         </div>
@@ -121,69 +121,56 @@
     <section id="showcase" class="relative pb-20 px-4">
         <div class="max-w-5xl mx-auto relative group">
             <div class="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-            <div class="relative glass rounded-2xl border border-slate-700 overflow-hidden shadow-2xl animate-float">
+            <div class="relative bg-navy-900 rounded-2xl border border-slate-700 overflow-hidden shadow-2xl animate-float">
                 <!-- Browser Header Mockup -->
-                <div class="bg-slate-900 px-4 py-3 border-b border-slate-700 flex items-center gap-2">
+                <div class="bg-navy-800 px-4 py-3 border-b border-white/5 flex items-center gap-2">
                     <div class="flex gap-1.5">
                         <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
                         <div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
                         <div class="w-3 h-3 rounded-full bg-green-500/50"></div>
                     </div>
-                    <div class="ml-4 bg-slate-800 rounded px-3 py-1 text-xs text-slate-500 flex-grow text-center font-mono">infocus-cinelog.vercel.app</div>
+                    <div class="ml-4 bg-navy-900 rounded px-3 py-1 text-xs text-slate-500 flex-grow text-center font-mono border border-white/5">infocus-cinelog.vercel.app</div>
                 </div>
                 
-                <!-- Simple CSS Representation of App Interface -->
-                <div class="bg-slate-950 p-6 md:p-8 aspect-video flex flex-col md:flex-row gap-6">
-                    <!-- Fake Sidebar -->
-                    <div class="hidden md:flex w-48 flex-col gap-4 border-r border-slate-800 pr-6">
-                        <div class="h-8 w-32 bg-slate-800 rounded-lg mb-4"></div>
+                <!-- Interface Representation -->
+                <div class="bg-navy-900 p-6 md:p-8 aspect-video flex flex-col md:flex-row gap-6">
+                    <!-- Sidebar -->
+                    <div class="hidden md:flex w-48 flex-col gap-4 border-r border-white/5 pr-6">
+                        <div class="h-8 w-32 bg-cyan-600/20 border border-cyan-500/30 rounded-lg mb-4 flex items-center justify-center text-[10px] text-cyan-400 font-bold uppercase tracking-widest">Add New</div>
                         <div class="space-y-2">
-                            <div class="h-8 w-full bg-cyan-900/20 border-l-2 border-cyan-500 rounded-r flex items-center px-2 text-xs text-cyan-400 font-bold">Watchlist</div>
+                            <div class="h-8 w-full bg-white/5 border-l-2 border-cyan-500 rounded-r flex items-center px-2 text-xs text-white font-bold">Watchlist</div>
                             <div class="h-8 w-full bg-transparent flex items-center px-2 text-xs text-slate-500">Gesehen</div>
                             <div class="h-8 w-full bg-transparent flex items-center px-2 text-xs text-slate-500">Favoriten</div>
                         </div>
-                        <div class="mt-auto h-24 w-full bg-gradient-to-br from-purple-900/20 to-slate-800 rounded-xl border border-purple-500/20 p-3">
-                            <div class="flex items-center gap-2 text-purple-300 text-xs font-bold mb-1"><i data-lucide="sparkles" class="w-3 h-3"></i> AI Tipp</div>
-                            <div class="h-2 w-20 bg-slate-700 rounded opacity-50"></div>
+                        <div class="mt-auto h-20 w-full bg-gradient-to-br from-purple-900/40 to-slate-800 rounded-xl border border-purple-500/20 p-3">
+                            <div class="flex items-center gap-2 text-purple-300 text-[10px] font-bold mb-1 uppercase tracking-tighter"><i data-lucide="sparkles" class="w-3 h-3"></i> AI Empfehlung</div>
+                            <div class="h-1.5 w-full bg-purple-500/20 rounded"></div>
                         </div>
                     </div>
                     
-                    <!-- Fake Grid -->
+                    <!-- Content Grid -->
                     <div class="flex-grow">
                         <div class="flex justify-between items-end mb-6">
                             <div>
-                                <div class="h-6 w-32 bg-slate-800 rounded mb-2"></div>
-                                <div class="h-3 w-48 bg-slate-800/50 rounded"></div>
+                                <div class="h-4 w-32 bg-slate-700 rounded mb-2"></div>
+                                <div class="h-2.5 w-48 bg-slate-800 rounded"></div>
                             </div>
-                            <div class="h-8 w-24 bg-slate-800 rounded border border-slate-700"></div>
+                            <div class="h-8 w-24 bg-navy-800 rounded border border-white/5"></div>
                         </div>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <!-- Card 1 -->
-                            <div class="aspect-[2/3] bg-slate-800 rounded-lg relative overflow-hidden group/card">
-                                <div class="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-80"></div>
-                                <div class="absolute bottom-3 left-3 right-3">
-                                    <div class="h-4 w-3/4 bg-slate-600 rounded mb-1"></div>
-                                    <div class="flex gap-1"><div class="h-2 w-8 bg-cyan-900 rounded"></div></div>
+                            <div class="aspect-[2/3] bg-navy-800 rounded-xl border border-white/5 relative overflow-hidden group/card shadow-lg">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60"></div>
+                                <div class="absolute bottom-3 left-3 right-3 space-y-1">
+                                    <div class="h-3 w-3/4 bg-slate-500 rounded"></div>
+                                    <div class="h-2 w-1/2 bg-slate-600 rounded"></div>
                                 </div>
+                                <div class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/40 backdrop-blur-sm border border-white/10"></div>
                             </div>
-                            <!-- Card 2 -->
-                            <div class="aspect-[2/3] bg-slate-800 rounded-lg relative overflow-hidden">
-                                <div class="absolute inset-0 bg-slate-800 flex items-center justify-center">
-                                    <i data-lucide="film" class="text-slate-700 w-8 h-8"></i>
-                                </div>
+                            <div class="aspect-[2/3] bg-navy-800 rounded-xl border border-white/5 flex items-center justify-center">
+                                <i data-lucide="film" class="text-slate-700 w-8 h-8"></i>
                             </div>
-                             <!-- Card 3 -->
-                             <div class="aspect-[2/3] bg-slate-800 rounded-lg relative overflow-hidden hidden md:block">
-                                <div class="absolute inset-0 bg-slate-800 flex items-center justify-center">
-                                    <i data-lucide="tv" class="text-slate-700 w-8 h-8"></i>
-                                </div>
-                            </div>
-                             <!-- Card 4 -->
-                             <div class="aspect-[2/3] bg-slate-800 rounded-lg relative overflow-hidden hidden md:block">
-                                <div class="absolute inset-0 bg-slate-800 flex items-center justify-center">
-                                    <i data-lucide="image" class="text-slate-700 w-8 h-8"></i>
-                                </div>
-                            </div>
+                             <div class="aspect-[2/3] bg-navy-800 rounded-xl border border-white/5 hidden md:block"></div>
+                             <div class="aspect-[2/3] bg-navy-800 rounded-xl border border-white/5 hidden md:block"></div>
                         </div>
                     </div>
                 </div>
@@ -196,35 +183,35 @@
         <div class="max-w-6xl mx-auto">
             <div class="grid md:grid-cols-3 gap-8">
                 <!-- Feature 1 -->
-                <div class="glass p-8 rounded-2xl hover:bg-slate-800/50 transition-colors">
-                    <div class="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center mb-6 text-cyan-400">
+                <div class="glass p-8 rounded-3xl hover:bg-navy-800 transition-colors">
+                    <div class="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center mb-6 text-cyan-400 border border-cyan-500/20">
                         <i data-lucide="camera" class="w-6 h-6"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white mb-3">Vision Search</h3>
                     <p class="text-slate-400 leading-relaxed">
-                        Siehst du ein Poster im Kino? Fotografiere es ab. Unsere AI erkennt den Film und fügt ihn deiner Watchlist hinzu.
+                        Fotografiere Filmplakate oder Cover. Unsere Gemini 3 Vision erkennt Titel sofort und spart dir das Tippen.
                     </p>
                 </div>
 
                 <!-- Feature 2 -->
-                <div class="glass p-8 rounded-2xl hover:bg-slate-800/50 transition-colors">
-                    <div class="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-6 text-purple-400">
+                <div class="glass p-8 rounded-3xl hover:bg-navy-800 transition-colors">
+                    <div class="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-6 text-purple-400 border border-purple-500/20">
                         <i data-lucide="brain-circuit" class="w-6 h-6"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white mb-3">Deep Analysis</h3>
                     <p class="text-slate-400 leading-relaxed">
-                        Hinterlege Notizen zu Filmen. Die AI lernt deinen Geschmack und gibt dir tiefgründige Einblicke ("Deep Insights").
+                        Schreibe Rezensionen und erhalte "Deep Insights". Die KI versteht deinen Geschmack auf einer neuen Ebene.
                     </p>
                 </div>
 
                 <!-- Feature 3 -->
-                <div class="glass p-8 rounded-2xl hover:bg-slate-800/50 transition-colors">
-                    <div class="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center mb-6 text-green-400">
+                <div class="glass p-8 rounded-3xl hover:bg-navy-800 transition-colors">
+                    <div class="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center mb-6 text-green-400 border border-green-500/20">
                         <i data-lucide="users" class="w-6 h-6"></i>
                     </div>
                     <h3 class="text-xl font-bold text-white mb-3">Social Sync</h3>
                     <p class="text-slate-400 leading-relaxed">
-                        Erstelle Listen wie "Halloween Marathon" und teile sie in Echtzeit mit Freunden. Cross-Device Synchronisation.
+                        Teile Listen mit Freunden und synchronisiere deinen Fortschritt in Echtzeit. Gemeinsam Filme entdecken.
                     </p>
                 </div>
             </div>
@@ -233,62 +220,63 @@
 
     <!-- AI Highlight Section -->
     <section id="ai" class="py-20 px-6 relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-b from-slate-950 via-purple-900/10 to-slate-950"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-navy-900 via-purple-900/10 to-navy-900"></div>
         
-        <div class="max-w-5xl mx-auto relative z-10 bg-slate-900/80 border border-purple-500/20 rounded-3xl p-8 md:p-12 text-center md:text-left flex flex-col md:flex-row items-center gap-10 shadow-2xl">
+        <div class="max-w-5xl mx-auto relative z-10 bg-navy-800/80 border border-purple-500/20 rounded-[2.5rem] p-8 md:p-12 text-center md:text-left flex flex-col md:flex-row items-center gap-10 shadow-2xl backdrop-blur-xl">
             <div class="flex-1">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-900/30 border border-purple-500/30 text-xs font-bold text-purple-300 mb-4">
-                    <i data-lucide="sparkles" class="w-3 h-3"></i> Powered by Google Gemini
+                    <i data-lucide="sparkles" class="w-3 h-3"></i> Powered by Gemini 3 Flash
                 </div>
                 <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
                     Dein persönlicher <br/>
                     <span class="text-gradient-purple">Film-Experte.</span>
                 </h2>
                 <p class="text-slate-400 mb-8 leading-relaxed">
-                    Der integrierte <strong>CineChat Bot</strong> kennt deine gesamte Sammlung. Frag ihn: 
-                    <em class="text-slate-300">"Welche Horrorfilme aus den 80ern habe ich noch auf meiner Watchlist?"</em> 
-                    oder lass dir basierend auf deinen Favoriten etwas Neues empfehlen.
+                    Der integrierte <strong>CineChat Bot</strong> kennt deine Sammlung. Er nutzt Smart Caching, um blitzschnell und effizient auf deine Fragen zu antworten.
                 </p>
                 <div class="flex flex-wrap gap-4 justify-center md:justify-start">
-                    <div class="flex items-center gap-2 text-sm text-slate-300 bg-slate-800 px-4 py-2 rounded-lg">
+                    <div class="flex items-center gap-2 text-sm text-slate-300 bg-navy-900 px-4 py-2 rounded-xl border border-white/5">
                         <i data-lucide="message-circle" class="text-purple-400 w-4 h-4"></i> Kontext-Chat
                     </div>
-                    <div class="flex items-center gap-2 text-sm text-slate-300 bg-slate-800 px-4 py-2 rounded-lg">
+                    <div class="flex items-center gap-2 text-sm text-slate-300 bg-navy-900 px-4 py-2 rounded-xl border border-white/5">
                         <i data-lucide="zap" class="text-yellow-400 w-4 h-4"></i> Smart Caching
                     </div>
                 </div>
             </div>
             <div class="w-full md:w-1/3 aspect-square bg-gradient-to-br from-purple-600 to-blue-600 rounded-full blur-3xl opacity-20 absolute right-0"></div>
-            <div class="relative w-full md:w-80 bg-slate-950 border border-slate-800 rounded-2xl p-4 shadow-xl">
+            <div class="relative w-full md:w-80 bg-navy-900 border border-slate-800 rounded-2xl p-5 shadow-2xl ring-1 ring-white/10">
                 <!-- Chat Mockup -->
-                <div class="space-y-3">
+                <div class="space-y-4">
                     <div class="flex justify-end">
-                        <div class="bg-purple-600 text-white text-xs px-3 py-2 rounded-lg rounded-tr-none max-w-[80%]">
-                            Suche was spannendes für heute Abend.
+                        <div class="bg-cyan-600 text-white text-[11px] px-3 py-2 rounded-2xl rounded-tr-none max-w-[80%] shadow-md">
+                            Welche Sci-Fi Klassiker habe ich?
                         </div>
                     </div>
                     <div class="flex justify-start">
-                        <div class="bg-slate-800 text-slate-300 text-xs px-3 py-2 rounded-lg rounded-tl-none max-w-[90%] border border-slate-700">
-                            Basierend auf deiner Liebe zu "Inception" und "Dark", empfehle ich dir <strong>"Coherence"</strong>. Er liegt bereits auf deiner Watchlist!
+                        <div class="bg-navy-800 text-slate-300 text-[11px] px-3 py-2 rounded-2xl rounded-tl-none max-w-[90%] border border-white/5 shadow-md">
+                            Du hast <strong>"Blade Runner"</strong> und <strong>"2001"</strong>. Letzteren hast du mit 5 Sternen bewertet!
                         </div>
                     </div>
                 </div>
-                <div class="mt-4 pt-3 border-t border-slate-800 flex gap-2 opacity-50">
-                    <div class="flex-grow h-8 bg-slate-900 rounded border border-slate-700"></div>
-                    <div class="w-8 h-8 bg-purple-600 rounded"></div>
+                <div class="mt-4 pt-3 border-t border-white/5 flex gap-2 opacity-50">
+                    <div class="flex-grow h-8 bg-navy-950 rounded-lg border border-white/5"></div>
+                    <div class="w-8 h-8 bg-cyan-600 rounded-lg"></div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="py-12 border-t border-slate-800 text-center text-slate-500 text-sm">
-        <div class="flex justify-center gap-6 mb-8">
-            <a href="https://infocus-cinelog.vercel.app/" class="hover:text-cyan-400 transition-colors">App Starten</a>
-            <a href="https://github.com/BigDaddy/cinelog-infocus" class="hover:text-white transition-colors">GitHub</a>
-            <a href="https://www.themoviedb.org/" class="hover:text-white transition-colors">TMDB Api</a>
+    <footer class="py-16 border-t border-white/5 text-center text-slate-500 text-sm">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-center gap-8 mb-10">
+                <a href="https://infocus-cinelog.vercel.app/" class="hover:text-cyan-400 transition-colors">App Starten</a>
+                <a href="https://github.com/BigDaddy/cinelog-infocus" class="hover:text-white transition-colors">GitHub</a>
+                <a href="https://www.themoviedb.org/" class="hover:text-white transition-colors">TMDB Api</a>
+            </div>
+            <p class="mb-2">&copy; 2024 InFocus CineLog. All rights reserved.</p>
+            <p class="text-[10px] uppercase tracking-widest text-slate-700">Frozen Baseline v2.1.0 • Built for Performance</p>
         </div>
-        <p>&copy; 2024 InFocus CineLog. Made with React, Tailwind & Gemini AI.</p>
     </footer>
 
     <!-- Init Icons -->
@@ -297,4 +285,3 @@
     </script>
 </body>
 </html>
-    

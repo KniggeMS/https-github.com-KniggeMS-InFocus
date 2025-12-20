@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Language } from '../types';
 
@@ -13,10 +12,15 @@ const dictionary: Translations = {
     "username": "Benutzername",
     "email": "E-Mail Adresse",
     "password": "Passwort",
+    "forgot_password": "Passwort vergessen?",
     "login_button": "Anmelden",
     "register_button": "Registrieren",
     "switch_to_register": "Noch kein Konto? Hier registrieren",
     "switch_to_login": "Bereits ein Konto? Hier anmelden",
+    "reset_password": "Passwort zurücksetzen",
+    "reset_subtitle": "Gib deine E-Mail an.",
+    "send_reset_link": "Link anfordern",
+    "back_to_login": "Zurück zum Login",
     "to_watch": "Geplant",
     "watching": "Dabei",
     "watched": "Gesehen",
@@ -38,10 +42,6 @@ const dictionary: Translations = {
     "überblick": "Überblick",
     "stream": "Stream",
     "registration_success": "Erfolgreich! Bitte melde dich an.",
-    "reset_password": "Passwort zurücksetzen",
-    "reset_subtitle": "Link anfordern.",
-    "send_reset_link": "Senden",
-    "back_to_login": "Zurück",
     "profile_updated": "Profil gespeichert",
     "password_updated": "Passwort geändert",
     "member_since": "Mitglied seit",
@@ -53,7 +53,10 @@ const dictionary: Translations = {
     "chat_placeholder": "Frag mich etwas...",
     "analyzing": "Analysiere...",
     "ai_tip": "AI Tipp",
-    "new_rec": "Neu"
+    "new_rec": "Neu",
+    "firstname": "Vorname",
+    "lastname": "Nachname",
+    "confirm_password": "Passwort bestätigen"
   },
   en: {
     "welcome_back": "Welcome Back",
@@ -63,10 +66,15 @@ const dictionary: Translations = {
     "username": "Username",
     "email": "Email",
     "password": "Password",
+    "forgot_password": "Forgot password?",
     "login_button": "Sign In",
     "register_button": "Register",
     "switch_to_register": "New here? Register",
     "switch_to_login": "Have an account? Login",
+    "reset_password": "Reset Password",
+    "reset_subtitle": "Enter your email.",
+    "send_reset_link": "Send Link",
+    "back_to_login": "Back to Login",
     "to_watch": "Planned",
     "watching": "Watching",
     "watched": "Watched",
@@ -93,7 +101,10 @@ const dictionary: Translations = {
     "chat_placeholder": "Ask me anything...",
     "analyzing": "Analyzing...",
     "ai_tip": "AI Tip",
-    "new_rec": "New"
+    "new_rec": "New",
+    "firstname": "First Name",
+    "lastname": "Last Name",
+    "confirm_password": "Confirm Password"
   }
 };
 

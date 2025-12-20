@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertCircle, Loader2, Sparkles, Plus, X, Quote, Film } from 'lucide-react';
@@ -96,7 +95,7 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                             {loading ? t('analyzing') : t('ai_tip')}
                         </p>
                         <p className="text-[10px] text-purple-300/80 uppercase tracking-wide font-medium">
-                            {loading ? "Gemini 2.5 Flash" : t('new_rec')}
+                            {loading ? "Gemini 3 Flash" : t('new_rec')}
                         </p>
                         </div>
                     </button>
@@ -105,7 +104,6 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
         )}
 
         {/* Mobile FAB Trigger - Only show if mobileFabOnly or if normal rendering (but handled via CSS md:hidden) */}
-        {/* We use mobileFabOnly prop to force render it in specific mobile contexts if needed */}
         <button 
             onClick={getAiTip}
             disabled={loading}
@@ -145,7 +143,7 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                         </div>
 
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[10px] font-bold uppercase tracking-widest mb-3">
-                            <Sparkles size={10} /> Gemini Empfehlung
+                            <Sparkles size={10} /> Gemini 3 Flash Empfehlung
                         </div>
                         
                         <h3 className="text-2xl md:text-3xl font-extrabold text-white mb-1 leading-tight text-balance">
