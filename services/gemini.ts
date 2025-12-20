@@ -29,7 +29,8 @@ export async function getChatResponse(userMessage: string, history: ChatMessage[
   } catch (error) { return "Fehler im Chat."; }
 }
 
+// KORREKTUR: Expliziter Cast auf any[], um die "title does not exist on never" Fehler zu töten
+export const getRecommendations = async (...args: any[]): Promise<any> => [] as any; 
 export const chatWithAI = async (...args: any[]) => getChatResponse(args[0], args[1], args[2]);
-export const getRecommendations = async (...args: any[]): Promise<Record<string, any>[]> => []; 
 export const generateAvatar = async (...args: any[]) => "";
 export const analyzeMovieContext = async (...args: any[]) => "";
