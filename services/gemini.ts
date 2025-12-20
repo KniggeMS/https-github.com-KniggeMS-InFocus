@@ -29,8 +29,8 @@ export async function getChatResponse(userMessage: string, history: ChatMessage[
   } catch (error) { return "Fehler im Chat."; }
 }
 
-// Stabilitäts-Exporte für bestehende Komponenten
-export const chatWithAI = getChatResponse;
-export const getRecommendations = async () => [];
-export const generateAvatar = async () => "";
-export const analyzeMovieContext = async () => "";
+// STABILITÄTS-EXPORTE FÜR ALTE KOMPONENTEN
+export const chatWithAI = async (message: any, history: any, watchlist: any) => getChatResponse(message, history, watchlist);
+export const getRecommendations = async (watchlist?: any) => [];
+export const generateAvatar = async (seed?: any) => "";
+export const analyzeMovieContext = async (title?: any, plot?: any) => "";
