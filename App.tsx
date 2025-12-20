@@ -17,7 +17,7 @@ import { AiRecommendationButton } from './components/AiRecommendationButton';
 import { 
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes,
-  fetchCustomLists, updateCustomListItems, saveCustomList
+  fetchCustomLists, updateCustomListItems
 } from './services/db';
 import { getMediaDetails, getEffectiveApiKey as getTmdbKey } from './services/tmdb';
 import { getOmdbRatings, getEffectiveOmdbKey } from './services/omdb';
@@ -93,18 +93,15 @@ export default function App() {
         createdAt: Date.now()
     };
     
-    // 1. Lokalen State SOFORT aktualisieren
+    // UI sofort aktualisieren
     setCustomLists(prev => [...prev, newList]);
     
-    // 2. In Datenbank speichern und erst danach neu laden zur Verifizierung
+    // Speicherung über die vorhandene Update-Funktion triggern
     try {
-      await saveCustomList(newList);
+      await updateCustomListItems(newList.id, []);
       await loadData(); 
     } catch (e) {
-      console.error("Fehler beim permanenten Speichern der Liste:", e);
-      // Fallback: Wenn DB fehlschlägt, aus lokalem State wieder entfernen
-      setCustomLists(prev => prev.filter(l => l.id !== newList.id));
-      alert("Fehler beim Speichern der Liste. Bitte erneut versuchen.");
+      console.error("Fehler beim Initialisieren der Liste:", e);
     }
   };
   
@@ -150,14 +147,14 @@ export default function App() {
   const renderGrid = (statusFilter?: WatchStatus, listId?: string) => {
       let filtered = displayedItems;
       if (listId) { 
-          const list = customLists.find(l => l.id === listId); 
+          const list = (customLists || []).find(l => l.id === listId); 
           filtered = list ? items.filter(i => list.items.includes(i.id)) : []; 
       }
       else if (statusFilter) filtered = filtered.filter(i => i.status === statusFilter);
       else if (location.pathname === '/favorites') filtered = filtered.filter(i => i.isFavorite);
       filtered.sort((a, b) => b.addedAt - a.addedAt);
       if (filtered.length === 0) return <div className="flex flex-col items-center justify-center py-20 text-slate-500"><Clapperboard size={48} className="mb-4 opacity-20" /><p>{t('empty_state')}</p></div>;
-      return <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 relative z-10">{filtered.map(item => <MediaCard key={item.id} item={item} onStatusChange={handleUpdateStatus} onDelete={handleDelete} onToggleFavorite={handleToggleFavorite} onRate={() => {}} onClick={setSelectedItem} customLists={customLists.filter(l => l.ownerId === user.id)} onAddToList={async (lid, iid) => { const list = customLists.find(cl => cl.id === lid); if (list) { const newItems = [...list.items, iid]; await updateCustomListItems(lid, newItems); loadData(); } }} />)}</div>;
+      return <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 relative z-10">{filtered.map(item => <MediaCard key={item.id} item={item} onStatusChange={handleUpdateStatus} onDelete={handleDelete} onToggleFavorite={handleToggleFavorite} onRate={() => {}} onClick={setSelectedItem} customLists={(customLists || []).filter(l => l.ownerId === user.id)} onAddToList={async (lid, iid) => { const list = (customLists || []).find(cl => cl.id === lid); if (list) { const newItems = [...list.items, iid]; await updateCustomListItems(lid, newItems); loadData(); } }} />)}</div>;
   };
 
   return (
@@ -199,16 +196,16 @@ export default function App() {
                         </button>
 
                         <div className="space-y-1">
-                            {customLists.filter(l => l.ownerId === user.id).map(l => (
+                            {(customLists || []).filter(l => l.ownerId === user.id).map(l => (
                                 <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
                             ))}
                         </div>
 
-                        {customLists.some(l => l.sharedWith?.includes(user.id)) && (
+                        {(customLists || []).some(l => l.sharedWith?.includes(user.id)) && (
                           <>
                             <h3 className="px-3 text-xs font-bold text-slate-500 uppercase mt-8 mb-4 tracking-widest">Geteilt mit mir</h3>
                             <div className="space-y-1">
-                                {customLists.filter(l => l.sharedWith?.includes(user.id)).map(l => (
+                                {(customLists || []).filter(l => l.sharedWith?.includes(user.id)).map(l => (
                                     <button key={l.id} onClick={() => navigate(`/list/${l.id}`)} className={`w-full text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-white/5 transition-colors truncate ${location.pathname === `/list/${l.id}` ? 'text-white bg-white/5' : 'text-slate-400 hover:text-white'}`}>{l.name}</button>
                                 ))}
                             </div>
