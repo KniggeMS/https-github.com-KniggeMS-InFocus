@@ -83,7 +83,11 @@ export default function App() {
     if (!user || !name.trim()) return;
     
     try {
+<<<<<<< HEAD
       // KORREKTUR: Übergibt nur den 'name' (string) wie in db.ts gefordert
+=======
+      // Nutzt die neue Signatur: Erwartet string, nicht Objekt
+>>>>>>> a5ab347 (Fix: Synchronize db and app logic, fix type mismatches and restore missing exports)
       const savedList = await createCustomList(name, user.id);
       if (savedList) {
         setCustomLists(prev => [...prev, savedList]);
@@ -91,7 +95,11 @@ export default function App() {
         navigate(`/list/${savedList.id}`);
       }
     } catch (e) {
+<<<<<<< HEAD
       console.error("Fehler beim Erstellen:", e);
+=======
+      console.error("Fehler beim Erstellen der Liste:", e);
+>>>>>>> a5ab347 (Fix: Synchronize db and app logic, fix type mismatches and restore missing exports)
     }
   };
   

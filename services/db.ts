@@ -144,6 +144,9 @@ export const updateMediaItemDetails = async (id: string, details: Partial<MediaI
   if (details.providers) dbUpdates.providers = details.providers;
   if (details.credits) dbUpdates.credits = details.credits;
   if (details.trailerKey) dbUpdates.trailer_key = details.trailerKey;
+  // Korrektur der Feldnamen für TypeScript
+  if (details.userRating !== undefined) dbUpdates.user_rating = details.userRating;
+  if (details.userNotes !== undefined) dbUpdates.user_notes = details.userNotes;
   
   await supabase.from('media_items').update(dbUpdates).eq('id', id);
 };
@@ -252,4 +255,3 @@ export const deleteUserProfile = async (userId: string) => {
     await supabase.from('custom_lists').delete().eq('owner_id', userId);
     const { error } = await supabase.from('profiles').delete().eq('id', userId);
     if (error) throw error;
-};
