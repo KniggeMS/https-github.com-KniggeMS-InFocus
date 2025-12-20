@@ -9,6 +9,7 @@ export const getEffectiveApiKey = (manualKey: string): string => {
   return import.meta.env.VITE_TMDB_API_KEY || manualKey;
 };
 
+// Haupt-Suchfunktion
 export async function searchMedia(query: string, apiKey: string): Promise<SearchResult[]> {
   const effectiveKey = getEffectiveApiKey(apiKey);
   if (!effectiveKey) return [];
@@ -33,9 +34,9 @@ export async function searchMedia(query: string, apiKey: string): Promise<Search
   } catch (error) { return []; }
 }
 
-// STABILITÄTS-EXPORTE
-export async function searchTMDB(query: string, apiKey: string, year?: any) { return searchMedia(query, apiKey); }
-export async function findByExternalId(id: string, source: string, apiKey: string) { return null; }
+// STABILITÄTS-EXPORTE: Akzeptiert beliebig viele Argumente
+export async function searchTMDB(...args: any[]) { return searchMedia(args[0], args[1]); }
+export async function findByExternalId(...args: any[]) { return null; }
 
 export async function getMediaDetails(item: SearchResult, apiKey: string): Promise<Partial<MediaItem>> {
   const effectiveKey = getEffectiveApiKey(apiKey);

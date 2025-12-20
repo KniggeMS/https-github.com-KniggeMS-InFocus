@@ -29,8 +29,8 @@ export async function getChatResponse(userMessage: string, history: ChatMessage[
   } catch (error) { return "Fehler im Chat."; }
 }
 
-// STABILITÄTS-EXPORTE FÜR ALTE KOMPONENTEN
-export const chatWithAI = async (message: any, history: any, watchlist: any) => getChatResponse(message, history, watchlist);
-export const getRecommendations = async (watchlist?: any) => [];
-export const generateAvatar = async (seed?: any) => "";
-export const analyzeMovieContext = async (title?: any, plot?: any) => "";
+// STABILITÄTS-EXPORTE: Nutzt Promise<any[]>, um "Property title does not exist on type never" zu fixen
+export const chatWithAI = async (...args: any[]) => getChatResponse(args[0], args[1], args[2]);
+export const getRecommendations = async (...args: any[]): Promise<any[]> => []; 
+export const generateAvatar = async (...args: any[]) => "";
+export const analyzeMovieContext = async (...args: any[]) => "";

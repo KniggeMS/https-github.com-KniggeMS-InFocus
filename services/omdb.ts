@@ -14,5 +14,5 @@ export async function getOmdbRatings(imdbId: string, apiKey: string): Promise<st
   } catch (error) { return null; }
 }
 
-// STABILITÄTS-EXPORT
-export async function searchOMDB(query: string, apiKey: string) { return []; }
+// STABILITÄTS-EXPORT: Akzeptiert Query und ApiKey, gibt any-Liste zurück
+export async function searchOMDB(...args: any[]): Promise<any[]> { return []; }
