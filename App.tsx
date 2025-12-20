@@ -28,7 +28,7 @@ const ListRoute = ({ customLists, renderGrid, onShare }: { customLists: CustomLi
     const { id } = useParams();
     const { user } = useAuth();
     const { t } = useTranslation();
-    const list = customLists.find(l => l.id === id);
+    const list = (customLists || []).find(l => l.id === id);
     if (!list) return <div className="p-8 text-center text-slate-500">Liste nicht gefunden</div>;
     const isOwner = user?.id === list.ownerId;
     
@@ -84,8 +84,9 @@ export default function App() {
   const handleCreateList = async (name: string) => {
     if (!user) return;
     
+    const listId = crypto.randomUUID();
     const newList: CustomList = {
-        id: crypto.randomUUID(),
+        id: listId,
         ownerId: user.id,
         name: name,
         items: [],
@@ -93,15 +94,18 @@ export default function App() {
         createdAt: Date.now()
     };
     
-    // UI sofort aktualisieren
+    // UI sofort aktualisieren (optimistisch)
     setCustomLists(prev => [...prev, newList]);
     
-    // Speicherung über die vorhandene Update-Funktion triggern
     try {
-      await updateCustomListItems(newList.id, []);
+      // Speicherung triggern (Sicherstellen, dass db.ts die Liste hier persistent macht)
+      await updateCustomListItems(listId, []);
+      setIsCreateModalOpen(false);
       await loadData(); 
     } catch (e) {
       console.error("Fehler beim Initialisieren der Liste:", e);
+      // Rollback bei Fehler
+      setCustomLists(prev => prev.filter(l => l.id !== listId));
     }
   };
   
