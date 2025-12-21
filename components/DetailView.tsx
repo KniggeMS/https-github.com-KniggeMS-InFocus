@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  X, Heart, Play, Clock, Share2, Film, User, Calendar, Zap, Sparkles
+  X, Heart, Play, Clock, Share2, Film, User, Calendar, Zap, Sparkles, Plus
 } from 'lucide-react';
 import { MediaItem, SearchResult, WatchStatus, MediaType } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
@@ -30,10 +30,18 @@ export const DetailView: React.FC<DetailViewProps> = ({
     const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
     const [backgroundTrailerUrl, setBackgroundTrailerUrl] = useState<string | null>(null);
     
-    const [activeTab, setActiveTab] = useState<'overview' | 'cast' | 'watch'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'cast' | 'facts'>('overview');
     const [notes, setNotes] = useState(isExisting ? (initialItem as MediaItem).userNotes || '' : '');
     const [showTrailer, setShowTrailer] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [localIsFav, setLocalIsFav] = useState(isExisting ? (initialItem as MediaItem).isFavorite || false : false);
+
+    const handleToggleFav = () => {
+        if (isExisting && onToggleFavorite) {
+            onToggleFavorite((initialItem as MediaItem).id);
+        }
+        setLocalIsFav(prev => !prev);
+    };
 
     useEffect(() => {
         const loadDetails = async () => {
@@ -47,7 +55,7 @@ export const DetailView: React.FC<DetailViewProps> = ({
                     setTrailerUrl(`https://www.youtube-nocookie.com/embed/${finalTrailerKey}?autoplay=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(origin)}`);
                     const bgParams = new URLSearchParams({
                         autoplay: '1', mute: '1', controls: '0', loop: '1', playlist: finalTrailerKey,
-                        rel: '0', showinfo: '0', enablejsapi: '1', origin: origin,
+                        rel: '0', showinfo: '0', enablejsapi: '1', origin: origin, playsinline: '1'
                     }).toString();
                     setBackgroundTrailerUrl(`https://www.youtube.com/embed/${finalTrailerKey}?${bgParams}`);
                 }
@@ -72,6 +80,8 @@ export const DetailView: React.FC<DetailViewProps> = ({
         } catch (err) {}
     };
 
+
+
     const handleSaveNotes = () => {
         if (isExisting && onUpdateNotes && (initialItem as MediaItem).id) {
             onUpdateNotes((initialItem as MediaItem).id, notes);
@@ -81,24 +91,36 @@ export const DetailView: React.FC<DetailViewProps> = ({
     const displayItem = { ...initialItem, ...details };
     const posterUrl = displayItem.posterPath ? (displayItem.posterPath.startsWith('http') ? displayItem.posterPath : `${IMAGE_BASE_URL}${displayItem.posterPath}`) : null;
     const rtState = displayItem.rtScore ? (parseInt(displayItem.rtScore) >= 60 ? 'fresh' : 'rotten') : null;
-    const isFav = isExisting ? (initialItem as MediaItem).isFavorite : false;
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0B0E14]/95 backdrop-blur-md animate-in fade-in duration-300 p-4 md:p-8">
-            <div className="bg-[#0B0E14] w-full max-w-5xl h-full md:h-auto md:max-h-[85vh] rounded-[2rem] shadow-2xl border border-white/5 flex flex-col md:flex-row overflow-hidden relative">
+            <div className="bg-[#0B0E14] w-full max-w-5xl h-full md:h-auto md:max-h-[85vh] rounded-[2rem] shadow-2xl border border-white/5 flex flex-col md:flex-row overflow-hidden relative group">
                 
-                <button onClick={onClose} className="absolute top-6 right-6 z-[100] p-2 bg-white/5 hover:bg-white/10 text-white rounded-full border border-white/10 transition-all active:scale-90">
+                {/* CINEMATIC BACKGROUND TRAILER */}
+                {backgroundTrailerUrl && (
+                    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-60">
+                        <iframe 
+                            src={backgroundTrailerUrl} 
+                            className="w-[150%] h-[150%] -ml-[25%] -mt-[25%] object-cover pointer-events-none filter blur-[2px] scale-110 opacity-80 mix-blend-screen" 
+                            allow="autoplay; encrypted-media" 
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0E14] via-[#0B0E14]/70 to-[#0B0E14]/40"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-[#0B0E14]/30 to-transparent"></div>
+                    </div>
+                )}
+
+                <button onClick={onClose} className="absolute top-6 right-6 z-[100] p-2 bg-white/5 hover:bg-white/10 text-white rounded-full border border-white/10 transition-all active:scale-90 backdrop-blur-md">
                     <X size={20} />
                 </button>
 
-                <div className="w-full md:w-[340px] shrink-0 bg-black relative flex items-center justify-center overflow-hidden">
+                <div className="w-full md:w-[340px] shrink-0 bg-transparent relative flex items-center justify-center overflow-hidden z-10">
                     {!showTrailer && (
                         <div className="relative z-10 p-10 w-full">
-                            <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900">
+                            <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900 group-hover:scale-105 transition-transform duration-700 ease-out">
                                 {posterUrl ? <img src={posterUrl} className="w-full h-full object-cover" alt=""/> : <div className="w-full h-full flex items-center justify-center"><Film size={48} className="text-slate-700"/></div>}
                                 {trailerUrl && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 cursor-pointer" onClick={() => setShowTrailer(true)}>
-                                        <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white shadow-2xl hover:scale-110 transition-transform">
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={() => setShowTrailer(true)}>
+                                        <div className="w-16 h-16 bg-red-600/90 backdrop-blur-md rounded-full flex items-center justify-center text-white shadow-2xl hover:scale-110 transition-transform border border-white/20">
                                             <Play size={32} fill="currentColor" className="ml-1" />
                                         </div>
                                     </div>
@@ -116,46 +138,109 @@ export const DetailView: React.FC<DetailViewProps> = ({
                     )}
                 </div>
 
-                <div className="flex-grow flex flex-col overflow-hidden bg-gradient-to-br from-[#0B0E14] to-[#121620]">
+                <div className="flex-grow flex flex-col overflow-hidden bg-transparent z-10 relative text-slate-200">
                     <div className="p-8 md:p-10 pb-0">
-                        <div className="flex flex-wrap gap-2 mb-3">
-                            <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[9px] font-black uppercase tracking-widest border border-cyan-500/20">{displayItem.type}</span>
+                        <div className="flex flex-wrap gap-2 mb-4 items-center">
+                            <span className="px-2.5 py-1 rounded bg-[#00A3C4]/20 text-[#00A3C4] text-[10px] font-black uppercase tracking-widest border border-[#00A3C4]/20">{displayItem.type}</span>
+                            {displayItem.productionStatus && (
+                                <span className={`px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-widest border ${displayItem.productionStatus === 'Released' ? 'bg-[#FF9F1C]/20 text-[#FF9F1C] border-[#FF9F1C]/20' : 'bg-orange-500/20 text-orange-400 border-orange-500/20'}`}>
+                                    {displayItem.productionStatus === 'Released' ? 'GEPLANT' : displayItem.productionStatus}
+                                </span>
+                            )}
                         </div>
-                        <h1 className="text-3xl md:text-5xl font-black text-white leading-tight mb-5 tracking-tight">{displayItem.title}</h1>
-                        <div className="flex flex-wrap items-center gap-5 text-slate-400 font-bold text-xs mb-6">
-                            <span className="flex items-center gap-2"><Calendar size={14} /> {displayItem.year}</span>
-                            <div className="bg-[#0d253f] px-2 py-0.5 rounded border border-[#01b4e4]/30 flex items-center gap-1.5">
-                                <span className="text-[8px] font-black text-[#01b4e4]">TMDB</span>
-                                <span className="text-white font-bold">{displayItem.rating?.toFixed(1)}</span>
+                        <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-4 tracking-tight">{displayItem.title}</h1>
+                        
+                        <div className="flex flex-wrap items-center gap-6 text-slate-400 font-bold text-xs mb-8">
+                            <span className="flex items-center gap-2"><Calendar size={16} /> {displayItem.year}</span>
+                            {displayItem.runtime && <span className="flex items-center gap-2"><Clock size={16} /> {displayItem.runtime} min</span>}
+                            <div className="bg-[#0d253f] px-2.5 py-1 rounded border border-[#01b4e4]/30 flex items-center gap-2">
+                                <span className="text-[9px] font-black text-[#01b4e4] uppercase">TMDB</span>
+                                <span className="text-white font-black">{displayItem.rating?.toFixed(1)}</span>
                             </div>
+                            {displayItem.rtScore && (
+                                <div className="bg-[#fa320a]/10 px-2.5 py-1 rounded border border-[#fa320a]/30 flex items-center gap-2">
+                                    <Zap size={12} className="text-red-500 fill-red-500" />
+                                    <span className="text-white font-black">{displayItem.rtScore}</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="flex gap-3 mb-6">
-                            <button onClick={handleShare} className="px-5 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-all flex items-center gap-2 font-bold text-sm">
-                                <Share2 size={16} /> {copied ? 'KOPIERT' : 'TEILEN'}
-                            </button>
+
+                        <div className="flex flex-wrap gap-4 mb-10">
+                            {isExisting ? (
+                                <>
+                                    <button 
+                                        onClick={handleToggleFav}
+                                        className={`px-8 py-3 rounded-2xl border transition-all flex items-center gap-3 font-black text-sm uppercase tracking-widest ${localIsFav ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}
+                                    >
+                                        <Heart size={20} className={localIsFav ? "fill-current" : ""} /> Favorit
+                                    </button>
+                                    <button onClick={handleShare} className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 transition-all flex items-center gap-3 font-black text-sm uppercase tracking-widest">
+                                        <Share2 size={20} /> {copied ? 'KOPIERT' : 'TEILEN'}
+                                    </button>
+                                </>
+                            ) : (
+                                <div className="flex flex-wrap gap-4 w-full md:w-auto">
+                                    <button 
+                                        onClick={() => onAdd && onAdd(initialItem as SearchResult, WatchStatus.TO_WATCH, localIsFav)}
+                                        className="flex-grow md:flex-none px-10 py-4 bg-[#00A3C4] hover:bg-[#00B4D8] text-white rounded-2xl shadow-xl shadow-cyan-900/20 transition-all flex items-center justify-center gap-3 font-black text-sm uppercase tracking-widest active:scale-[0.98]"
+                                    >
+                                        <Plus size={20} /> Zur Sammlung hinzufügen
+                                    </button>
+                                    <button 
+                                        onClick={handleToggleFav}
+                                        className={`px-6 py-4 rounded-2xl border transition-all flex items-center gap-3 font-black text-sm uppercase tracking-widest ${localIsFav ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}
+                                    >
+                                        <Heart size={20} className={localIsFav ? "fill-current" : ""} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
+
                         <div className="flex gap-8 border-b border-white/5">
-                            {['overview', 'cast'].map((tab) => (
-                                <button key={tab} onClick={() => setActiveTab(tab as any)} className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-2 ${activeTab === tab ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
-                                    {t(tab === 'cast' ? 'besetzung' : 'überblick')}
+                            {['overview', 'cast', 'facts'].map((tab) => (
+                                <button key={tab} onClick={() => setActiveTab(tab as any)} className={`pb-4 text-[11px] font-black uppercase tracking-[0.25em] transition-all border-b-2 ${activeTab === tab ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
+                                    {t(tab === 'cast' ? 'besetzung' : (tab === 'facts' ? 'facts' : 'überblick'))}
                                 </button>
                             ))}
                         </div>
                     </div>
-                    <div className="flex-grow overflow-y-auto custom-scrollbar p-8 md:p-10 pt-6">
-                        <div className="max-w-2xl space-y-8">
+
+                    <div className="flex-grow overflow-y-auto custom-scrollbar p-8 md:p-10 pt-8">
+                        <div className="max-w-3xl space-y-10">
                             {activeTab === 'overview' && (
                                 <>
-                                    <div className="space-y-2.5">
-                                        <h3 className="text-[9px] font-black text-slate-500 uppercase tracking-widest">HANDLUNG</h3>
-                                        <p className="text-base text-slate-200 leading-relaxed font-medium">{displayItem.plot}</p>
+                                    <div className="space-y-4">
+                                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">HANDLUNG</h3>
+                                        <p className="text-lg text-slate-200 leading-relaxed font-medium">{displayItem.plot}</p>
                                     </div>
-                                    <div className="bg-purple-900/10 p-6 rounded-2xl border border-purple-500/20">
-                                         <h3 className="text-purple-400 text-[9px] font-black uppercase tracking-[0.25em] mb-3 flex items-center gap-2">
-                                            <Sparkles size={12} /> AI ANALYSIS
+
+                                    <div className="bg-[#2D1B4E]/40 p-8 rounded-[2rem] border border-purple-500/20 backdrop-blur-xl relative overflow-hidden group/ai shadow-2xl shadow-purple-900/20">
+                                         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover/ai:bg-purple-500/20 transition-colors"></div>
+                                         <h3 className="text-purple-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                                            <Sparkles size={14} /> DEEP CONTENT ANALYSIS
                                          </h3>
-                                         <p className="text-purple-100 italic text-sm leading-relaxed">{loadingAi ? "Analysiere..." : (aiAnalysis || "Analyse bereit.")}</p>
+                                         <p className="text-purple-100 italic text-base leading-relaxed font-medium">
+                                            {loadingAi ? "Die AI analysiert den Filmkontext..." : (aiAnalysis && aiAnalysis.includes("Quotaregelung") ? aiAnalysis : (aiAnalysis || "Keine Analyse verfügbar."))}
+                                         </p>
                                     </div>
+
+                                    {isExisting && (
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">DEINE REZENSION</h3>
+                                                <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest flex items-center gap-1.5 bg-green-500/10 px-2 py-1 rounded-lg border border-green-500/20">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Öffentlich sichtbar
+                                                </span>
+                                            </div>
+                                            <textarea 
+                                                value={notes}
+                                                onChange={(e) => setNotes(e.target.value)}
+                                                onBlur={handleSaveNotes}
+                                                placeholder="Teile deine Meinung mit der Community! Was hat dir gefallen? Was nicht? Deine Rezension hilft auch der AI."
+                                                className="w-full bg-black/30 border border-white/10 rounded-2xl p-6 text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all h-40 resize-none font-medium leading-relaxed"
+                                            />
+                                        </div>
+                                    )}
                                 </>
                             )}
                             {activeTab === 'cast' && (
@@ -171,6 +256,32 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+                            {activeTab === 'facts' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">ORIGINAL TITEL</h3>
+                                        <p className="text-sm font-bold text-white tracking-wide">{displayItem.originalTitle}</p>
+                                    </div>
+                                    {displayItem.collectionName && (
+                                        <div className="space-y-2">
+                                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">SAMMLUNG</h3>
+                                            <p className="text-sm font-bold text-white tracking-wide">{displayItem.collectionName}</p>
+                                        </div>
+                                    )}
+                                    <div className="space-y-2">
+                                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">BUDGET</h3>
+                                        <p className="text-sm font-mono text-slate-300">
+                                            {displayItem.budget && displayItem.budget > 0 ? `$ ${(displayItem.budget / 1000000).toFixed(1)} Mio.` : '-'}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">BOX OFFICE</h3>
+                                        <p className={`text-sm font-mono font-bold ${displayItem.revenue && displayItem.budget && displayItem.revenue > displayItem.budget * 2.5 ? 'text-green-400' : 'text-orange-400'}`}>
+                                            {displayItem.revenue && displayItem.revenue > 0 ? `$ ${(displayItem.revenue / 1000000).toFixed(1)} Mio.` : '-'}
+                                        </p>
+                                    </div>
                                 </div>
                             )}
                         </div>

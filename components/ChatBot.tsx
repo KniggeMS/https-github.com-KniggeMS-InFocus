@@ -64,8 +64,15 @@ export const ChatBot: React.FC<ChatBotProps> = ({ items }) => {
       };
       
       setMessages(prev => [...prev, aiMsg]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat Error:", error);
+      const errorMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'model',
+        text: "Entschuldigung, ich habe gerade Verbindungsprobleme. Bitte prüfe deinen API-Key in den Einstellungen.",
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }

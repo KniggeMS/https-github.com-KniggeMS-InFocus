@@ -74,6 +74,10 @@ export interface MediaItem {
   runtime?: number;
   certification?: string;
   trailerKey?: string;
+  budget?: number;
+  revenue?: number;
+  tagline?: string;
+  productionStatus?: string;
   collectionName?: string;
   collectionParts?: string[];
   providers?: StreamingProvider[];

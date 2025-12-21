@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '../types';
 import { supabase } from '../services/supabase';
+import { addAdminNotification } from '../services/db';
 
 interface AuthContextType {
   user: User | null;
@@ -158,18 +159,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const now = new Date().toISOString();
             await supabase.from('profiles').update({ login_count: newCount, last_login_at: now }).eq('id', authData.user.id);
             
-            // Broadcast an Admins senden
-            supabase.channel('admin_surveillance').send({
-                type: 'broadcast',
-                event: 'user_action',
-                payload: { type: 'LOGIN', username: profile.username }
-            });
+            // Persistente Admin-Benachrichtigung erstellen
+            await addAdminNotification('login', `Login: ${profile.username}`, authData.user.id);
         }
     }
   };
 
   const register = async (newUser: Partial<User>, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
         email: newUser.email!.trim(),
         password: password,
         options: { data: { username: newUser.username, role: 'USER' } }
@@ -177,12 +174,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (error) throw error;
 
-    // Registrierung broadcasten (für bereits eingeloggte Admins)
-    supabase.channel('admin_surveillance').send({
-        type: 'broadcast',
-        event: 'user_action',
-        payload: { type: 'REGISTER', username: newUser.username }
-    });
+    if (authData.user) {
+      await addAdminNotification('register', `Neuer User: ${newUser.username}`, authData.user.id);
+    }
   };
 
   const logout = async () => { await supabase.auth.signOut(); setUser(null); };

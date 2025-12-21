@@ -69,6 +69,12 @@ export default defineConfig(({ mode }) => {
       'process.env.VITE_OMDB_API_KEY': JSON.stringify(env.VITE_OMDB_API_KEY || ''),
       'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || ''),
       'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || '')
-    }
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './test_setup.ts', // Erstellen wir gleich
+      include: ['**/*.test.ts', '**/*.test.tsx'],
+    },
   };
 });

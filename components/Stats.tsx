@@ -29,7 +29,7 @@ const renderActiveShape = (props: any) => {
 };
 
 export const Stats: React.FC<StatsProps> = ({ items }) => {
-  const [isExpanded, setIsExpanded] = useState(true); // Default open for better visibility
+  const [isExpanded, setIsExpanded] = useState(false); // Default collapsed for cleaner UI
   const [metric, setMetric] = useState<'count' | 'runtime'>('count');
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 

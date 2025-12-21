@@ -23,6 +23,13 @@ export const MediaCard = memo<MediaCardProps>(({
   const [isMobile, setIsMobile] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Self-healing for missing RT score
+  useEffect(() => {
+    if (!item.rtScore && item.imdbId && onRefreshMetadata) {
+      onRefreshMetadata(item);
+    }
+  }, [item.rtScore, item.imdbId, onRefreshMetadata]);
+
   // Check for mobile view
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -64,7 +71,9 @@ export const MediaCard = memo<MediaCardProps>(({
 
   const getRtState = (scoreStr?: string) => {
       if (!scoreStr) return null;
-      const score = parseInt(scoreStr);
+      // Robust parsing: remove non-digits (like '%')
+      const cleanScore = scoreStr.toString().replace(/[^0-9]/g, '');
+      const score = parseInt(cleanScore);
       if (isNaN(score)) return null;
       return score >= 60 ? 'fresh' : 'rotten';
   };
@@ -219,69 +228,69 @@ export const MediaCard = memo<MediaCardProps>(({
         )}
 
         {/* Text Details Area */}
-        <div className="px-1 min-h-[90px] flex flex-col justify-end">
-            <h3 onClick={() => onClick(item)} className="font-bold text-white text-lg leading-tight line-clamp-1 hover:text-cyan-400 transition-colors cursor-pointer mb-1.5" title={item.title}>
-                {item.title}
-            </h3>
-            
-            <div className="flex items-center flex-wrap gap-2 text-xs text-slate-400 font-medium mb-2">
-                <span className="text-slate-300">{item.year}</span>
-                {item.runtime && (
-                    <>
-                        <span className="text-slate-600">•</span>
-                        <span>{formatRuntime(item.runtime)}</span>
-                    </>
-                )}
-                 {item.certification && (
-                    <>
-                        <span className="text-slate-600">•</span>
-                        <span className="border border-slate-600 px-1 rounded text-[10px] text-slate-400 uppercase">{item.certification}</span>
-                    </>
-                )}
-                <span className="text-slate-600">•</span>
-                <span className="truncate max-w-[100px] text-slate-500">{item.genre[0]}</span>
-            </div>
-
-            <div className="flex items-center gap-2 mb-2">
-                <div className="flex items-center gap-1.5 bg-[#0d253f]/80 px-2 py-0.5 rounded-md border border-[#01b4e4]/30" title="TMDB Score">
-                    <div className="font-black text-[9px] text-[#01b4e4] tracking-tighter">TMDB</div>
-                    <span className="text-[10px] font-bold text-white">{item.rating.toFixed(1)}</span>
+        <div className="px-1 pt-1 flex flex-col justify-between h-40">
+            <div>
+                <h3 onClick={() => onClick(item)} className="font-bold text-white text-lg leading-tight line-clamp-1 hover:text-cyan-400 transition-colors cursor-pointer mb-1.5" title={item.title}>
+                    {item.title}
+                </h3>
+                
+                <div className="flex items-center flex-wrap gap-2 text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-3">
+                    <span className="text-slate-300">{item.year}</span>
+                    {item.runtime && (
+                        <>
+                            <span className="text-slate-700 font-black">•</span>
+                            <span>{formatRuntime(item.runtime)}</span>
+                        </>
+                    )}
+                    {item.certification && (
+                        <>
+                            <span className="text-slate-700 font-black">•</span>
+                            <span className="bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded text-[9px] border border-white/5">{item.certification}</span>
+                        </>
+                    )}
+                    <span className="text-slate-700 font-black">•</span>
+                    <span className="truncate max-w-[80px] text-slate-500">{item.genre[0]}</span>
                 </div>
 
-                {rtState ? (
-                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md border ${rtState === 'fresh' ? 'bg-[#fa320a]/20 border-[#fa320a]/30' : 'bg-green-600/20 border-green-600/30'}`} title="Rotten Tomatoes">
-                        <Zap size={10} className={rtState === 'fresh' ? 'text-[#fa320a] fill-[#fa320a]' : 'text-green-500 fill-green-500'} />
-                        <span className={`text-[10px] font-bold ${rtState === 'fresh' ? 'text-red-200' : 'text-green-200'}`}>{item.rtScore}</span>
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 bg-[#0d253f] px-2 py-0.5 rounded border border-[#01b4e4]/30">
+                        <span className="font-black text-[8px] text-[#01b4e4] tracking-tighter uppercase">TMDB</span>
+                        <span className="text-[10px] font-black text-white">{item.rating.toFixed(1)}</span>
                     </div>
-                ) : (
-                    <div className="h-5 w-12 rounded-md bg-white/5 opacity-0"></div>
-                )}
+
+                    {rtState && (
+                        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded border ${rtState === 'fresh' ? 'bg-red-500/10 border-red-500/20' : 'bg-green-500/10 border-green-500/20'}`}>
+                            <Zap size={10} className={rtState === 'fresh' ? 'text-red-500 fill-red-500' : 'text-green-500 fill-green-500'} />
+                            <span className={`text-[10px] font-black ${rtState === 'fresh' ? 'text-red-200' : 'text-green-200'}`}>{item.rtScore}</span>
+                        </div>
+                    )}
+                </div>
             </div>
 
-             {item.providers && item.providers.length > 0 && (
-                <div className="flex items-center gap-1.5 mb-2 h-5">
-                    {item.providers.slice(0, 5).map(p => (
-                        <img 
-                            key={p.providerId}
-                            src={`${LOGO_BASE_URL}${p.logoPath}`}
-                            alt={p.providerName}
-                            title={p.providerName}
-                            className="w-5 h-5 rounded-md shadow-sm border border-white/10 object-cover bg-slate-800"
-                            loading="lazy"
-                        />
-                    ))}
-                </div>
-            )}
+            <div className="space-y-2">
+                {item.providers && item.providers.length > 0 && (
+                    <div className="flex items-center gap-1.5 h-5">
+                        {item.providers.slice(0, 4).map(p => (
+                            <img 
+                                key={p.providerId}
+                                src={`${LOGO_BASE_URL}${p.logoPath}`}
+                                alt={p.providerName}
+                                className="w-5 h-5 rounded-md shadow-lg border border-white/10 object-cover bg-slate-900"
+                            />
+                        ))}
+                    </div>
+                )}
 
-            {item.credits && item.credits.length > 0 && (
-                <div className="flex items-center gap-1.5 text-xs bg-slate-800/50 p-1.5 rounded-md border border-white/5 mt-1">
-                    <Users size={12} className="text-slate-400 flex-shrink-0"/>
-                    <span className="truncate text-slate-300 font-medium" title={item.credits.map(c => c.name).join(', ')}>
-                        {item.credits.slice(0, 2).map(c => c.name).join(', ')}
-                        {item.credits.length > 2 && '...'}
-                    </span>
-                </div>
-            )}
+                {item.credits && item.credits.length > 0 && (
+                    <div className="flex items-center gap-2 text-[10px] bg-white/5 py-1.5 px-2 rounded-xl border border-white/5 group-hover:border-white/10 transition-colors">
+                        <Users size={12} className="text-slate-500 flex-shrink-0"/>
+                        <span className="truncate text-slate-400 font-bold" title={item.credits.map(c => c.name).join(', ')}>
+                            {item.credits[0].name}
+                            {item.credits.length > 1 && `, ${item.credits[1].name}`}
+                        </span>
+                    </div>
+                )}
+            </div>
         </div>
     </div>
   );

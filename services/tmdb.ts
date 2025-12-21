@@ -42,12 +42,42 @@ export async function getMediaDetails(item: SearchResult, apiKey: string): Promi
   const effectiveKey = getEffectiveApiKey(apiKey);
   const typePath = item.type === MediaType.SERIES ? 'tv' : 'movie';
   try {
-    const response = await fetch(`${BASE_URL}/${typePath}/${item.tmdbId}?api_key=${effectiveKey}&language=de-DE&append_to_response=videos,credits`);
+    const response = await fetch(`${BASE_URL}/${typePath}/${item.tmdbId}?api_key=${effectiveKey}&language=de-DE&append_to_response=videos,credits,release_dates,content_ratings,watch/providers`);
     const data = await response.json();
+    
+    // Trailer Logic
+    const trailer = data.videos?.results.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
+    
+    // Certification Logic
+    let certification = undefined;
+    if (item.type === MediaType.MOVIE) {
+        const release = data.release_dates?.results.find((r: any) => r.iso_3166_1 === 'DE') || data.release_dates?.results.find((r: any) => r.iso_3166_1 === 'US');
+        certification = release?.release_dates[0]?.certification;
+    } else {
+        const rating = data.content_ratings?.results.find((r: any) => r.iso_3166_1 === 'DE') || data.content_ratings?.results.find((r: any) => r.iso_3166_1 === 'US');
+        certification = rating?.rating;
+    }
+
+    // Providers Logic (DE Flatrate)
+    const providers = data['watch/providers']?.results?.DE?.flatrate?.map((p: any) => ({
+        providerId: p.provider_id,
+        providerName: p.provider_name,
+        logoPath: p.logo_path
+    })) || [];
+
     return {
-      runtime: data.runtime || 0,
+      runtime: data.runtime || (data.episode_run_time ? data.episode_run_time[0] : 0),
       genre: data.genres?.map((g: any) => g.name) || [],
-      credits: data.credits?.cast?.slice(0, 10).map((c: any) => ({ id: c.id, name: c.name, character: c.character }))
+      credits: data.credits?.cast?.slice(0, 10).map((c: any) => ({ id: c.id, name: c.name, character: c.character, profilePath: c.profile_path })),
+      trailerKey: trailer?.key,
+      certification,
+      providers,
+      // New Micro-Facts
+      budget: data.budget,
+      revenue: data.revenue,
+      tagline: data.tagline,
+      productionStatus: data.status,
+      collectionName: data.belongs_to_collection?.name
     };
   } catch (error) { return {}; }
 }

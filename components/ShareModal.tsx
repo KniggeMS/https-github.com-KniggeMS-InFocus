@@ -1,86 +1,101 @@
-
-import React, { useState } from 'react';
-import { X, UserPlus, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useTranslation } from '../contexts/LanguageContext';
-import { CustomList } from '../types';
+import { X, Share2, User as UserIcon } from 'lucide-react';
+import { fetchAllProfiles, shareCustomList } from '../services/db';
+import { User, CustomList } from '../types';
 
 interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
-  list: CustomList;
-  onShare: (listId: string, userIds: string[]) => void;
+  list: CustomList | null;
+  onShared: () => void; // Callback to refresh data in parent
 }
 
-export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, list, onShare }) => {
-  const { t } = useTranslation();
-  const { getAllUsers, user: currentUser } = useAuth();
-  const [selectedUsers, setSelectedUsers] = useState<string[]>(list.sharedWith || []);
+export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, list, onShared }) => {
+  const { user: currentUser } = useAuth();
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && list) {
+      setIsLoading(true);
+      fetchAllProfiles()
+        .then(profiles => {
+          // Filter out the current user
+          setAllUsers(profiles.filter(p => p.id !== currentUser?.id));
+          // Pre-select users the list is already shared with
+          setSelectedUserIds(list.sharedWith || []);
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [isOpen, list, currentUser]);
 
-  const allUsers = getAllUsers().filter(u => u.id !== currentUser?.id);
-
-  const toggleUser = (userId: string) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId) 
-        : [...prev, userId]
+  const handleToggleUser = (userId: string) => {
+    setSelectedUserIds(prev =>
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
     );
   };
 
-  const handleSave = () => {
-    onShare(list.id, selectedUsers);
-    onClose();
+  const handleShare = async () => {
+    if (!list) return;
+    setIsLoading(true);
+    try {
+      await shareCustomList(list.id, selectedUserIds);
+      onShared(); // Notify parent to refresh
+      onClose();
+    } catch (error) {
+      console.error("Failed to share list:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  if (!isOpen || !list) return null;
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
-          <h3 className="font-semibold text-white flex items-center gap-2">
-            <UserPlus size={18} className="text-cyan-400"/> {t('share_with_friends')}
-          </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
-            <X size={20} />
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="bg-[#0B0E14] border border-white/10 rounded-3xl shadow-2xl w-full max-w-md relative animate-in zoom-in-95 duration-300">
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-500 hover:text-white hover:bg-white/10 rounded-full transition-colors">
+          <X size={20} />
+        </button>
         
-        <div className="p-4 max-h-[50vh] overflow-y-auto custom-scrollbar">
-           {allUsers.length === 0 ? (
-               <div className="text-slate-500 text-center py-4 text-sm">Keine anderen Benutzer gefunden.</div>
-           ) : (
-               <div className="space-y-2">
-                   {allUsers.map(u => {
-                       const isSelected = selectedUsers.includes(u.id);
-                       return (
-                           <button 
-                                key={u.id}
-                                onClick={() => toggleUser(u.id)}
-                                className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${isSelected ? 'bg-cyan-900/30 border-cyan-500/50' : 'bg-slate-700/30 border-transparent hover:bg-slate-700'}`}
-                           >
-                               <div className="flex items-center gap-3">
-                                   <div className="w-8 h-8 rounded-full bg-slate-600 overflow-hidden">
-                                       {u.avatar ? <img src={u.avatar} alt={u.username} className="w-full h-full object-cover"/> : null}
-                                   </div>
-                                   <span className={`text-sm font-medium ${isSelected ? 'text-cyan-100' : 'text-slate-300'}`}>{u.username}</span>
-                               </div>
-                               {isSelected && <Check size={16} className="text-cyan-400" />}
-                           </button>
-                       );
-                   })}
-               </div>
-           )}
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-2">
+            <Share2 size={24} className="text-cyan-400" />
+            <h2 className="text-2xl font-black text-white">Liste teilen</h2>
+          </div>
+          <p className="text-slate-400 text-sm mb-6">Teile "<span className="font-bold text-white">{list.name}</span>" mit anderen Nutzern.</p>
+
+          {isLoading ? (
+            <div className="text-center p-8 text-slate-400">Lade Benutzer...</div>
+          ) : (
+            <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+              {allUsers.length > 0 ? allUsers.map(u => (
+                <div key={u.id} onClick={() => handleToggleUser(u.id)} className="flex items-center justify-between p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden">
+                      {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : <UserIcon size={18} className="text-slate-400 m-auto mt-2"/>}
+                    </div>
+                    <span className="font-bold text-sm text-white">{u.username}</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={selectedUserIds.includes(u.id)}
+                    readOnly
+                    className="w-5 h-5 rounded-md bg-slate-700 border-slate-600 text-cyan-500 focus:ring-cyan-500"
+                  />
+                </div>
+              )) : <p className="text-slate-500 text-sm text-center">Keine anderen Nutzer gefunden.</p>}
+            </div>
+          )}
         </div>
 
-        <div className="p-4 bg-slate-900/50 flex justify-end gap-2 border-t border-slate-700">
-            <button onClick={onClose} className="px-3 py-2 text-slate-400 hover:text-white text-sm">{t('cancel')}</button>
-            <button 
-                onClick={handleSave}
-                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-                {t('share')} ({selectedUsers.length})
-            </button>
+        <div className="bg-black/20 px-8 py-4 border-t border-white/5 flex justify-end gap-3 rounded-b-3xl">
+          <button onClick={onClose} disabled={isLoading} className="px-5 py-2.5 text-sm font-bold text-slate-300 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50">Abbrechen</button>
+          <button onClick={handleShare} disabled={isLoading} className="px-5 py-2.5 text-sm font-bold bg-cyan-500 text-black rounded-lg hover:bg-cyan-400 transition-colors disabled:opacity-50">
+            {isLoading ? 'Speichern...' : 'Änderungen speichern'}
+          </button>
         </div>
       </div>
     </div>

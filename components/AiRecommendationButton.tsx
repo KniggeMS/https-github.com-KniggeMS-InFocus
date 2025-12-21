@@ -40,7 +40,7 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                    bestPick = {
                        ...match,
                        plot: bestPick.plot || match.plot,
-                       providers: details.genre 
+                       genre: details.genre 
                    };
                 }
             } catch (e) {
@@ -68,23 +68,31 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
   return (
     <>
         {!mobileFabOnly && (
-            <div className="mt-auto px-4 pb-4 pt-2 border-t border-slate-800 hidden md:block">
-                <div className="bg-gradient-to-br from-purple-900/40 to-slate-800 rounded-xl p-1 border border-purple-500/20 backdrop-blur-sm shadow-lg relative overflow-hidden group">
-                    <button onClick={getAiTip} disabled={loading} className="w-full flex items-center gap-3 text-left relative z-10 p-3 rounded-lg hover:bg-white/5 transition-colors">
-                        <div className={`p-2.5 rounded-lg shadow-inner transition-all duration-500 ${loading ? 'bg-slate-800' : 'bg-purple-600 shadow-purple-900/30'}`}>
-                        {loading ? <Loader2 className="w-5 h-5 animate-spin text-purple-400" /> : <Sparkles className="w-5 h-5 text-white" />}
+            <div className="w-full hidden md:block group cursor-pointer">
+                <button 
+                    onClick={getAiTip} 
+                    disabled={loading} 
+                    className="w-full bg-[#1A1425] hover:bg-[#251C35] border border-purple-500/20 rounded-2xl p-4 transition-all duration-300 shadow-xl relative overflow-hidden text-left"
+                >
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 ${loading ? 'bg-slate-800' : 'bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/20'}`}>
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin text-purple-400" /> : <Sparkles className="w-5 h-5 text-white" />}
                         </div>
                         <div>
-                        <p className="text-sm font-bold text-slate-100 group-hover:text-purple-200 transition-colors">
-                            {loading ? t('analyzing') : t('ai_tip')}
-                        </p>
-                        <p className="text-[10px] text-purple-300/80 uppercase tracking-wide font-medium">
-                            {/* KORREKTUR: t('NEW_REC') muss großgeschrieben sein */}
-                            {loading ? "Gemini 1.5 Flash" : t('NEW_REC')}
-                        </p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm font-black text-white uppercase tracking-tight">
+                                    {loading ? t('analyzing') : t('ai_tip')}
+                                </p>
+                                {!loading && <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[8px] font-black uppercase tracking-widest">NEU</span>}
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+                                {loading ? "Gemini 1.5 Flash" : "Entdecke Filme"}
+                            </p>
                         </div>
-                    </button>
-                </div>
+                    </div>
+                    {/* Subtle Glow Effect */}
+                    <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-purple-600/10 rounded-full blur-2xl group-hover:bg-purple-600/20 transition-colors"></div>
+                </button>
             </div>
         )}
 

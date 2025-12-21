@@ -1,32 +1,26 @@
-
 # 🎬 InFocus CineLog
 
-**Die ultimative AI-Watchlist.** Verwalte deine Filme & Serien mit Vision-Suche, Deep Content Analysis und Freunden.
+**Die ultimative AI-Watchlist.** Verwalte deine Filme & Serien mit Vision-Suche, Deep Content Analysis und intelligenter Sammlungs-Verwaltung.
 
 ![Banner](https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200&auto=format&fit=crop)
 
-## ✨ Features
+## ✨ Highlights
 
-### 🧠 AI Powered (Gemini 2.5)
-*   **Vision Search:** Fotografiere ein Filmplakat im Kino oder Laden, und die App erkennt den Titel automatisch.
-*   **Deep Content Analysis:** Hinterlege Notizen zu Filmen. Die AI analysiert diese und gibt dir "Deep Insights" basierend auf deinem Geschmack und der Handlung.
-*   **Smart Caching:** Intelligente Speicherstrategie für AI-Antworten (LocalStorage), um das API-Limit zu schonen und Offline-Support zu bieten.
-*   **CineChat:** Ein integrierter Chatbot, der vollen Zugriff auf den Kontext deiner Sammlung hat.
+### 🧠 AI Powered (Google Gemini)
+*   **Vision Search:** Fotografiere ein Filmplakat oder erkenne Filme aus Bildern – die App identifiziert den Titel automatisch.
+*   **Deep Content Analysis:** Erhalte tiefe Einblicke in Filme basierend auf Handlung, Stil und kultureller Bedeutung.
+*   **CineChat:** Ein integrierter AI-Chatbot, der deine Sammlung kennt und dir Empfehlungen gibt oder Fragen beantwortet.
+*   **AI Empfehlungen:** Erhalte personalisierte Film-Tipps basierend auf deinen Favoriten.
 
-### 🤝 Social & Sync
-*   **Listen Teilen:** Erstelle Listen (z.B. "Halloween Marathon") und teile sie in Echtzeit mit anderen Nutzern.
-*   **Cloud Sync:** Dank Supabase sind deine Daten auf allen Geräten synchronisiert.
-*   **Rollen-System:** User, Manager und Admin Rollen für erweiterte Verwaltung.
-
-### 🏆 Gamification
-*   **Level System:** Sammle XP basierend auf der Laufzeit deiner gesehenen Filme (1 Minute = 1 XP).
-*   **Ränge:** Steige vom "Statist" bis zur "Hollywood Legende" auf.
-*   **Trophäen:** Schalte Achievements frei (z.B. "Binge Master", "Genre Guru", "Zeitreisender").
+### 🛠️ Profi-Features
+*   **Smart Import:** Importiere deine bestehenden Listen (z.B. aus Excel oder anderen Apps) einfach per Copy-Paste. Die App erkennt die Titel automatisch.
+*   **Self-Healing Data:** Fehlende Bewertungen (Rotten Tomatoes), Laufzeiten oder Poster werden im Hintergrund automatisch nachgeladen und korrigiert.
+*   **Cinematic Detail View:** Erlebe Trailer direkt im Hintergrund der Detailansicht für volle Immersion.
 
 ### 📱 Modern UI/UX
-*   **PWA Support:** Installierbar als App auf iOS und Android.
-*   **Theming:** Wähle zwischen Dark Mode, Light Mode und dem exklusiven **iOS Glassmorphism** Theme.
-*   **Responsive:** Optimiert für Desktop und Mobile ("Thumb-friendly" Navigation).
+*   **Design Lab:** Wähle zwischen Cinematic Dark, Daylight und einem edlen Glassmorphism-Design.
+*   **PWA Support:** Installiere InFocus CineLog direkt auf deinem Homescreen (iOS & Android).
+*   **Cloud Sync:** Vollständige Synchronisation und Authentifizierung über Supabase.
 
 ---
 
@@ -34,18 +28,18 @@
 
 *   **Frontend:** React 19, Vite, TypeScript
 *   **Styling:** Tailwind CSS, Lucide Icons
-*   **AI:** Google Gemini API (`gemini-2.5-flash`, `gemini-2.5-flash-image`)
+*   **AI:** Google Gemini API (`gemini-1.5-flash`)
 *   **Backend/Auth:** Supabase
-*   **Movie Data:** TMDB API (The Movie Database) & OMDb API (Fallback)
+*   **Movie Data:** TMDB API & OMDb API (Fallback für RT-Scores)
 
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Quick Start
 
 1.  **Repository klonen**
     ```bash
-    git clone https://github.com/DEIN_USERNAME/cinelog-infocus.git
-    cd cinelog-infocus
+    git clone https://github.com/KniggeMS/InFocus.git
+    cd InFocus
     ```
 
 2.  **Abhängigkeiten installieren**
@@ -53,22 +47,21 @@
     npm install
     ```
 
-3.  **Lokal Starten**
-    Erstelle eine `.env` Datei im Hauptverzeichnis für lokale Entwicklung:
-    ```env
-    VITE_TMDB_API_KEY=dein_tmdb_key
-    VITE_OMDB_API_KEY=dein_omdb_key
-    API_KEY=dein_gemini_key
-    ```
-    Starten:
+3.  **Konfiguration**
+    Kopiere die `.env.example` nach `.env` und trage deine API-Keys ein:
+    *   `VITE_SUPABASE_URL` & `VITE_SUPABASE_ANON_KEY`
+    *   `VITE_TMDB_API_KEY`
+    *   `VITE_GEMINI_API_KEY`
+
+4.  **Lokal Starten**
     ```bash
     npm run dev
     ```
 
-## 🌍 Landing Page & Docs
+## 🌍 Deployment
 
-Eine Marketing-Landingpage für GitHub Pages findest du im Ordner `/docs`.
-Aktiviere GitHub Pages in den Repository-Settings und wähle `/docs` als Source.
+Dieses Projekt ist für das Deployment auf **Vercel** optimiert. 
+Vergiss nicht, die Environment Variables im Vercel-Dashboard zu hinterlegen.
 
 ## 📄 Lizenz
 
