@@ -69,6 +69,54 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    performSearch(query);
+  };
+
+  const handleVisionSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsVisionLoading(true);
+    setError('');
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Data = reader.result as string;
+      const identifiedTitle = await identifyMovieFromImage(base64Data);
+      if (identifiedTitle) {
+        setQuery(identifiedTitle);
+        performSearch(identifiedTitle);
+      } else {
+        setError("Konnte kein Bild erkennen.");
+      }
+      setIsVisionLoading(false);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; 
+  };
+
+  const handleSaveKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedKey = tempKey.trim();
+    if (trimmedKey && onUpdateApiKey) {
+      onUpdateApiKey(trimmedKey);
+      setShowKeyInput(false);
+      setTempKey('');
+      setError(''); 
+    }
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) setTempKey(text);
+    } catch (err) {
+      const input = document.getElementById('apiKeyInput');
+      if (input) (input as HTMLElement).focus();
+    }
+  };
+
   const handleSelectItem = (item: SearchResult) => {
       if (onSelectItem) {
           onSelectItem(item);
