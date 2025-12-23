@@ -105,7 +105,7 @@ export const MediaCard = memo<MediaCardProps>(({
         <div 
             onClick={() => onClick(item)}
             onMouseMove={handleMouseMove}
-            className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-[#1c212c] border border-white/5 shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500/60"
+            className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden bg-input border border-border-main shadow-lg cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-accent/60"
         >
             {/* SENTIENT GLASS: Interactive Border & Spotlight - BOOSTED (v1.9.32) */}
             <div 
@@ -127,7 +127,7 @@ export const MediaCard = memo<MediaCardProps>(({
                     loading="lazy"
                 />
             ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-600 bg-[#151a23]">
+                <div className="w-full h-full flex items-center justify-center text-text-muted bg-card">
                     <Film size={40} />
                 </div>
             )}
@@ -136,12 +136,12 @@ export const MediaCard = memo<MediaCardProps>(({
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none opacity-90 z-10" />
 
             {/* Badges */}
-            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1.5 shadow-sm z-30">
+            <div className="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-border-light flex items-center gap-1.5 shadow-sm z-30">
                 {item.type === MediaType.MOVIE ? <Film size={12} className="text-blue-400"/> : <Tv size={12} className="text-purple-400"/>}
             </div>
 
             {item.status !== WatchStatus.TO_WATCH && (
-                <div className={`absolute bottom-2 right-2 p-1.5 rounded-full backdrop-blur-md border border-white/10 shadow-lg z-30 ${item.status === WatchStatus.WATCHED ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                <div className={`absolute bottom-2 right-2 p-1.5 rounded-full backdrop-blur-md border border-border-light shadow-lg z-30 ${item.status === WatchStatus.WATCHED ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
                     {item.status === WatchStatus.WATCHED ? <Check size={14} /> : <PlayCircle size={14} />}
                 </div>
             )}
@@ -157,7 +157,7 @@ export const MediaCard = memo<MediaCardProps>(({
         <div className="absolute top-2 right-2 z-30" ref={menuRef}>
             <button 
                 onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
-                className="w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md flex items-center justify-center text-white border border-white/10 transition-colors shadow-sm"
+                className="w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md flex items-center justify-center text-text-main border border-border-light transition-colors shadow-sm"
             >
                 <MoreHorizontal size={16} />
             </button>
@@ -165,32 +165,32 @@ export const MediaCard = memo<MediaCardProps>(({
             {/* Desktop Dropdown */}
             {!isMobile && isMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-200">
-                    <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                    <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text-main hover:bg-white/5 rounded-lg transition-colors">
                         <Heart size={16} className={item.isFavorite ? "fill-red-500 text-red-500" : ""} /> Favorit
                     </button>
-                    <div className="h-px bg-white/5 my-1"></div>
-                    <button onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.TO_WATCH); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                    <div className="h-px bg-border-main my-1"></div>
+                    <button onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.TO_WATCH); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text-main hover:bg-white/5 rounded-lg transition-colors">
                         <Clock size={16} /> Planen
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.WATCHING); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                    <button onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.WATCHING); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text-main hover:bg-white/5 rounded-lg transition-colors">
                         <PlayCircle size={16} /> Schaue gerade
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.WATCHED); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                    <button onClick={(e) => { e.stopPropagation(); onStatusChange(item.id, WatchStatus.WATCHED); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text-main hover:bg-white/5 rounded-lg transition-colors">
                         <Check size={16} /> Gesehen
                     </button>
                     
                     {customLists.length > 0 && (
                         <>
-                            <div className="h-px bg-white/5 my-1"></div>
-                            <div className="px-3 py-1 text-[10px] text-slate-500 font-bold uppercase">Listen</div>
+                            <div className="h-px bg-border-main my-1"></div>
+                            <div className="px-3 py-1 text-[10px] text-text-muted font-bold uppercase">Listen</div>
                             {customLists.map(l => (
                                 <button 
                                     key={l.id}
                                     onClick={(e) => { e.stopPropagation(); onAddToList && onAddToList(l.id, item.id); setIsMenuOpen(false); }} 
-                                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text-main hover:bg-white/5 rounded-lg transition-colors"
                                 >
                                     <span className="truncate">{l.name}</span>
-                                    {l.items.includes(item.id) && <Check size={14} className="text-blue-400"/>}
+                                    {l.items.includes(item.id) && <Check size={14} className="text-accent"/>}
                                 </button>
                             ))}
                         </>
@@ -198,14 +198,14 @@ export const MediaCard = memo<MediaCardProps>(({
 
                     {onRefreshMetadata && (
                         <>
-                            <div className="h-px bg-white/5 my-1"></div>
-                            <button onClick={(e) => { e.stopPropagation(); onRefreshMetadata(item); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-cyan-400 hover:bg-cyan-500/10 rounded-lg transition-colors">
+                            <div className="h-px bg-border-main my-1"></div>
+                            <button onClick={(e) => { e.stopPropagation(); onRefreshMetadata(item); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-accent hover:bg-accent/10 rounded-lg transition-colors">
                                 <RefreshCw size={16} /> Daten aktualisieren
                             </button>
                         </>
                     )}
                     
-                    <div className="h-px bg-white/5 my-1"></div>
+                    <div className="h-px bg-border-main my-1"></div>
                     <button onClick={(e) => { e.stopPropagation(); onDelete(item.id); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
                         <Trash2 size={16} /> Entfernen
                     </button>
@@ -228,28 +228,28 @@ export const MediaCard = memo<MediaCardProps>(({
         )}
 
         {/* Text Details Area */}
-        <div className="px-1 pt-1 flex flex-col justify-between h-40">
+        <div className="px-1 pt-1 flex flex-col justify-between min-h-[10rem] flex-grow">
             <div>
-                <h3 onClick={() => onClick(item)} className="font-bold text-white text-lg leading-tight line-clamp-1 hover:text-cyan-400 transition-colors cursor-pointer mb-1.5" title={item.title}>
+                <h3 onClick={() => onClick(item)} className="font-bold text-text-main text-lg leading-tight line-clamp-2 hover:text-accent transition-colors cursor-pointer mb-1.5" title={item.title}>
                     {item.title}
                 </h3>
                 
-                <div className="flex items-center flex-wrap gap-2 text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-3">
-                    <span className="text-slate-300">{item.year}</span>
+                <div className="flex items-center flex-wrap gap-2 text-[11px] text-text-muted font-bold uppercase tracking-wider mb-3">
+                    <span className="text-text-main">{item.year}</span>
                     {item.runtime && (
                         <>
-                            <span className="text-slate-700 font-black">•</span>
+                            <span className="text-border-light font-black">•</span>
                             <span>{formatRuntime(item.runtime)}</span>
                         </>
                     )}
                     {item.certification && (
                         <>
-                            <span className="text-slate-700 font-black">•</span>
-                            <span className="bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded text-[9px] border border-white/5">{item.certification}</span>
+                            <span className="text-border-light font-black">•</span>
+                            <span className="bg-input text-text-muted px-1.5 py-0.5 rounded text-[9px] border border-border-main">{item.certification}</span>
                         </>
                     )}
-                    <span className="text-slate-700 font-black">•</span>
-                    <span className="truncate max-w-[80px] text-slate-500">{item.genre[0]}</span>
+                    <span className="text-border-light font-black">•</span>
+                    <span className="truncate max-w-[80px] text-text-muted">{item.genre[0]}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -267,7 +267,7 @@ export const MediaCard = memo<MediaCardProps>(({
                 </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 mt-auto pt-3">
                 {item.providers && item.providers.length > 0 && (
                     <div className="flex items-center gap-1.5 h-5">
                         {item.providers.slice(0, 4).map(p => (
@@ -275,16 +275,16 @@ export const MediaCard = memo<MediaCardProps>(({
                                 key={p.providerId}
                                 src={`${LOGO_BASE_URL}${p.logoPath}`}
                                 alt={p.providerName}
-                                className="w-5 h-5 rounded-md shadow-lg border border-white/10 object-cover bg-slate-900"
+                                className="w-5 h-5 rounded-md shadow-lg border border-border-light object-cover bg-card"
                             />
                         ))}
                     </div>
                 )}
 
                 {item.credits && item.credits.length > 0 && (
-                    <div className="flex items-center gap-2 text-[10px] bg-white/5 py-1.5 px-2 rounded-xl border border-white/5 group-hover:border-white/10 transition-colors">
-                        <Users size={12} className="text-slate-500 flex-shrink-0"/>
-                        <span className="truncate text-slate-400 font-bold" title={item.credits.map(c => c.name).join(', ')}>
+                    <div className="flex items-center gap-2 text-[10px] bg-card/5 py-1.5 px-2 rounded-xl border border-border-main group-hover:border-border-light transition-colors">
+                        <Users size={12} className="text-text-muted flex-shrink-0"/>
+                        <span className="truncate text-text-muted font-bold" title={item.credits.map(c => c.name).join(', ')}>
                             {item.credits[0].name}
                             {item.credits.length > 1 && `, ${item.credits[1].name}`}
                         </span>

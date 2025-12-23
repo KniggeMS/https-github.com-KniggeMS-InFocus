@@ -153,6 +153,7 @@ export const updateMediaItemDetails = async (id: string, details: Partial<MediaI
   if (details.providers) dbUpdates.providers = details.providers;
   if (details.credits) dbUpdates.credits = details.credits;
   if (details.trailerKey) dbUpdates.trailer_key = details.trailerKey;
+  if (details.rtScore) dbUpdates.rt_score = details.rtScore;
   
   await supabase.from('media_items').update(dbUpdates).eq('id', id);
 };

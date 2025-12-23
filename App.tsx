@@ -15,12 +15,16 @@ import { DesignLabModal } from './components/DesignLabModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ImportModal } from './components/ImportModal';
 import { ShareModal } from './components/ShareModal';
+import { CreateListModal } from './components/CreateListModal';
+import { RenameListModal } from './components/RenameListModal';
+import { BottomSheet } from './components/BottomSheet';
+import { usePwaInstall } from './hooks/usePwaInstall';
 import { ChatBot } from './components/ChatBot';
 import { AiRecommendationButton } from './components/AiRecommendationButton';
 import {
   fetchMediaItems, addMediaItem, updateMediaItemStatus, deleteMediaItem,
   toggleMediaItemFavorite, updateMediaItemRating, updateMediaItemNotes,
-  fetchCustomLists, updateCustomListItems, updateCustomList, deleteCustomList,
+  fetchCustomLists, updateCustomListItems, updateCustomList, deleteCustomList, createCustomList,
   fetchAdminNotifications, markAdminNotificationsAsRead, updateMediaItemDetails
 } from './services/db';
 import { hydrateMissingData } from './services/hydration';
@@ -38,18 +42,20 @@ const ListRoute = ({ customLists, renderGrid, onShare }: { customLists: CustomLi
     const isOwner = user?.id === list.ownerId;
     return (
         <div>
-            <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-black text-white flex items-center gap-3">
-                        <List size={28} className="text-purple-400" /> {list.name}
-                    </h2>
-                    {isOwner && (
-                        <button onClick={() => onShare(list)} className="px-4 py-2 bg-white/5 hover:bg-white/10 text-cyan-400 rounded-xl border border-white/10 transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
-                            <Share2 size={14} /> Teilen
-                        </button>
-                    )}
+            <div className="mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="flex-grow">
+                    <div className="flex items-center gap-4 mb-2">
+                        <h2 className="text-3xl font-black text-white flex items-center gap-3">
+                            <List size={28} className="text-purple-400" /> {list.name}
+                        </h2>
+                        {isOwner && (
+                            <button onClick={() => onShare(list)} className="px-4 py-2 bg-white/5 hover:bg-white/10 text-cyan-400 rounded-xl border border-white/10 transition-colors flex items-center gap-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap">
+                                <Share2 size={14} /> Teilen
+                            </button>
+                        )}
+                    </div>
+                    {list.description && <p className="text-slate-400 text-sm font-medium mt-1">{list.description}</p>}
                 </div>
-                {list.description && <p className="text-slate-400 text-sm font-medium">{list.description}</p>}
             </div>
             {renderGrid(undefined, id)}
         </div>
@@ -61,6 +67,7 @@ const ListRoute = ({ customLists, renderGrid, onShare }: { customLists: CustomLi
 export default function App() {
   const { user, logout } = useAuth();
   const { t, language, setLanguage } = useTranslation();
+  const { isInstallable, installApp } = usePwaInstall();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -74,15 +81,23 @@ export default function App() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<'ALL' | 'MOVIE' | 'SERIES'>('ALL');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isCreateListOpen, setIsCreateListOpen] = useState(false);
+  const [isRenameListOpen, setIsRenameListOpen] = useState(false);
+  const [isListsSheetOpen, setIsListsSheetOpen] = useState(false);
   const [listToShare, setListToShare] = useState<CustomList | null>(null);
+  const [listToRename, setListToRename] = useState<CustomList | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
-  const handleRenameList = async (listId: string, currentName: string) => {
-      const newName = prompt("Neuer Name für die Liste:", currentName);
-      if (newName && newName !== currentName) {
-          await updateCustomList(listId, newName);
-          setCustomLists(prev => prev.map(l => l.id === listId ? { ...l, name: newName } : l));
-      }
+  const handleRenameList = (list: CustomList) => {
+      setListToRename(list);
+      setIsRenameListOpen(true);
+  };
+
+  const executeRenameList = async (newName: string) => {
+    if (listToRename && newName && newName !== listToRename.name) {
+        await updateCustomList(listToRename.id, newName);
+        setCustomLists(prev => prev.map(l => l.id === listToRename.id ? { ...l, name: newName } : l));
+    }
   };
 
   const handleDeleteList = async (listId: string) => {
@@ -206,23 +221,10 @@ export default function App() {
     }
 
     let details: Partial<MediaItem> = {};
-    let finalImdbId = result.imdbId;
 
     if (tmdbKey) {
         try {
             details = await getMediaDetails(result, tmdbKey);
-            // If our details fetch gave us an imdbId, use it.
-            if (details.imdbId) {
-                finalImdbId = details.imdbId;
-            }
-            // If we STILL don't have an imdb_id, try the external_ids endpoint as a fallback.
-            if (!finalImdbId && result.tmdbId) {
-                const response = await fetch(`https://api.themoviedb.org/3/${result.type === 'MOVIE' ? 'movie' : 'tv'}/${result.tmdbId}/external_ids?api_key=${tmdbKey}`);
-                const externalIds = await response.json();
-                if (externalIds.imdb_id) {
-                    finalImdbId = externalIds.imdb_id;
-                }
-            }
         } catch (e) {
             console.error("Failed to get TMDB details on add:", e);
         }
@@ -232,7 +234,7 @@ export default function App() {
       id: crypto.randomUUID(),
       userId: user.id,
       tmdbId: result.tmdbId,
-      imdbId: finalImdbId, // Use the reliably fetched IMDB ID
+      imdbId: details.imdbId || result.imdbId, // Use fetched or provided IMDb ID
       title: result.title,
       originalTitle: result.originalTitle,
       year: result.year,
@@ -288,82 +290,76 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05070A] text-slate-200 pb-20 md:pb-0 font-sans relative overflow-x-hidden">
-        <header className="sticky top-0 z-[100] bg-[#0B0E14]/80 backdrop-blur-xl border-b border-white/5 px-4 md:px-8 h-16 flex items-center justify-between shadow-xl">
+    <div className="min-h-screen bg-main text-text-main pb-20 md:pb-0 font-sans relative overflow-x-hidden transition-colors duration-300">
+        <header className="sticky top-0 z-[100] bg-sidebar/80 backdrop-blur-xl border-b border-border-main px-4 md:px-8 h-16 flex items-center justify-between shadow-xl transition-colors duration-300">
             <div className="flex items-center gap-8">
                 <div onClick={() => navigate('/')} className="flex items-center gap-2.5 cursor-pointer group">
                     <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-900/20 group-hover:scale-110 transition-transform">
                         <Clapperboard size={18} className="text-white" />
                     </div>
-                    <span className="font-black text-lg tracking-tight text-white block">InFocus <span className="text-cyan-500">CineLog</span></span>
+                    <span className="font-black text-lg tracking-tight text-text-main block">InFocus <span className="text-cyan-500">CineLog</span></span>
                 </div>
                 <nav className="hidden md:flex items-center gap-1">
-                    <button onClick={() => navigate('/')} className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${location.pathname === '/' ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>{t('overview')}</button>
-                    <button onClick={() => navigate('/watchlist')} className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${location.pathname === '/watchlist' ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>{t('watchlist')}</button>
-                    <button onClick={() => navigate('/favorites')} className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${location.pathname === '/favorites' ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}>{t('favorites')}</button>
+                    <button onClick={() => navigate('/')} className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${location.pathname === '/' ? 'bg-white/10 text-text-main' : 'text-text-muted hover:text-text-main hover:bg-white/5'}`}>{t('overview')}</button>
+                    <button onClick={() => navigate('/watchlist')} className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${location.pathname === '/watchlist' ? 'bg-white/10 text-text-main' : 'text-text-muted hover:text-text-main hover:bg-white/5'}`}>{t('watchlist')}</button>
+                    <button onClick={() => navigate('/favorites')} className={`px-5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${location.pathname === '/favorites' ? 'bg-white/10 text-text-main' : 'text-text-muted hover:text-text-main hover:bg-white/5'}`}>{t('favorites')}</button>
                 </nav>
             </div>
             <div className="flex items-center gap-4">
-                <button onClick={() => setIsSearchOpen(true)} className="p-2 rounded-full hover:bg-white/5 text-slate-400 hover:text-white transition-colors"><Search size={20} /></button>
+                <button onClick={() => setIsSearchOpen(true)} className="p-2 rounded-full hover:bg-white/5 text-text-muted hover:text-text-main transition-colors"><Search size={20} /></button>
                 
                 <div className="relative" ref={profileMenuRef}>
                     <button onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)} className="flex items-center gap-2 group outline-none">
-                        <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden border-2 border-white/10 group-hover:border-cyan-500/50 transition-all shadow-lg shadow-black/40">
+                        <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden border-2 border-border-light group-hover:border-cyan-500/50 transition-all shadow-lg shadow-black/40">
                             {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : <UserIcon size={20} className="text-slate-400 m-auto mt-2.5"/>}
                         </div>
                         <div className="flex flex-col items-start mr-1">
-                            <Download size={14} className="text-slate-500 group-hover:text-white transition-colors" />
+                            <Download size={14} className="text-text-muted group-hover:text-text-main transition-colors" />
                         </div>
                     </button>
 
                     {isProfileMenuOpen && (
-                        <div className="absolute right-0 mt-4 w-72 bg-[#0B0E14] border border-white/10 rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] p-2.5 z-[110] animate-in fade-in slide-in-from-top-2 duration-300 backdrop-blur-3xl">
-                            <div className="px-5 py-5 border-b border-white/5 mb-2">
-                                <p className="text-base font-black text-white truncate leading-none mb-1.5">{user.username}</p>
-                                <p className="text-xs font-medium text-slate-500 truncate">{user.email}</p>
+                        <div className="absolute right-0 mt-4 w-72 bg-sidebar border border-border-main rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.8)] p-2.5 z-[110] animate-in fade-in slide-in-from-top-2 duration-300 backdrop-blur-3xl">
+                            <div className="px-5 py-5 border-b border-border-main mb-2">
+                                <p className="text-base font-black text-text-main truncate leading-none mb-1.5">{user.username}</p>
+                                <p className="text-xs font-medium text-text-muted truncate">{user.email}</p>
                             </div>
                             
-                            <button className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-black text-[#00A3C4] hover:bg-[#00A3C4]/10 rounded-2xl transition-all mb-2 group">
-                                <div className="p-2 rounded-xl bg-[#00A3C4]/10 group-hover:bg-[#00A3C4]/20 transition-colors">
-                                    <Download size={18} />
-                                </div>
-                                App installieren
-                            </button>
-
                             <div className="space-y-1">
                                 <button onClick={() => { navigate('/profile'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-2xl transition-colors">
                                     <UserIcon size={18} className="text-slate-500" /> Profil
                                 </button>
-                                <button onClick={() => { setIsDesignLabOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-[#D499FF] hover:bg-[#D499FF]/10 rounded-2xl transition-colors">
-                                    <Palette size={18} /> Design Lab
-                                </button>
-                                {user.role === UserRole.ADMIN && (
-                                    <button onClick={() => { 
-                                        navigate('/users'); 
-                                        setIsProfileMenuOpen(false); 
-                                        if (unreadNotifications > 0) {
-                                            markAdminNotificationsAsRead();
-                                            setUnreadNotifications(0);
-                                        }
-                                    }} className="w-full flex items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-2xl transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <List size={18} className="text-slate-500" /> Benutzerverwaltung
-                                        </div>
-                                        {unreadNotifications > 0 && (
-                                            <span className="w-5 h-5 bg-cyan-500 text-black text-[10px] font-black rounded-full flex items-center justify-center">{unreadNotifications}</span>
-                                        )}
-                                    </button>
-                                )}
-                                <button onClick={() => { setIsSettingsOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-2xl transition-colors">
-                                    <Settings size={18} className="text-slate-500" /> Einstellungen
-                                </button>
-                                <button onClick={() => { setIsImportOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-2xl transition-colors">
-                                    <Database size={18} className="text-slate-500" /> Smart Import
+                                <button onClick={() => { setIsDesignLabOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-2xl transition-colors">
+                                    <Palette size={18} className="text-slate-500" /> Design Lab
                                 </button>
                                 <button onClick={() => { navigate('/guide'); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-2xl transition-colors">
                                     <BookOpen size={18} className="text-slate-500" /> Handbuch
                                 </button>
+                                {isInstallable && (
+                                    <button onClick={installApp} className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-black text-cyan-400 hover:bg-cyan-500/10 rounded-2xl transition-all group">
+                                        <Download size={18} /> App installieren
+                                    </button>
+                                )}
                             </div>
+
+                            {(user.role === UserRole.ADMIN || user.role === UserRole.OWNER) && (
+                                <>
+                                    <div className="h-px bg-white/5 my-2 mx-2"></div>
+                                    <div className="px-4 pt-1 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Admin Tools</div>
+                                    <div className="space-y-1">
+                                        <button onClick={() => { navigate('/users'); setIsProfileMenuOpen(false); if (unreadNotifications > 0) { markAdminNotificationsAsRead(); setUnreadNotifications(0); } }} className="w-full flex items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-2xl transition-colors">
+                                            <div className="flex items-center gap-3"><List size={18} className="text-slate-500" /> Benutzer</div>
+                                            {unreadNotifications > 0 && <span className="w-5 h-5 bg-cyan-500 text-black text-[10px] font-black rounded-full flex items-center justify-center">{unreadNotifications}</span>}
+                                        </button>
+                                        <button onClick={() => { setIsSettingsOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-2xl transition-colors">
+                                            <Settings size={18} className="text-slate-500" /> Einstellungen
+                                        </button>
+                                        <button onClick={() => { setIsImportOpen(true); setIsProfileMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 rounded-2xl transition-colors">
+                                            <Database size={18} className="text-slate-500" /> Smart Import
+                                        </button>
+                                    </div>
+                                </>
+                            )}
 
                             <div className="h-px bg-white/5 my-2 mx-2"></div>
                             
@@ -377,12 +373,12 @@ export default function App() {
         </header>
 
         <div className="max-w-[1600px] mx-auto flex relative z-10">
-            <aside className="hidden md:flex w-72 flex-col sticky top-16 h-[calc(100vh-64px)] border-r border-white/5 bg-[#0B0E14] overflow-hidden shrink-0">
+            <aside className="hidden md:flex w-72 flex-col sticky top-16 h-[calc(100vh-64px)] border-r border-border-main bg-sidebar overflow-hidden shrink-0 transition-colors duration-300">
                 <div className="p-6 flex-grow overflow-y-auto custom-scrollbar">
                     <button onClick={() => setIsSearchOpen(true)} className="w-full flex items-center justify-center gap-2 bg-[#00A3C4] hover:bg-[#00B4D8] text-white px-4 py-3 rounded-xl font-bold transition-all mb-8 shadow-lg shadow-[#00A3C4]/10 active:scale-95"><Plus size={20} /> {t('add_button')}</button>
                     
                     <div className="mb-8">
-                        <h3 className="px-3 text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.2em]">{t('my_lists')}</h3>
+                        <h3 className="px-3 text-[10px] font-black text-text-muted uppercase mb-4 tracking-[0.2em]">{t('my_lists')}</h3>
                         <div className="space-y-1">
                             {customLists.filter(l => l.ownerId === user.id).map(l => (
                                 <div key={l.id} className="group relative flex items-center">
@@ -390,7 +386,7 @@ export default function App() {
                                         {l.name}
                                     </button>
                                     <div className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={(e) => { e.stopPropagation(); handleRenameList(l.id, l.name); }} className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors">
+                                        <button onClick={(e) => { e.stopPropagation(); handleRenameList(l); }} className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors">
                                             <Pencil size={12} />
                                         </button>
                                         <button onClick={(e) => { e.stopPropagation(); handleDeleteList(l.id); }} className="p-1.5 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400 transition-colors">
@@ -399,7 +395,7 @@ export default function App() {
                                     </div>
                                 </div>
                             ))}
-                            <button className="w-full text-left px-3 py-2.5 text-sm font-bold text-cyan-500 flex items-center gap-2 hover:text-cyan-400 transition-colors">
+                            <button onClick={() => setIsCreateListOpen(true)} className="w-full text-left px-3 py-2.5 text-sm font-bold text-cyan-500 flex items-center gap-2 hover:text-cyan-400 transition-colors">
                                 <Plus size={16} /> {t('create_list')}
                             </button>
                         </div>
@@ -414,7 +410,7 @@ export default function App() {
                 </div>
 
                 {/* AI TIP BOX - Fixed at bottom */}
-                <div className="p-4 border-t border-white/5 bg-[#0B0E14]">
+                <div className="p-4 border-t border-border-main bg-sidebar">
                     <AiRecommendationButton items={displayedItems} onAdd={handleAdd} apiKey={tmdbKey} />
                 </div>
             </aside>
@@ -423,16 +419,16 @@ export default function App() {
                 {!['/profile', '/users', '/guide'].includes(location.pathname) && (
                     <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
-                            <h2 className="text-3xl font-black text-white tracking-tight mb-4">
+                            <h2 className="text-3xl font-black text-text-main tracking-tight mb-4">
                                 {location.pathname === '/watchlist' ? t('watchlist') : (location.pathname === '/favorites' ? t('favorites') : (location.pathname.includes('/list/') ? customLists.find(l => `/list/${l.id}` === location.pathname)?.name : t('collection')))}
                             </h2>
                             <div className="flex gap-2">
-                                <button onClick={() => setMediaTypeFilter('ALL')} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${mediaTypeFilter === 'ALL' ? 'bg-white text-black shadow-lg shadow-white/10' : 'bg-white/5 text-slate-500 hover:text-white hover:bg-white/10'}`}>ALL</button>
-                                <button onClick={() => setMediaTypeFilter('MOVIE')} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${mediaTypeFilter === 'MOVIE' ? 'bg-white text-black shadow-lg shadow-white/10' : 'bg-white/5 text-slate-500 hover:text-white hover:bg-white/10'}`}>MOVIES</button>
-                                <button onClick={() => setMediaTypeFilter('SERIES')} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${mediaTypeFilter === 'SERIES' ? 'bg-white text-black shadow-lg shadow-white/10' : 'bg-white/5 text-slate-500 hover:text-white hover:bg-white/10'}`}>SERIES</button>
+                                <button onClick={() => setMediaTypeFilter('ALL')} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${mediaTypeFilter === 'ALL' ? 'bg-text-main text-main shadow-lg shadow-white/10' : 'bg-white/5 text-text-muted hover:text-text-main hover:bg-white/10'}`}>ALL</button>
+                                <button onClick={() => setMediaTypeFilter('MOVIE')} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${mediaTypeFilter === 'MOVIE' ? 'bg-text-main text-main shadow-lg shadow-white/10' : 'bg-white/5 text-text-muted hover:text-text-main hover:bg-white/10'}`}>MOVIES</button>
+                                <button onClick={() => setMediaTypeFilter('SERIES')} className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${mediaTypeFilter === 'SERIES' ? 'bg-text-main text-main shadow-lg shadow-white/10' : 'bg-white/5 text-text-muted hover:text-text-main hover:bg-white/10'}`}>SERIES</button>
                             </div>
                         </div>
-                        {location.pathname === '/' && <Stats items={displayedItems} />}
+                        {location.pathname === '/' && !isProfileMenuOpen && <Stats items={displayedItems} />}
                     </div>
                 )}
 
@@ -453,11 +449,13 @@ export default function App() {
         <SettingsModal 
             isOpen={isSettingsOpen} 
             onClose={() => setIsSettingsOpen(false)} 
+            userRole={user.role}
             tmdbKey={localStorage.getItem('tmdb_api_key') || ''} 
             omdbKey={localStorage.getItem('omdb_api_key') || ''}
             onSave={(keys) => {
                 if (keys.tmdb) localStorage.setItem('tmdb_api_key', keys.tmdb);
                 if (keys.omdb) localStorage.setItem('omdb_api_key', keys.omdb);
+                if (keys.groq) localStorage.setItem('groq_api_key', keys.groq);
                 setIsSettingsOpen(false);
                 window.location.reload();
             }}
@@ -473,7 +471,52 @@ export default function App() {
             apiKey={tmdbKey}
             omdbApiKey={omdbKey}
         />
-        <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => {}} />
+        <CreateListModal 
+            isOpen={isCreateListOpen} 
+            onClose={() => setIsCreateListOpen(false)}
+            onCreate={async (name) => {
+                const tempNewList: CustomList = {
+                    id: '',
+                    name: name,
+                    ownerId: user.id,
+                    createdAt: Date.now(),
+                    items: [],
+                    sharedWith: []
+                };
+                const created = await createCustomList(tempNewList, user.id);
+                if (created) {
+                    setCustomLists(prev => [...prev, created]);
+                    navigate(`/list/${created.id}`);
+                    setIsCreateListOpen(false);
+                }
+            }}
+        />
+        <BottomSheet 
+            isOpen={isListsSheetOpen}
+            onClose={() => setIsListsSheetOpen(false)}
+            title={t('my_lists')}
+            actions={[
+                {
+                    label: t('create_list'),
+                    icon: <Plus size={20} className="text-cyan-400" />,
+                    onClick: () => setIsCreateListOpen(true),
+                    variant: 'accent'
+                }
+            ]}
+            sections={[
+                {
+                    title: "DEINE SAMMLUNGEN",
+                    actions: customLists.filter(l => l.ownerId === user.id).map(l => ({
+                        label: l.name,
+                        icon: <List size={20} />,
+                        onClick: () => navigate(`/list/${l.id}`),
+                        active: location.pathname === `/list/${l.id}`
+                    }))
+                }
+            ]}
+        />
+        <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsListsSheetOpen(true)} />
+        <AiRecommendationButton items={displayedItems} onAdd={handleAdd} apiKey={tmdbKey} mobileFabOnly={true} />
         {selectedItem && <DetailView item={selectedItem} isExisting={true} onClose={() => setSelectedItem(null)} apiKey={tmdbKey} onUpdateStatus={handleUpdateStatus} onToggleFavorite={handleToggleFavorite} />}
         <ShareModal 
             isOpen={isShareModalOpen} 
@@ -484,6 +527,14 @@ export default function App() {
                 loadData();
             }}
         />
+        {listToRename && (
+            <RenameListModal
+                isOpen={isRenameListOpen}
+                onClose={() => setIsRenameListOpen(false)}
+                currentName={listToRename.name}
+                onRename={executeRenameList}
+            />
+        )}
     </div>
   );
 }

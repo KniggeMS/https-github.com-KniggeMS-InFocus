@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Loader2, Sparkles, Minimize2 } from 'lucide-react';
-// Wichtig: Wir nutzen ausschließlich den zentralen Service
-import { chatWithAI } from '../services/gemini';
+// Hybride KI-Logik: Groq als Primärquelle, Gemini als Fallback
+import { chatWithAI as geminiChat } from '../services/gemini';
+import { getGroqChatResponse } from '../services/groq';
 import { MediaItem, ChatMessage } from '../types';
 import { useTranslation } from '../contexts/LanguageContext';
 
@@ -52,9 +53,16 @@ export const ChatBot: React.FC<ChatBotProps> = ({ items }) => {
     setIsLoading(true);
 
     try {
-      // KORREKTUR: Reihenfolge der Parameter angepasst an services/gemini.ts
-      // (message, history, watchlist)
-      const response = await chatWithAI(currentInput, messages, items);
+      let response = '';
+      
+      try {
+        // Versuch 1: Groq (Ultraschnell)
+        response = await getGroqChatResponse(currentInput, messages, items);
+      } catch (groqError: any) {
+        console.warn("Groq failed, switching to Gemini:", groqError.message);
+        // Versuch 2: Gemini (Zuverlässiger Fallback)
+        response = await geminiChat(currentInput, messages, items);
+      }
       
       const aiMsg: ChatMessage = {
         id: crypto.randomUUID(),
@@ -69,7 +77,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ items }) => {
       const errorMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'model',
-        text: "Entschuldigung, ich habe gerade Verbindungsprobleme. Bitte prüfe deinen API-Key in den Einstellungen.",
+        text: t('chat_error'),
         timestamp: Date.now()
       };
       setMessages(prev => [...prev, errorMsg]);
@@ -106,7 +114,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ items }) => {
                <div className="flex justify-start">
                  <div className="bg-slate-800 text-slate-400 rounded-2xl rounded-tl-sm px-4 py-3 border border-slate-700 flex items-center gap-2">
                     <Loader2 size={14} className="animate-spin" />
-                    <span className="text-xs">Tippt...</span>
+                    <span className="text-xs">{t('chat_typing')}</span>
                  </div>
                </div>
             )}

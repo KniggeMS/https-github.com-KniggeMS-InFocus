@@ -19,6 +19,7 @@ test_lab/
 test_setup.ts
 *.alt
 SESSION_HANDOVER.md
+temp_report/
 
 # Editor directories and files
 .vscode/*

@@ -34,6 +34,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     let mounted = true;
 
+    // --- TEST MODE BACKDOOR ---
+    const testUserStr = localStorage.getItem('TEST_MODE_USER');
+    if (testUserStr) {
+        console.warn("⚠️ RUNNING IN TEST MODE - AUTHENTICATION BYPASSED ⚠️");
+        try {
+            const fakeUser = JSON.parse(testUserStr);
+            setUser(fakeUser);
+            setLoading(false);
+            return; // Supabase Init überspringen
+        } catch (e) { console.error("Invalid Test User JSON"); }
+    }
+    // --------------------------
+
     if (window.location.hash && window.location.hash.includes('type=recovery')) {
         setIsRecoveryMode(true);
     }

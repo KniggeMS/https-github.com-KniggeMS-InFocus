@@ -1,25 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { X, Shield, Key, Check, Eye, EyeOff, Globe } from 'lucide-react';
+import { X, Shield, Key, Check, Eye, EyeOff, Globe, Sparkles } from 'lucide-react';
 import { useTranslation } from '../contexts/LanguageContext';
+import { UserRole } from '../types';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  userRole: UserRole;
   tmdbKey: string;
   omdbKey: string;
-  onSave: (keys: { tmdb: string, omdb: string }) => void;
+  onSave: (keys: { tmdb: string, omdb: string, groq?: string }) => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, tmdbKey, omdbKey, onSave }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, userRole, tmdbKey, omdbKey, onSave }) => {
   const { t } = useTranslation();
   const [localTmdb, setLocalTmdb] = useState(tmdbKey);
   const [localOmdb, setLocalOmdb] = useState(omdbKey);
+  const [localGroq, setLocalGroq] = useState('');
   const [showSecrets, setShowSecrets] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
         setLocalTmdb(localStorage.getItem('tmdb_api_key') || '');
         setLocalOmdb(localStorage.getItem('omdb_api_key') || '');
+        setLocalGroq(localStorage.getItem('groq_api_key') || '');
     }
   }, [isOpen]);
 
@@ -27,12 +31,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
 
   const handleSave = (e: React.FormEvent) => {
       e.preventDefault();
-      onSave({ tmdb: localTmdb, omdb: localOmdb });
+      onSave({ 
+        tmdb: localTmdb, 
+        omdb: localOmdb,
+        groq: localGroq 
+      });
       onClose();
   };
 
   const isTmdbEnvSet = !!import.meta.env.VITE_TMDB_API_KEY;
   const isOmdbEnvSet = !!import.meta.env.VITE_OMDB_API_KEY;
+  const isGroqEnvSet = !!import.meta.env.VITE_GROQ_API_KEY;
+
+  if (userRole !== UserRole.ADMIN) {
+      return (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm">
+              <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-8 text-center">
+                  <Shield size={48} className="text-red-500 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-xl font-bold text-white mb-2">Zugriff verweigert</h3>
+                  <p className="text-slate-400 mb-6">Sie haben keine Berechtigung, die System-Einstellungen einzusehen oder zu ändern.</p>
+                  <button onClick={onClose} className="px-6 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-colors">Schließen</button>
+              </div>
+          </div>
+      );
+  }
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -90,6 +112,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, t
                     value={localOmdb}
                     onChange={e => setLocalOmdb(e.target.value)}
                     placeholder={isOmdbEnvSet ? "System-Key aktiv..." : "Key eingeben..."}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none font-mono text-sm"
+                />
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex flex-wrap justify-between items-center gap-2">
+                    <label className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase flex items-center gap-2">
+                        <Sparkles size={12} className="text-purple-400"/> Groq API Key (Llama 3)
+                    </label>
+                    {(isGroqEnvSet && !localGroq) && (
+                        <span className="text-[9px] sm:text-[10px] text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-900/30 flex items-center gap-1 font-bold">
+                            <Check size={10}/> VERCEL ACTIVE
+                        </span>
+                    )}
+                </div>
+                <input 
+                    type={showSecrets ? "text" : "password"}
+                    value={localGroq}
+                    onChange={e => setLocalGroq(e.target.value)}
+                    placeholder={isGroqEnvSet ? "System-Key aktiv..." : "Key eingeben..."}
                     className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:outline-none font-mono text-sm"
                 />
             </div>

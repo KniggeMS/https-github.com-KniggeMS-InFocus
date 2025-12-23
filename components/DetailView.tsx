@@ -5,7 +5,8 @@ import {
 import { MediaItem, SearchResult, WatchStatus, MediaType } from '../types';
 import { getMediaDetails, IMAGE_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 // Import aus unserem stabilen Baseline-Service
-import { analyzeMovieContext } from '../services/gemini';
+import { analyzeMovieContext as geminiAnalyze } from '../services/gemini';
+import { analyzeMovieWithGroq } from '../services/groq';
 import { useTranslation } from '../contexts/LanguageContext';
 
 interface DetailViewProps {
@@ -30,11 +31,19 @@ export const DetailView: React.FC<DetailViewProps> = ({
     const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
     const [backgroundTrailerUrl, setBackgroundTrailerUrl] = useState<string | null>(null);
     
-    const [activeTab, setActiveTab] = useState<'overview' | 'cast' | 'facts'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'cast' | 'facts' | 'analysis'>('overview');
     const [notes, setNotes] = useState(isExisting ? (initialItem as MediaItem).userNotes || '' : '');
     const [showTrailer, setShowTrailer] = useState(false);
     const [copied, setCopied] = useState(false);
     const [localIsFav, setLocalIsFav] = useState(isExisting ? (initialItem as MediaItem).isFavorite || false : false);
+    const [showFullPlot, setShowFullPlot] = useState(false);
+
+    // Sync local state with prop changes
+    useEffect(() => {
+        if (isExisting) {
+            setLocalIsFav((initialItem as MediaItem).isFavorite || false);
+        }
+    }, [initialItem, isExisting]);
 
     const handleToggleFav = () => {
         if (isExisting && onToggleFavorite) {
@@ -63,9 +72,23 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 // KORREKTUR: Aufruf an Baseline-Service angepasst (Titel und Plot getrennt)
                 if (isExisting || (initialItem as SearchResult).tmdbId) {
                     setLoadingAi(true);
-                    analyzeMovieContext(initialItem.title, initialItem.plot || '')
-                        .then((text: any) => setAiAnalysis(text))
-                        .finally(() => setLoadingAi(false));
+                    
+                    const performAnalysis = async () => {
+                        try {
+                            // Versuch 1: Groq (Schnell)
+                            const res = await analyzeMovieWithGroq(initialItem.title, initialItem.plot || '');
+                            setAiAnalysis(res);
+                        } catch (err) {
+                            console.warn("Groq analysis failed, trying Gemini:", err);
+                            // Versuch 2: Gemini (Fallback)
+                            const res = await geminiAnalyze(initialItem.title, initialItem.plot || '');
+                            setAiAnalysis(res);
+                        } finally {
+                            setLoadingAi(false);
+                        }
+                    };
+                    
+                    performAnalysis();
                 }
             } catch (e) { console.error(e); }
         };
@@ -197,9 +220,9 @@ export const DetailView: React.FC<DetailViewProps> = ({
                         </div>
 
                         <div className="flex gap-8 border-b border-white/5">
-                            {['overview', 'cast', 'facts'].map((tab) => (
+                            {['overview', 'cast', 'facts', 'analysis'].map((tab) => (
                                 <button key={tab} onClick={() => setActiveTab(tab as any)} className={`pb-4 text-[11px] font-black uppercase tracking-[0.25em] transition-all border-b-2 ${activeTab === tab ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
-                                    {t(tab === 'cast' ? 'besetzung' : (tab === 'facts' ? 'facts' : 'überblick'))}
+                                    {t(tab === 'cast' ? 'besetzung' : (tab === 'facts' ? 'facts' : (tab === 'analysis' ? 'analyse' : 'überblick')))}
                                 </button>
                             ))}
                         </div>
@@ -211,17 +234,16 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                 <>
                                     <div className="space-y-4">
                                         <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">HANDLUNG</h3>
-                                        <p className="text-lg text-slate-200 leading-relaxed font-medium">{displayItem.plot}</p>
-                                    </div>
-
-                                    <div className="bg-[#2D1B4E]/40 p-8 rounded-[2rem] border border-purple-500/20 backdrop-blur-xl relative overflow-hidden group/ai shadow-2xl shadow-purple-900/20">
-                                         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover/ai:bg-purple-500/20 transition-colors"></div>
-                                         <h3 className="text-purple-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                                            <Sparkles size={14} /> DEEP CONTENT ANALYSIS
-                                         </h3>
-                                         <p className="text-purple-100 italic text-base leading-relaxed font-medium">
-                                            {loadingAi ? "Die AI analysiert den Filmkontext..." : (aiAnalysis && aiAnalysis.includes("Quotaregelung") ? aiAnalysis : (aiAnalysis || "Keine Analyse verfügbar."))}
-                                         </p>
+                                        <p className="text-lg text-slate-200 leading-relaxed font-medium">
+                                            {displayItem.plot && displayItem.plot.length > 300 && !showFullPlot
+                                                ? `${displayItem.plot.substring(0, 300)}...`
+                                                : displayItem.plot}
+                                        </p>
+                                        {displayItem.plot && displayItem.plot.length > 300 && (
+                                            <button onClick={() => setShowFullPlot(!showFullPlot)} className="text-sm font-bold text-cyan-400 hover:text-cyan-500 transition-colors mt-2">
+                                                {showFullPlot ? 'Weniger anzeigen' : 'Mehr anzeigen'}
+                                            </button>
+                                        )}
                                     </div>
 
                                     {isExisting && (
@@ -259,7 +281,13 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                 </div>
                             )}
                             {activeTab === 'facts' && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                    {displayItem.tagline && (
+                                        <div className="space-y-2 md:col-span-2">
+                                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">TAGLINE</h3>
+                                            <p className="text-lg font-medium text-white italic">"{displayItem.tagline}"</p>
+                                        </div>
+                                    )}
                                     <div className="space-y-2">
                                         <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">ORIGINAL TITEL</h3>
                                         <p className="text-sm font-bold text-white tracking-wide">{displayItem.originalTitle}</p>
@@ -282,6 +310,23 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                             {displayItem.revenue && displayItem.revenue > 0 ? `$ ${(displayItem.revenue / 1000000).toFixed(1)} Mio.` : '-'}
                                         </p>
                                     </div>
+                                    {displayItem.productionStatus && (
+                                        <div className="space-y-2">
+                                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">PRODUKTION STATUS</h3>
+                                            <p className="text-sm font-bold text-white tracking-wide">{displayItem.productionStatus}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                             {activeTab === 'analysis' && (
+                                <div className="bg-[#2D1B4E]/40 p-8 rounded-[2rem] border border-purple-500/20 backdrop-blur-xl relative overflow-hidden group/ai shadow-2xl shadow-purple-900/20">
+                                     <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover/ai:bg-purple-500/20 transition-colors"></div>
+                                     <h3 className="text-purple-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                                        <Sparkles size={14} /> DEEP CONTENT ANALYSIS
+                                     </h3>
+                                     <p className="text-purple-100 italic text-base leading-relaxed font-medium">
+                                        {loadingAi ? "Die AI analysiert den Filmkontext..." : (aiAnalysis && aiAnalysis.includes("Quotaregelung") ? aiAnalysis : (aiAnalysis || "Keine Analyse verfügbar."))}
+                                     </p>
                                 </div>
                             )}
                         </div>

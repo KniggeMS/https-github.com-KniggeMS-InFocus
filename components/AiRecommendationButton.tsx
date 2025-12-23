@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, Sparkles, Plus, X, Quote } from 'lucide-react';
-import { getRecommendations } from '../services/gemini';
+import { getRecommendations as getGeminiRecommendations } from '../services/gemini';
+import { getGroqRecommendations } from '../services/groq';
 import { searchTMDB, getMediaDetails, IMAGE_BASE_URL, LOGO_BASE_URL } from '../services/tmdb';
 import { MediaItem, SearchResult, WatchStatus } from '../types';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -17,14 +18,25 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [recommendation, setRecommendation] = useState<any | null>(null);
+  const [usedModel, setUsedModel] = useState<'Groq' | 'Gemini'>('Groq');
 
   const getAiTip = async () => {
     setLoading(true);
     setRecommendation(null);
 
     try {
-      // 1. Hole Empfehlung von Gemini
-      const results = await getRecommendations(items);
+      let results: SearchResult[] = [];
+      
+      try {
+          // Versuch 1: Groq
+          results = await getGroqRecommendations(items);
+          setUsedModel('Groq');
+      } catch (err) {
+          console.warn("Groq recommendations failed, trying Gemini:", err);
+          // Versuch 2: Gemini
+          results = await getGeminiRecommendations(items);
+          setUsedModel('Gemini');
+      }
       
       if (results && results.length > 0) {
         let bestPick = results[0] as any;
@@ -48,9 +60,12 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
             }
         }
         setRecommendation(bestPick);
+      } else {
+          alert("Die AI konnte aktuell keine Empfehlung generieren. Bitte versuche es später erneut.");
       }
     } catch (error) {
       console.error("AI Error:", error);
+      alert("AI Service momentan nicht erreichbar. Bitte prüfe deine API Keys in den Einstellungen.");
     } finally {
       setLoading(false);
     }
@@ -72,6 +87,7 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                 <button 
                     onClick={getAiTip} 
                     disabled={loading} 
+                    data-testid="ai-sidebar-button"
                     className="w-full bg-[#1A1425] hover:bg-[#251C35] border border-purple-500/20 rounded-2xl p-4 transition-all duration-300 shadow-xl relative overflow-hidden text-left"
                 >
                     <div className="flex items-center gap-4 relative z-10">
@@ -86,7 +102,7 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                                 {!loading && <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[8px] font-black uppercase tracking-widest">NEU</span>}
                             </div>
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
-                                {loading ? "Gemini 1.5 Flash" : "Entdecke Filme"}
+                                {loading ? (usedModel === 'Groq' ? "Llama 3 (Groq)" : "Gemini 1.5 Flash") : "Entdecke Filme"}
                             </p>
                         </div>
                     </div>
@@ -96,14 +112,21 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
             </div>
         )}
 
-        {/* Mobiler Floating Action Button */}
-        <button onClick={getAiTip} disabled={loading} className={`md:hidden fixed bottom-24 left-4 z-50 w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-900/40 border-2 border-slate-900 active:scale-95 transition-transform ${!mobileFabOnly ? 'md:hidden' : ''}`}>
-            {loading ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
-        </button>
+        {/* Mobiler Floating Action Button - Nur wenn explizit gefordert */}
+        {mobileFabOnly && (
+            <button 
+                onClick={getAiTip} 
+                disabled={loading} 
+                data-testid="ai-fab-button"
+                className="md:hidden fixed bottom-24 left-4 z-[100] w-14 h-14 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-2xl shadow-purple-900/60 border-2 border-slate-900 active:scale-95 transition-all"
+            >
+                {loading ? <Loader2 size={24} className="animate-spin" /> : <Sparkles size={24} />}
+            </button>
+        )}
 
         {/* Empfehlungs-Modal */}
         {recommendation && createPortal(
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+            <div data-testid="recommendation-modal" className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
                 <div className="bg-slate-900 border border-purple-500/30 w-full max-w-md rounded-3xl shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh]">
                     <button onClick={handleClose} className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-slate-400 hover:text-white rounded-full z-20">
                       <X size={20} />

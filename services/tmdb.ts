@@ -34,15 +34,39 @@ export async function searchMedia(query: string, apiKey: string): Promise<Search
   } catch (error) { return []; }
 }
 
+// Find TMDB Item by External ID (e.g. IMDb ID)
+export async function findByExternalId(externalId: string, apiKey: string): Promise<SearchResult | null> {
+  const effectiveKey = getEffectiveApiKey(apiKey);
+  if (!effectiveKey || !externalId) return null;
+  try {
+    const response = await fetch(`${BASE_URL}/find/${externalId}?api_key=${effectiveKey}&external_source=imdb_id&language=de-DE`);
+    const data = await response.json();
+    const result = (data.movie_results?.[0]) || (data.tv_results?.[0]);
+    if (!result) return null;
+    
+    return {
+      tmdbId: result.id,
+      title: result.title || result.name,
+      originalTitle: result.original_title || result.original_name,
+      year: new Date(result.release_date || result.first_air_date).getFullYear() || 0,
+      type: result.media_type === 'tv' || data.tv_results?.length > 0 ? MediaType.SERIES : MediaType.MOVIE,
+      genre: [],
+      plot: result.overview,
+      rating: result.vote_average,
+      posterPath: result.poster_path ? `${IMAGE_BASE_URL}${result.poster_path}` : null,
+      imdbId: externalId
+    };
+  } catch (error) { return null; }
+}
+
 // STABILITÄTS-EXPORTE: Akzeptiert beliebig viele Argumente
 export async function searchTMDB(...args: any[]) { return searchMedia(args[0], args[1]); }
-export async function findByExternalId(...args: any[]) { return null; }
 
 export async function getMediaDetails(item: SearchResult, apiKey: string): Promise<Partial<MediaItem>> {
   const effectiveKey = getEffectiveApiKey(apiKey);
   const typePath = item.type === MediaType.SERIES ? 'tv' : 'movie';
   try {
-    const response = await fetch(`${BASE_URL}/${typePath}/${item.tmdbId}?api_key=${effectiveKey}&language=de-DE&append_to_response=videos,credits,release_dates,content_ratings,watch/providers`);
+    const response = await fetch(`${BASE_URL}/${typePath}/${item.tmdbId}?api_key=${effectiveKey}&language=de-DE&append_to_response=videos,credits,release_dates,content_ratings,watch/providers,external_ids`);
     const data = await response.json();
     
     // Trailer Logic
@@ -72,6 +96,7 @@ export async function getMediaDetails(item: SearchResult, apiKey: string): Promi
       trailerKey: trailer?.key,
       certification,
       providers,
+      imdbId: data.imdb_id || data.external_ids?.imdb_id, // Fetching IMDb ID for both Movies and Series
       // New Micro-Facts
       budget: data.budget,
       revenue: data.revenue,

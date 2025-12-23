@@ -24,7 +24,7 @@ export const DesignLabModal: React.FC<DesignLabModalProps> = ({ isOpen, onClose 
         
         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
-        <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-10">
+        <button onClick={onClose} className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-50">
             <X size={20} />
         </button>
 

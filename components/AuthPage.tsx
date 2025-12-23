@@ -87,12 +87,20 @@ export const AuthPage: React.FC = () => {
 
         {/* TOP BAR NAVIGATION */}
         <div className="absolute top-8 left-8 right-8 flex justify-between z-50 items-center">
-             <button onClick={() => setShowGuide(true)} className="px-5 py-2 rounded-full text-slate-300 hover:text-white text-xs font-black uppercase tracking-widest border border-white/5 bg-[#121620]/80 backdrop-blur-xl flex items-center gap-2.5 transition-all hover:bg-[#1A202E]">
-                <BookOpen size={14} className="text-cyan-400" /> Handbuch
-            </button>
-            <button onClick={() => setLanguage(language === 'de' ? 'en' : 'de')} className="px-5 py-2 rounded-full text-slate-300 hover:text-white text-xs font-black uppercase tracking-widest border border-white/5 bg-[#121620]/80 backdrop-blur-xl flex items-center gap-2.5 transition-all hover:bg-[#1A202E]">
-                <Languages size={14} className="text-cyan-400" /> {language.toUpperCase()}
-            </button>
+            <div>
+                {view === 'login' && (
+                    <button onClick={() => setShowGuide(true)} className="px-5 py-2 rounded-full text-slate-300 hover:text-white text-xs font-black uppercase tracking-widest border border-white/5 bg-[#121620]/80 backdrop-blur-xl flex items-center gap-2.5 transition-all hover:bg-[#1A202E] animate-in fade-in duration-300">
+                        <BookOpen size={14} className="text-cyan-400" /> Handbuch
+                    </button>
+                )}
+            </div>
+            <div>
+                {view === 'register' && (
+                    <button onClick={() => setLanguage(language === 'de' ? 'en' : 'de')} className="px-5 py-2 rounded-full text-slate-300 hover:text-white text-xs font-black uppercase tracking-widest border border-white/5 bg-[#121620]/80 backdrop-blur-xl flex items-center gap-2.5 transition-all hover:bg-[#1A202E] animate-in fade-in duration-300">
+                        <Languages size={14} className="text-cyan-400" /> {language.toUpperCase()}
+                    </button>
+                )}
+            </div>
         </div>
 
         {/* AUTH CARD */}
@@ -180,6 +188,7 @@ export const AuthPage: React.FC = () => {
                         <input type="text" placeholder={t('username_placeholder')} value={username} onChange={(e) => setUsername(e.target.value)} className="w-full bg-[#121620] border border-white/5 rounded-2xl py-4 px-5 text-white placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 font-medium" />
                          <input type="email" placeholder={t('email_address')} value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-[#121620] border border-white/5 rounded-2xl py-4 px-5 text-white placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 font-medium" />
                         <input type="password" placeholder={t('password_placeholder')} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-[#121620] border border-white/5 rounded-2xl py-4 px-5 text-white placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 font-medium" />
+                        <input type="password" placeholder="Passwort bestätigen" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-[#121620] border border-white/5 rounded-2xl py-4 px-5 text-white placeholder-slate-700 focus:outline-none focus:border-cyan-500/50 font-medium" />
                     </div>
                 )}
 

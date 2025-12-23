@@ -25,6 +25,35 @@
   --glass-blur: blur(25px);
 }
 
+/* Theme Overrides */
+:root.theme-light {
+  --bg-main: #f8fafc; /* Slate 50 */
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9; /* Slate 100 */
+  --bg-input: #e2e8f0; /* Slate 200 */
+  --bg-input-border: #cbd5e1; /* Slate 300 */
+  --text-primary: #0f172a; /* Slate 900 */
+  --text-secondary: #64748b; /* Slate 500 */
+  --border-color: #e2e8f0;
+  --border-color-light: #cbd5e1;
+  --accent-primary: #0ea5e9; /* Sky 500 */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg-opaque: #ffffff;
+  --glass-border: rgba(0, 0, 0, 0.05);
+}
+
+:root.theme-glass {
+  --bg-main: #0f172a; 
+  --bg-sidebar: rgba(15, 23, 42, 0.6);
+  --bg-card: rgba(30, 41, 59, 0.4);
+  --bg-card-hover: rgba(30, 41, 59, 0.6);
+  --bg-input: rgba(15, 23, 42, 0.5);
+  --bg-input-border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(15, 23, 42, 0.3);
+  --glass-blur: blur(40px);
+}
+
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--bg-main);

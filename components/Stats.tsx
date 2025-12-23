@@ -151,40 +151,40 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
   if (items.length === 0) return null;
 
   return (
-    <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-lg mb-8 transition-all hover:border-slate-600">
+    <div className="bg-card rounded-xl p-6 border border-border-main shadow-lg mb-8 transition-all hover:border-border-light">
       
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-4 text-white group w-full sm:w-auto"
+            className="flex items-center gap-4 text-text-main group w-full sm:w-auto"
           >
-            <div className={`p-3 rounded-xl transition-colors shadow-inner ${isExpanded ? 'bg-cyan-500/10 text-cyan-400' : 'bg-slate-700/50 text-slate-400 group-hover:bg-slate-700 group-hover:text-slate-200'}`}>
+            <div className={`p-3 rounded-xl transition-colors shadow-inner ${isExpanded ? 'bg-accent/10 text-accent' : 'bg-input text-text-muted group-hover:bg-card-hover group-hover:text-text-main'}`}>
                 <Activity size={24} />
             </div>
             <div className="text-left flex-grow">
-                <h3 className="text-lg font-bold group-hover:text-cyan-400 transition-colors">Statistik & Trends</h3>
-                <span className="text-sm text-slate-400 block">
+                <h3 className="text-lg font-bold group-hover:text-accent transition-colors">Statistik & Trends</h3>
+                <span className="text-sm text-text-muted block">
                     {metric === 'count' ? 'Genre-Verteilung (Gesamt)' : 'Deine Watchtime (Gesehen)'}
                 </span>
             </div>
             <div className="sm:hidden ml-auto">
-                {isExpanded ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+                {isExpanded ? <ChevronUp size={20} className="text-text-muted" /> : <ChevronDown size={20} className="text-text-muted" />}
             </div>
           </button>
 
           {/* METRIC SWITCH (Visible when expanded) */}
           {isExpanded && (
-              <div className="flex bg-slate-900/50 p-1.5 rounded-lg border border-slate-700 self-end sm:self-auto animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="flex bg-input p-1.5 rounded-lg border border-border-main self-end sm:self-auto animate-in fade-in slide-in-from-right-4 duration-300">
                   <button
                     onClick={() => setMetric('count')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${metric === 'count' ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${metric === 'count' ? 'bg-accent text-white shadow-lg' : 'text-text-muted hover:text-text-main hover:bg-card-hover'}`}
                   >
                       <Hash size={14} /> Anzahl
                   </button>
                   <button
                     onClick={() => setMetric('runtime')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${metric === 'runtime' ? 'bg-purple-600 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold transition-all ${metric === 'runtime' ? 'bg-purple-600 text-white shadow-lg' : 'text-text-muted hover:text-text-main hover:bg-card-hover'}`}
                   >
                       <Clock size={14} /> Laufzeit
                   </button>
@@ -228,20 +228,20 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
 
                 {/* THE INFORMATIVE CENTER (Absolute overlay) */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none flex-col animate-in fade-in duration-300 z-10">
-                    <span className={`text-6xl font-black leading-none tracking-tight ${metric === 'count' ? 'text-white' : 'text-purple-100'}`}>
+                    <span className={`text-6xl font-black leading-none tracking-tight ${metric === 'count' ? 'text-text-main' : 'text-purple-300'}`}>
                         {centerValue}
                     </span>
-                    <span className="text-sm uppercase font-bold text-slate-400 tracking-widest mt-2">
+                    <span className="text-sm uppercase font-bold text-text-muted tracking-widest mt-2">
                         {centerLabel}
                     </span>
-                    <div className={`mt-3 px-4 py-1.5 rounded-md text-sm font-bold border transition-colors max-w-[90%] truncate ${activeItem ? 'bg-slate-700/80 border-slate-600 text-cyan-400' : 'bg-transparent border-transparent text-slate-500'}`}>
+                    <div className={`mt-3 px-4 py-1.5 rounded-md text-sm font-bold border transition-colors max-w-[90%] truncate ${activeItem ? 'bg-card-hover border-border-light text-accent' : 'bg-transparent border-transparent text-text-muted'}`}>
                         {centerContext}
                     </div>
                 </div>
             </div>
 
             {/* CUSTOM LEGEND (Right Side) */}
-            <div className="flex flex-col justify-center w-full sm:w-64 sm:border-l sm:border-slate-700/50 sm:pl-8 h-auto sm:h-[90%] my-auto">
+            <div className="flex flex-col justify-center w-full sm:w-64 sm:border-l sm:border-border-main/50 sm:pl-8 h-auto sm:h-[90%] my-auto">
                 <div className="grid grid-cols-2 sm:grid-cols-1 gap-x-6 gap-y-3">
                     {data.map((entry, index) => {
                         const isActive = activeIndex === index;
@@ -260,11 +260,11 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
                                         className={`w-3 h-3 rounded-full transition-transform duration-200 ${isActive ? 'scale-125 shadow-[0_0_8px_currentColor]' : ''}`} 
                                         style={{ backgroundColor: COLORS[index % COLORS.length], color: COLORS[index % COLORS.length] }}
                                     ></div>
-                                    <span className={`truncate transition-colors font-medium ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-slate-100'}`}>
+                                    <span className={`truncate transition-colors font-medium ${isActive ? 'text-text-main' : 'text-text-muted group-hover:text-text-main'}`}>
                                         {entry.name}
                                     </span>
                                 </div>
-                                <span className={`font-mono text-sm transition-colors ${isActive ? 'text-cyan-400 font-bold' : 'text-slate-500'}`}>
+                                <span className={`font-mono text-sm transition-colors ${isActive ? 'text-accent font-bold' : 'text-text-muted/70'}`}>
                                     {percent}%
                                 </span>
                             </div>
@@ -272,7 +272,7 @@ export const Stats: React.FC<StatsProps> = ({ items }) => {
                     })}
                 </div>
                 {/* Instruction Hint (Desktop only) */}
-                <div className="hidden sm:flex mt-6 pt-4 border-t border-slate-700/50 text-sm text-slate-500 items-center gap-2">
+                <div className="hidden sm:flex mt-6 pt-4 border-t border-border-main/50 text-sm text-text-muted items-center gap-2">
                     <MousePointer2 size={14} />
                     <span>Hover für Details</span>
                 </div>
