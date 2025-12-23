@@ -77,7 +77,14 @@ export default function App() {
   const [isDesignLabOpen, setIsDesignLabOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MediaItem | SearchResult | null>(null);
+  const [isSelectedItemExisting, setIsSelectedItemExisting] = useState(false);
+
+  const handleSelectItem = (item: MediaItem | SearchResult, isExisting: boolean) => {
+      setSelectedItem(item);
+      setIsSelectedItemExisting(isExisting);
+      if (!isExisting) setIsSearchOpen(false); // Close search when opening detail for new item
+  };
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<'ALL' | 'MOVIE' | 'SERIES'>('ALL');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -286,7 +293,7 @@ export default function App() {
 
       filtered.sort((a, b) => b.addedAt - a.addedAt);
       if (filtered.length === 0) return <div className="flex flex-col items-center justify-center py-20 text-slate-500"><Clapperboard size={48} className="mb-4 opacity-20" /><p>{t('empty_state')}</p></div>;
-      return <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 relative z-10">{filtered.map(item => <MediaCard key={item.id} item={item} onStatusChange={handleUpdateStatus} onDelete={handleDelete} onToggleFavorite={handleToggleFavorite} onRate={() => {}} onClick={setSelectedItem} onRefreshMetadata={handleRefreshItem} customLists={customLists.filter(l => l.ownerId === user.id)} onAddToList={(lid, iid) => { updateCustomListItems(lid, [...(customLists.find(cl => cl.id === lid)?.items || []), iid]); loadData(); }} />)}</div>;
+      return <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 relative z-10">{filtered.map(item => <MediaCard key={item.id} item={item} onStatusChange={handleUpdateStatus} onDelete={handleDelete} onToggleFavorite={handleToggleFavorite} onRate={() => {}} onClick={(i) => handleSelectItem(i, true)} onRefreshMetadata={handleRefreshItem} customLists={customLists.filter(l => l.ownerId === user.id)} onAddToList={(lid, iid) => { updateCustomListItems(lid, [...(customLists.find(cl => cl.id === lid)?.items || []), iid]); loadData(); }} />)}</div>;
   };
 
   return (
@@ -444,7 +451,7 @@ export default function App() {
             </main>
         </div>
         <ChatBot items={displayedItems} />
-        <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} onUpdateApiKey={(key) => { localStorage.setItem('tmdb_api_key', key); }} />
+        <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onAdd={handleAdd} apiKey={tmdbKey} onUpdateApiKey={(key) => { localStorage.setItem('tmdb_api_key', key); }} onSelectItem={(i) => handleSelectItem(i, false)} />
         <DesignLabModal isOpen={isDesignLabOpen} onClose={() => setIsDesignLabOpen(false)} />
         <SettingsModal 
             isOpen={isSettingsOpen} 
@@ -517,7 +524,7 @@ export default function App() {
         />
         <MobileNav onSearchClick={() => setIsSearchOpen(true)} onListsClick={() => setIsListsSheetOpen(true)} />
         <AiRecommendationButton items={displayedItems} onAdd={handleAdd} apiKey={tmdbKey} mobileFabOnly={true} />
-        {selectedItem && <DetailView item={selectedItem} isExisting={true} onClose={() => setSelectedItem(null)} apiKey={tmdbKey} onUpdateStatus={handleUpdateStatus} onToggleFavorite={handleToggleFavorite} />}
+        {selectedItem && <DetailView item={selectedItem} isExisting={isSelectedItemExisting} onClose={() => setSelectedItem(null)} apiKey={tmdbKey} onUpdateStatus={handleUpdateStatus} onToggleFavorite={handleToggleFavorite} onAdd={(item, status, isFav) => { handleAdd(item, status, isFav); setSelectedItem(null); }} />}
         <ShareModal 
             isOpen={isShareModalOpen} 
             onClose={() => setIsShareModalOpen(false)}

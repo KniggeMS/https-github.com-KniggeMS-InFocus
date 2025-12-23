@@ -49,6 +49,7 @@ export const CreateListModal: React.FC<CreateListModalProps> = ({ isOpen, onClos
                 <button type="button" onClick={onClose} className="px-3 py-2 text-slate-400 hover:text-white text-sm">{t('cancel')}</button>
                 <button 
                     type="submit"
+                    data-testid="submit-create-list"
                     disabled={!name.trim()}
                     className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                 >

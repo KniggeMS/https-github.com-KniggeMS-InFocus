@@ -13,25 +13,22 @@ Willkommen zur technischen Dokumentation von InFocus CineLog. Dieses Dokument be
 *   **Self-Healing Data:** `services/hydration.ts` lädt fehlende Runtime-, FSK- und Anbieterdaten automatisch nach. Aggressive "Self-Healing" für Rotten Tomatoes (RT) Scores in `MediaCard.tsx`.
 *   **Intelligentes Layout:** Medienkarten haben jetzt eine einheitliche Höhe, unabhängig vom Inhalt (dank Flexbox und `min-h` in `MediaCard.tsx`).
 *   **Admin Benachrichtigungen:** Persistentes System zur Benachrichtigung von Administratoren bei neuen Registrierungen oder Logins. Zeigt einen Badge im Profilmenü an.
-*   **Listen Teilen:** Benutzer können nun ihre erstellten Listen mit anderen Nutzern teilen. Eine `ShareModal` Komponente wurde implementiert.
-*   **AI Funktionen (Gemini 1.5 Flash):**
-    *   **AI Tipp:** Button in der Sidebar für KI-Empfehlungen.
+*   **Listen Teilen:** Benutzer können nun ihre erstellten Listen mit anderen Nutzern teilen. Eine `ShareModal` Komponente wurde implementiert. Zudem gibt es eine optimierte **Mobile Listen-Übersicht** via Bottom Sheet.
+*   **AI Funktionen (Hybrid Engine):**
+    *   **Hybride Architektur:** Nutzt primär **Groq (Llama 3)** für extrem schnelle Textantworten und **Google Gemini 1.5 Flash** für Vision-Aufgaben und Deep Content Analysis.
+    *   **AI Tipp:** Button in der Sidebar (Desktop) und als **Mobile FAB** (Floating Action Button) für schnelle KI-Empfehlungen.
     *   **Deep Content Analysis:** Analyse von Filmen in der Detailansicht.
     *   **Chatbot:** Integrierter AI-Chatbot mit Kontext zur Sammlung.
-    *   **Graceful Degradation:** Bei Überschreitung des API-Kontingents wird eine freundliche Fehlermeldung angezeigt, anstatt die Funktion zu deaktivieren.
-*   **PWA Support:** Installierbar als App auf iOS und Android.
+*   **PWA Support:** Vollständige PWA-Integration mit `usePwaInstall` Hook; installierbar auf iOS und Android.
+*   **Admin-Kontrolle:** "Smart Import" und erweiterte Einstellungen sind nun strikt auf Benutzer mit der Rolle `ADMIN` beschränkt.
 *   **Internationale Sprachunterstützung (i18n):** Implementiert für Deutsch und Englisch, einschließlich der Auth-Seite und des Chatbots.
-*   **AuthPage Redesign:** Überarbeitetes Login/Registrierungs-Layout mit Glow-Effekten und Sprachumschalter.
 
 ### 🐛 Behobene Bugs in v2.4
 
+*   **Mobile UX:** "Design Lab" Modal Z-Index Fix, "App installieren" Button Funktionalität, und Sichtbarkeit von Admin-Features für reguläre User korrigiert.
 *   "Missing Add Button" in `SearchModal`/`DetailView`.
 *   "No Cards after Login" durch Login-Sync-Verbesserungen.
 *   "No Rotten Tomatoes Score" durch robustere Hydration und Fallback-Mechanismen.
-*   "Layout Shift" durch inkonsistente Kartenhöhen.
-*   "AI Tipp/Deep Content Analysis Connection Issues" durch verbesserte API Key Logik.
-*   "Chat Not Translated" durch Hinzufügen der Übersetzungen.
-*   "Translation Button No Function" auf der Auth-Seite.
 
 ---
 
@@ -39,7 +36,9 @@ Willkommen zur technischen Dokumentation von InFocus CineLog. Dieses Dokument be
 
 *   **Frontend:** React 19, Vite, TypeScript
 *   **Styling:** Tailwind CSS, Lucide Icons
-*   **AI:** Google Gemini API (`gemini-1.5-flash`)
+*   **AI Engines:** 
+    *   **Groq:** Llama 3 (Primäre Text-Engine)
+    *   **Google Gemini:** 1.5 Flash (Vision & Analysis)
 *   **Backend/Auth:** Supabase
 *   **Movie Data:** TMDB API (The Movie Database) & OMDb API
 

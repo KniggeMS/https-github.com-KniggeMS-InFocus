@@ -6,29 +6,28 @@
 
 ## ✨ Highlights
 
-### 🧠 AI Powered (Google Gemini)
+### 🧠 Hybrid AI Powered (Groq & Gemini)
+*   **Groq (Llama 3):** Ultraschnelle Textantworten im CineChat und bei Filmempfehlungen.
+*   **Gemini (1.5 Flash):** Leistungsstarke Vision-Suche und Deep Content Analysis.
 *   **Vision Search:** Fotografiere ein Filmplakat oder erkenne Filme aus Bildern – die App identifiziert den Titel automatisch.
-*   **Deep Content Analysis:** Erhalte tiefe Einblicke in Filme basierend auf Handlung, Stil und kultureller Bedeutung.
 *   **CineChat:** Ein integrierter AI-Chatbot, der deine Sammlung kennt und dir Empfehlungen gibt oder Fragen beantwortet.
-*   **AI Empfehlungen:** Erhalte personalisierte Film-Tipps basierend auf deinen Favoriten.
 
 ### 🛠️ Profi-Features
-*   **Smart Import:** Importiere deine bestehenden Listen (z.B. aus Excel oder anderen Apps) einfach per Copy-Paste. Die App erkennt die Titel automatisch.
+*   **Smart Import:** Importiere deine bestehenden Listen (z.B. aus Excel oder anderen Apps) einfach per Copy-Paste. Die App erkennt die Titel automatisch (Admin-only).
 *   **Self-Healing Data:** Fehlende Bewertungen (Rotten Tomatoes), Laufzeiten oder Poster werden im Hintergrund automatisch nachgeladen und korrigiert.
 *   **Cinematic Detail View:** Erlebe Trailer direkt im Hintergrund der Detailansicht für volle Immersion.
 
 ### 📱 Modern UI/UX
+*   **Mobile-First Design:** Optimierte Steuerung via Floating Action Button (FAB) für AI-Tipps und Bottom Sheets für Listen-Aktionen.
 *   **Design Lab:** Wähle zwischen Cinematic Dark, Daylight und einem edlen Glassmorphism-Design.
 *   **PWA Support:** Installiere InFocus CineLog direkt auf deinem Homescreen (iOS & Android).
-*   **Cloud Sync:** Vollständige Synchronisation und Authentifizierung über Supabase.
 
 ---
 
 ## 🛠️ Tech Stack
 
 *   **Frontend:** React 19, Vite, TypeScript
-*   **Styling:** Tailwind CSS, Lucide Icons
-*   **AI:** Google Gemini API (`gemini-1.5-flash`)
+*   **AI Engines:** Groq (Llama 3), Google Gemini (1.5 Flash)
 *   **Backend/Auth:** Supabase
 *   **Movie Data:** TMDB API & OMDb API (Fallback für RT-Scores)
 

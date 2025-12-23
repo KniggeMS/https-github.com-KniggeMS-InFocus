@@ -38,6 +38,7 @@ const ActionButton: React.FC<{ action: BottomSheetAction; onClose: () => void }>
     return (
         <button 
             onClick={handleClick}
+            data-testid="bottom-sheet-action"
             className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-colors active:bg-white/10 ${variantStyles[action.variant || 'default']}`}
         >
             <div className="flex items-center gap-4">
@@ -77,6 +78,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, title
             
             {/* Sheet */}
             <div 
+                data-testid="bottom-sheet"
                 className={`relative w-full max-w-lg glass-panel rounded-t-3xl shadow-2xl border-t border-white/10 pb-safe transition-transform duration-300 ease-out transform ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
             >
                 {/* Drag Handle */}

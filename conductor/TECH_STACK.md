@@ -1,7 +1,7 @@
 # Tech Stack Preferences
 
 ## 💻 Frontend
-- **Framework:** React 18 (TypeScript)
+- **Framework:** React 19 (TypeScript)
 - **Build Tool:** Vite
 - **Styling:** Tailwind CSS (Custom config with CSS variables for theming)
 - **Icons:** Lucide React

@@ -45,3 +45,7 @@ temp_report/
 # Build output
 dist
 build
+
+# Playwright
+test-results/
+playwright-report/

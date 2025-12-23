@@ -11,7 +11,7 @@ interface MobileNavProps {
 
 export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick, onListsClick, hasNotification }) => {
   return (
-    <div className="md:hidden fixed bottom-4 left-4 right-4 glass-panel pb-1 pt-1 z-40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] rounded-2xl animate-in slide-in-from-bottom-10 duration-500">
+    <nav data-testid="mobile-nav" className="md:hidden fixed bottom-4 left-4 right-4 glass-panel pb-1 pt-1 z-40 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] rounded-2xl animate-in slide-in-from-bottom-10 duration-500">
       <div className="flex justify-around items-center h-14 px-2">
         <NavLink 
           to="/" 
@@ -35,6 +35,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick, onListsClic
         <div className="relative -top-8">
             <button 
                 onClick={onSearchClick}
+                data-testid="search-nav-button"
                 className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl rotate-45 flex items-center justify-center text-white shadow-lg shadow-cyan-900/50 border-4 border-[#0B0E14] active:scale-95 transition-transform group"
             >
                 <Search size={24} className="-rotate-45 group-hover:scale-110 transition-transform" />
@@ -61,6 +62,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({ onSearchClick, onListsClic
           )}
         </button>
       </div>
-    </div>
+    </nav>
   );
 };

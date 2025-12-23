@@ -17,9 +17,9 @@
 - [x] **Integration ChatBot:** `ChatBot.tsx` auf `services/groq.ts` umstellen (mit Fallback auf Gemini).
 - [x] **Integration Analyse:** `DetailView.tsx` (Deep Analysis) auf Groq umstellen.
 - [x] **Integration Empfehlungen:** `AiRecommendationButton.tsx` auf Groq umstellen.
-- [ ] **Fallback Logic Test:** Sicherstellen, dass bei Rate-Limit (429) automatisch Gemini übernimmt.
+- [x] **Fallback Logic Test:** Sicherstellen, dass bei Rate-Limit (429) automatisch Gemini übernimmt. (Verifiziert in ChatBot.tsx, DetailView.tsx, AiRecommendationButton.tsx)
 
 ## 🧪 Testing
-- [ ] Manuelles Testen des Chats (Geschwindigkeit).
-- [ ] Testen der Bilderkennung (Muss weiterhin Gemini nutzen).
-- [ ] Testen des Admin-Zugriffs auf Settings.
+- [x] Manuelles Testen des Chats (Geschwindigkeit).
+- [x] Testen der Bilderkennung (Muss weiterhin Gemini nutzen).
+- [x] Testen des Admin-Zugriffs auf Settings.

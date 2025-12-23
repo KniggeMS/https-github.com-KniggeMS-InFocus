@@ -218,7 +218,11 @@ export const deleteCustomList = async (listId: string) => {
 };
 
 export const shareCustomList = async (listId: string, userIds: string[]) => {
-    await supabase.from('custom_lists').update({ shared_with: userIds }).eq('id', listId);
+    const { error } = await supabase.from('custom_lists').update({ shared_with: userIds }).eq('id', listId);
+    if (error) {
+        console.error("Error sharing custom list:", error);
+        throw error; // Re-throw to be caught by ShareModal
+    }
 };
 
 // --- USER MANAGEMENT ---

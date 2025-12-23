@@ -117,24 +117,18 @@ export const DetailView: React.FC<DetailViewProps> = ({
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0B0E14]/95 backdrop-blur-md animate-in fade-in duration-300 p-4 md:p-8">
+            <button 
+                onClick={onClose} 
+                data-testid="close-detail"
+                style={{ zIndex: 99999 }}
+                className="fixed top-6 right-6 p-4 bg-slate-900/90 hover:bg-slate-800 text-white rounded-full border-2 border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all active:scale-90 backdrop-blur-2xl"
+            >
+                <X size={28} />
+            </button>
+
             <div className="bg-[#0B0E14] w-full max-w-5xl h-full md:h-auto md:max-h-[85vh] rounded-[2rem] shadow-2xl border border-white/5 flex flex-col md:flex-row overflow-hidden relative group">
                 
                 {/* CINEMATIC BACKGROUND TRAILER */}
-                {backgroundTrailerUrl && (
-                    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-60">
-                        <iframe 
-                            src={backgroundTrailerUrl} 
-                            className="w-[150%] h-[150%] -ml-[25%] -mt-[25%] object-cover pointer-events-none filter blur-[2px] scale-110 opacity-80 mix-blend-screen" 
-                            allow="autoplay; encrypted-media" 
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0E14] via-[#0B0E14]/70 to-[#0B0E14]/40"></div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-[#0B0E14]/30 to-transparent"></div>
-                    </div>
-                )}
-
-                <button onClick={onClose} className="absolute top-6 right-6 z-[100] p-2 bg-white/5 hover:bg-white/10 text-white rounded-full border border-white/10 transition-all active:scale-90 backdrop-blur-md">
-                    <X size={20} />
-                </button>
 
                 <div className="w-full md:w-[340px] shrink-0 bg-transparent relative flex items-center justify-center overflow-hidden z-10">
                     {!showTrailer && (
@@ -190,17 +184,12 @@ export const DetailView: React.FC<DetailViewProps> = ({
 
                         <div className="flex flex-wrap gap-4 mb-10">
                             {isExisting ? (
-                                <>
-                                    <button 
-                                        onClick={handleToggleFav}
-                                        className={`px-8 py-3 rounded-2xl border transition-all flex items-center gap-3 font-black text-sm uppercase tracking-widest ${localIsFav ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}
-                                    >
-                                        <Heart size={20} className={localIsFav ? "fill-current" : ""} /> Favorit
-                                    </button>
-                                    <button onClick={handleShare} className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 transition-all flex items-center gap-3 font-black text-sm uppercase tracking-widest">
-                                        <Share2 size={20} /> {copied ? 'KOPIERT' : 'TEILEN'}
-                                    </button>
-                                </>
+                                <button 
+                                    onClick={handleToggleFav}
+                                    className={`px-8 py-3 rounded-2xl border transition-all flex items-center gap-3 font-black text-sm uppercase tracking-widest ${localIsFav ? 'bg-red-500/10 border-red-500/50 text-red-500' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'}`}
+                                >
+                                    <Heart size={20} className={localIsFav ? "fill-current" : ""} /> Favorit
+                                </button>
                             ) : (
                                 <div className="flex flex-wrap gap-4 w-full md:w-auto">
                                     <button 
@@ -217,11 +206,23 @@ export const DetailView: React.FC<DetailViewProps> = ({
                                     </button>
                                 </div>
                             )}
+                            <button 
+                                onClick={handleShare} 
+                                data-testid="detail-share-button"
+                                className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 transition-all flex items-center gap-3 font-black text-sm uppercase tracking-widest"
+                            >
+                                <Share2 size={20} /> {copied ? 'KOPIERT' : 'TEILEN'}
+                            </button>
                         </div>
 
                         <div className="flex gap-8 border-b border-white/5">
                             {['overview', 'cast', 'facts', 'analysis'].map((tab) => (
-                                <button key={tab} onClick={() => setActiveTab(tab as any)} className={`pb-4 text-[11px] font-black uppercase tracking-[0.25em] transition-all border-b-2 ${activeTab === tab ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}>
+                                <button 
+                                    key={tab} 
+                                    data-testid={`tab-${tab}`}
+                                    onClick={() => setActiveTab(tab as any)} 
+                                    className={`pb-4 text-[11px] font-black uppercase tracking-[0.25em] transition-all border-b-2 ${activeTab === tab ? 'text-cyan-400 border-cyan-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}
+                                >
                                     {t(tab === 'cast' ? 'besetzung' : (tab === 'facts' ? 'facts' : (tab === 'analysis' ? 'analyse' : 'überblick')))}
                                 </button>
                             ))}

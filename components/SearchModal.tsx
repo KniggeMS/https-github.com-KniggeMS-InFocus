@@ -12,9 +12,10 @@ interface SearchModalProps {
   onAdd: (item: SearchResult, status?: WatchStatus, isFav?: boolean) => void;
   apiKey: string;
   onUpdateApiKey?: (key: string) => void;
+  onSelectItem?: (item: SearchResult) => void;
 }
 
-export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd, apiKey, onUpdateApiKey }) => {
+export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd, apiKey, onUpdateApiKey, onSelectItem }) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -24,7 +25,6 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
   
   const [tempKey, setTempKey] = useState('');
   const [showKeyInput, setShowKeyInput] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<SearchResult | null>(null);
 
   // KORREKTUR: Nutzt die hybride Logik (Vercel oder Lokal)
   const effectiveApiKey = getEffectiveApiKey(apiKey);
@@ -35,7 +35,6 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
       setQuery('');
       setResults([]);
       setError('');
-      setSelectedItem(null);
     }
   }, [isOpen]);
 
@@ -59,7 +58,6 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
     }
     setIsLoading(true);
     setError('');
-    setSelectedItem(null); 
     
     try {
       const data = await searchTMDB(searchQuery, effectiveApiKey);
@@ -71,68 +69,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    performSearch(query);
-  };
-
-  const handleVisionSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsVisionLoading(true);
-    setError('');
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64Data = reader.result as string;
-      const identifiedTitle = await identifyMovieFromImage(base64Data);
-      if (identifiedTitle) {
-        setQuery(identifiedTitle);
-        performSearch(identifiedTitle);
-      } else {
-        setError("Konnte kein Bild erkennen.");
+  const handleSelectItem = (item: SearchResult) => {
+      if (onSelectItem) {
+          onSelectItem(item);
       }
-      setIsVisionLoading(false);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = ''; 
   };
-
-  const handleSaveKey = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedKey = tempKey.trim();
-    if (trimmedKey && onUpdateApiKey) {
-      onUpdateApiKey(trimmedKey);
-      setShowKeyInput(false);
-      setTempKey('');
-      setError(''); 
-    }
-  };
-
-  const handlePaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) setTempKey(text);
-    } catch (err) {
-      const input = document.getElementById('apiKeyInput');
-      if (input) (input as HTMLElement).focus();
-    }
-  };
-
-  if (selectedItem) {
-    return (
-      <DetailView 
-        item={selectedItem}
-        isExisting={false}
-        apiKey={effectiveApiKey}
-        onClose={() => setSelectedItem(null)}
-        onAdd={(item, status, isFav) => {
-          onAdd(item, status, isFav);
-          onClose();
-        }}
-      />
-    );
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -195,6 +136,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
                   <input
                     type="text"
                     value={query}
+                    data-testid="search-input"
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={t('search_placeholder')}
                     className="w-full bg-slate-900 border border-slate-700 text-white pl-12 pr-12 py-3 rounded-xl focus:outline-none focus:border-cyan-500 transition-all"
@@ -235,7 +177,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onAdd
               ) : results.length > 0 ? (
                 <div className="space-y-3">
                   {results.map((result, idx) => (
-                    <div key={idx} onClick={() => setSelectedItem(result)} className="flex gap-4 p-3 rounded-xl hover:bg-slate-700/50 transition-colors border border-transparent hover:border-slate-600 group cursor-pointer">
+                    <div key={idx} onClick={() => handleSelectItem(result)} className="flex gap-4 p-3 rounded-xl hover:bg-slate-700/50 transition-colors border border-transparent hover:border-slate-600 group cursor-pointer">
                       <div className="w-16 h-24 bg-slate-700 rounded-lg flex-shrink-0 overflow-hidden relative shadow-md">
                         {result.posterPath ? (
                           <img src={result.posterPath} alt={result.title} className="w-full h-full object-cover" />
