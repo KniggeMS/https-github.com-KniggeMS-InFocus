@@ -126,11 +126,20 @@ export const DetailView: React.FC<DetailViewProps> = ({
                 <X size={28} />
             </button>
 
-            <div className="bg-[#0B0E14] w-full max-w-5xl h-full md:h-auto md:max-h-[85vh] rounded-[2rem] shadow-2xl border border-white/5 flex flex-col md:flex-row overflow-hidden relative group">
+            <div className="bg-[#0B0E14] w-full max-w-5xl h-[100dvh] md:h-auto md:max-h-[85vh] rounded-[2rem] shadow-2xl border border-white/5 flex flex-col md:flex-row overflow-hidden relative group">
                 
                 {/* CINEMATIC BACKGROUND TRAILER */}
-
-                <div className="w-full md:w-[340px] shrink-0 bg-transparent relative flex items-center justify-center overflow-hidden z-10">
+                {backgroundTrailerUrl && !showTrailer && (
+                    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-60">
+                        <iframe 
+                            src={backgroundTrailerUrl} 
+                            className="w-[150%] h-[150%] -ml-[25%] -mt-[25%] object-cover pointer-events-none filter blur-[2px] scale-110 opacity-80 mix-blend-screen" 
+                            allow="autoplay; encrypted-media" 
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#0B0E14] via-[#0B0E14]/70 to-[#0B0E14]/40"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0E14] via-[#0B0E14]/30 to-transparent"></div>
+                    </div>
+                )}                <div className="w-full md:w-[340px] shrink-0 bg-transparent relative flex items-center justify-center overflow-hidden z-10">
                     {!showTrailer && (
                         <div className="relative z-10 p-10 w-full">
                             <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900 group-hover:scale-105 transition-transform duration-700 ease-out">

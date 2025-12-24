@@ -118,7 +118,7 @@ export const AiRecommendationButton: React.FC<AiRecommendationButtonProps> = ({ 
                 onClick={getAiTip} 
                 disabled={loading} 
                 data-testid="ai-fab-button"
-                className="md:hidden fixed bottom-24 left-4 z-[100] w-14 h-14 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-2xl shadow-purple-900/60 border-2 border-slate-900 active:scale-95 transition-all"
+                className="md:hidden fixed bottom-24 left-4 z-40 w-14 h-14 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-2xl shadow-purple-900/60 border-2 border-slate-900 active:scale-95 transition-all"
             >
                 {loading ? <Loader2 size={24} className="animate-spin" /> : <Sparkles size={24} />}
             </button>

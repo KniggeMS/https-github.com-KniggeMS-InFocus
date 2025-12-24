@@ -86,15 +86,15 @@ export const AuthPage: React.FC = () => {
         <div className="fixed bottom-[-5%] left-[-5%] w-[600px] h-[600px] bg-purple-600/5 rounded-full blur-[150px] pointer-events-none"></div>
 
         {/* TOP BAR NAVIGATION */}
-        <div className="absolute top-8 left-8 right-8 flex justify-between z-50 items-center">
-            <div>
+        <div className="absolute top-6 left-6 right-6 flex flex-wrap justify-between z-50 items-start gap-4 pointer-events-none">
+            <div className="pointer-events-auto">
                 {view === 'login' && (
                     <button onClick={() => setShowGuide(true)} className="px-5 py-2 rounded-full text-slate-300 hover:text-white text-xs font-black uppercase tracking-widest border border-white/5 bg-[#121620]/80 backdrop-blur-xl flex items-center gap-2.5 transition-all hover:bg-[#1A202E] animate-in fade-in duration-300">
                         <BookOpen size={14} className="text-cyan-400" /> Handbuch
                     </button>
                 )}
             </div>
-            <div>
+            <div className="pointer-events-auto">
                 {view === 'register' && (
                     <button onClick={() => setLanguage(language === 'de' ? 'en' : 'de')} className="px-5 py-2 rounded-full text-slate-300 hover:text-white text-xs font-black uppercase tracking-widest border border-white/5 bg-[#121620]/80 backdrop-blur-xl flex items-center gap-2.5 transition-all hover:bg-[#1A202E] animate-in fade-in duration-300">
                         <Languages size={14} className="text-cyan-400" /> {language.toUpperCase()}

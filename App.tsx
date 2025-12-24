@@ -300,7 +300,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-main text-text-main pb-20 md:pb-0 font-sans relative overflow-x-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-main text-text-main pb-32 md:pb-0 font-sans relative overflow-x-hidden transition-colors duration-300">
         <header className="sticky top-0 z-[100] bg-sidebar/80 backdrop-blur-xl border-b border-border-main px-4 md:px-8 h-16 flex items-center justify-between shadow-xl transition-colors duration-300">
             <div className="flex items-center gap-8">
                 <div onClick={() => navigate('/')} className="flex items-center gap-2.5 cursor-pointer group">
