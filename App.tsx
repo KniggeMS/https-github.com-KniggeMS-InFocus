@@ -140,17 +140,8 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Self-Healing: Hydrate missing data when items are loaded or added
-  useEffect(() => {
-    if (items.length > 0 && tmdbKey) {
-       hydrateMissingData(items, tmdbKey, omdbKey, (updatedItem) => {
-           setItems(prev => prev.map(i => i.id === updatedItem.id ? updatedItem : i));
-       });
-    }
-  }, [items.length, tmdbKey, omdbKey]);
-
-
-
+  // Removed dangerous useEffect for hydration to prevent loops.
+  // Hydration is now called explicitly in loadData and handleAdd.
 
   const openShareModal = (list: CustomList) => {
     setListToShare(list);
@@ -169,6 +160,18 @@ export default function App() {
         if (fetchedNotifs) {
             setUnreadNotifications(fetchedNotifs.length);
         }
+
+        // Safe Hydration after load
+        if (fetchedItems.length > 0 && tmdbKey) {
+            const updates = await hydrateMissingData(fetchedItems, tmdbKey, omdbKey);
+            if (updates.length > 0) {
+                setItems(current => current.map(i => {
+                    const update = updates.find(u => u.id === i.id);
+                    return update ? update : i;
+                }));
+            }
+        }
+
     } catch (e) {
         console.error("Failed to load data", e);
     }

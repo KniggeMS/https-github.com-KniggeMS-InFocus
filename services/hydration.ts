@@ -9,10 +9,9 @@ const HYDRATION_LIMIT = 5; // Max 5 items per run to respect API limits
 export const hydrateMissingData = async (
     items: MediaItem[], 
     tmdbKey: string, 
-    omdbKey: string | null,
-    onUpdate: (updatedItem: MediaItem) => void
-) => {
-    if (!tmdbKey) return;
+    omdbKey: string | null
+): Promise<MediaItem[]> => {
+    if (!tmdbKey) return [];
 
     // Find candidates for hydration (missing runtime OR missing certification OR missing RT score)
     const candidates = items.filter(item => {
@@ -21,8 +20,11 @@ export const hydrateMissingData = async (
         return missingCore || missingRt;
     });
 
+    if (candidates.length === 0) return [];
+
     // Process only a few items to avoid rate limiting issues
     const batch = candidates.slice(0, HYDRATION_LIMIT);
+    const updatedItems: MediaItem[] = [];
 
     for (const item of batch) {
         let hasChanges = false;
@@ -72,7 +74,9 @@ export const hydrateMissingData = async (
         }
 
         if (hasChanges) {
-            onUpdate(updatedItem);
+            updatedItems.push(updatedItem);
         }
     }
+    
+    return updatedItems;
 };

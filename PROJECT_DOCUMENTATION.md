@@ -4,6 +4,25 @@ Willkommen zur technischen Dokumentation von InFocus CineLog. Dieses Dokument be
 
 ---
 
+## 🚀 Version: v2.4.1 (Mobile Stability Patch)
+
+### ✨ Aktuelle Features & Optimierungen
+
+*   **Mobile UX Core Fix:** Komplette Überarbeitung der mobilen Navigation (`MobileNav`) auf semantisches HTML (`<nav>`) und Z-Index Optimierung.
+*   **Modal Architektur:** Entkopplung von `SearchModal` und `DetailView`. Suchergebnisse öffnen die Detailansicht nun auf App-Ebene statt verschachtelt im Such-Modal. Dies behebt Klick-Probleme auf Touch-Devices.
+*   **Touch-Optimierung:** Der "Schließen"-Button in der Detailansicht wurde als fixes Top-Level-Element implementiert, um Überlagerungen durch Trailer oder Modals zu verhindern.
+*   **Share-Button Logik:** Der "Teilen"-Button ist nun auch für Suchergebnisse (noch nicht gespeicherte Items) verfügbar.
+*   **E2E Testing:** Neue umfassende Test-Suite `mobile-audit.spec.ts` für mobile Core-Flows (Suche, Add, Listen, Admin).
+*   **Build Stability:** TypeScript-Fehler im `SearchModal` und `ChatBot` Tests behoben.
+
+### 🐛 Behobene Bugs in v2.4.1
+
+*   **Nested Modals:** Behebung von Blockaden bei Interaktionen in der Detailansicht, wenn diese aus der Suche geöffnet wurde.
+*   **Mobile Nav:** Navigation war für Automatisierungstools (und Screenreader) teilweise unsichtbar.
+*   **Sync-Verzögerung:** Listen-Erstellung synchronisiert nun sauberer mit der UI.
+
+---
+
 ## 🚀 Version: v2.4 (Cinematic Immersion Update)
 
 ### ✨ Aktuelle Features
